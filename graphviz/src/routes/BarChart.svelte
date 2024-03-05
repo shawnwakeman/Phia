@@ -1,176 +1,201 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import * as d3 from 'd3';
+// chart to display issues
 
 
 
-    let pullStrength: number = 0.02
-    const numNodes: number = 100;
 
-    let svg: SVGSVGElement | null = null;
-    let selectedNode: Node | null = null;
+  import { onMount } from 'svelte';
+  import * as d3 from 'd3';
+  import anime from 'animejs';
 
-    interface Node {
-        
-        radius: number;
-        value: number;
-        x?: number;
-        y?: number;
-        vx: number ; // Add velocity in the x direction
-        vy: number; // Add velocity in the y direction
-        color: string;
-        fx?: number | null; // Fix x position during drag
-        fy?: number | null; // Fix y position during drag
+  interface Node {
+    name: string;
+    value?: number;
+    children?: Node[];
+  }
 
-    }
-    
 
-    onMount(() => {
-      const width: number = 1000, height: number = 1000;
+  // Generating dummy hierarchical data
+  const data: Node = {
+    name: "root",
+    children: [
+      {
+        name: "group1",
+        children: [
+          { name: "node1", value: 10 },
+          { name: "node2", value: 15 },
+          { name: "node3", value: 5 },
+        ],
+      },
+      {
+        name: "group2",
+        children: [
+          { name: "node4", value: 8 },
+          { name: "node5", value: 12 },
+        ],
+      },
+      { name: "node6", value: 20 },
+    ],
+  };
 
-    //   if (!svg) return; // Ensure svg is not null
 
-    // const zoom = d3.zoom<SVGSVGElement, unknown>()
-    //   .scaleExtent([1, 10]) // Limits zooming between 1x and 10x
-    //   .on('zoom', (event) => {
-    //     // Ensure svg is not null and apply the transform
-    //     if (svg) d3.select(svg).select('g').attr('transform', event.transform);
-    //   });
-    //   // Select the SVG element (using D3 or the bound variable) and call zoom
-    //   d3.select(svg).call(zoom);
-      
-      const colorScale: string[] = ['orange', 'lightblue', '#B19CD9'];
-        
-      const svg = d3.create("svg")
-      .attr("viewBox", `-${width / 2} -${height / 2} ${width} ${height}`)
+
+onMount(() => {
+    const width: number = 600;
+    const height: number = 600;
+
+
+    // Create SVG element
+    const svg = d3.select("#circle-packing")
+      .append("svg")
       .attr("width", width)
       .attr("height", height)
-  
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("font-family", "sans-serif");
 
+
+    // Initialize zoom behavior
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 5])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+    });
+
+    svg.call(zoom);
+
+
+    const g = svg.append("g");
     
-      const nodes: Node[] = d3.range(numNodes).map((d, i) => {
+
+    // Prepare the data for visualization
+    const root: d3.HierarchyNode<Node> = d3.hierarchy<Node>(data)
+      .sum(d => d.value ?? 0)
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+
+    const pack = d3.pack<Node>()
+      .size([width - 2, height - 2])
+      .padding(3);
+
+    // Apply the pack layout to the root hierarchy. The explicit typing of `root` helps TypeScript understand the expected type.
+    const nodes = pack(root);
+
+    interface ZoomState {
+      transform: d3.ZoomTransform;
+    }
+
+    let lastClickedNode: d3.HierarchyCircularNode<Node> | null = null;
+
+    let currentDepth = 0;
+
+
+    // Stack to keep track of zoom levels
+    let zoomStack: ZoomState[] = [];
+
+
+  function updateText() {
+
+    console.log(currentDepth)
+
+    g.selectAll("text").remove();
+    g.selectAll("text")
+    .data(nodes.descendants().filter(d => d.depth === currentDepth + 1), d => d.data.name)
+    .join(
+      enter => enter.append("text")
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .attr("opacity", 0) // Start fully transparent
+        .text(d => d.data.name)
+        .attr("class", "text")
+        .call(enter => enter.transition()
+        .duration(750)
+        .attr("opacity", 1)), // Animate to fully opaque
+      update => update.call(update => update.transition()
+        .duration(750)), // Optional: animate updates
+      exit => exit.call(exit => exit.transition()
+        .duration(750)
+        .attr("opacity", 0) // Animate to fully transparent
+        .remove())
+    );
+
+  }
+
+
+
+    const circles = g.selectAll("circle")
+      .data(nodes.descendants())
+      .join("circle")
+      .attr("transform", d => `translate(${d.x},${d.y})`)
+      .attr("r", 0) // Initial radius set to 0 for animation
+      .attr("fill", d => d.children ? "#555" : "#999")
+      .attr("stroke", "#fff")
+      .attr("class", "circle")
+      
+      .on("click", function(event, d) {
+        if (event.defaultPrevented) return;
+
+        if (lastClickedNode === d) {
+          // If the same node is clicked again, reset the zoom
+
+          svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+          lastClickedNode = null; // Reset last clicked node
+          currentDepth = 0
+        } else {
+          // Zoom into the node
+          const targetDiameter = Math.min(width, height) * 0.9;
+          const scale = targetDiameter / (d.r * 2);
+          const limitedScale = Math.min(Math.max(scale, zoom.scaleExtent()[0]), zoom.scaleExtent()[1]);
+          const translate = [width / 2 - limitedScale * d.x, height / 2 - limitedScale * d.y];
+          const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(limitedScale);
+          svg.transition().duration(750).call(zoom.transform, transform);
+          lastClickedNode = d; // Update last clicked node
+          currentDepth = d.depth
+          
+        }
+        event.stopPropagation();
+        updateText(); // Prevent click event from propagating to svg
+        console.log(currentDepth)
         
-      // Define the circle's center
-      const centerX = width / 2;
-      const centerY = height / 2;
-
-      // Define the radius of the circle where the nodes will be placed
-      // This should be smaller than the SVG width/height to fit all nodes
-      const placementRadius = Math.min(width, height) / 3 * Math.random(); // Adjust as needed
-
-      // Distribute nodes evenly in a circle
-      const angle = (i / numNodes) * 2 * Math.PI; // Even distribution of angles in radians
-
-      // Convert polar coordinates (angle, placementRadius) to Cartesian coordinates (x, y)
-      const x = centerX + placementRadius * Math.cos(angle);
-      const y = centerY + placementRadius * Math.sin(angle);
-
-      return {
-        radius: 10,
-        value: Math.random(),
-        color: colorScale[i % colorScale.length + 1],
-        x,
-        y,
-        vx: 0,
-        vy: 0,
-      };
-    });
-
-
-    const simulation = d3.forceSimulation(nodes as d3.SimulationNodeDatum[])
-    // .force('x', d3.forceX().x(width / 2).strength(pullStrength))
-    // .force('y', d3.forceY().y(height / 2).strength(pullStrength))
-    .force('collision', d3.forceCollide().radius((d: any) => d.radius).strength(.8))
-    .on('tick', ticked);
-
-    // Function to gradually increase the centering force strength
-    function updateForces() {
-      
-      // pullStrength = Math.min(0.1, 0.0001 + pullStrength); // Gradually increase to a max of 0.1
-      
-      // console.log(pullStrength);
-
-      // simulation.force('x', d3.forceX().x(width / 2).strength(pullStrength));
-      // simulation.force('y', d3.forceY().y(height / 2).strength(pullStrength));
-    }
-
-    const config = {
-      colour: 'yellow'
-    }
-
-
-    simulation.on('tick', () => {
-      ticked();
-      updateForces(); // Update forces on each tick
-      applyCustomCenteringForce(simulation.alpha());
-      
-    });
-
-    function ticked() {
-      const circles = d3.select('svg g').selectAll('circle')
-        .data(nodes)
-        .join('circle')
-        .attr('r', d => d.radius)
-        .attr('cx', d => d.x ?? 0)
-        .attr('cy', d => d.y ?? 0)
-        .attr('fill', d => d.color)
-    
-        // Apply hover effects directly using D3
-        .on('mouseenter', function(event, d) {
-          d3.select(this)
-            .attr('stroke', 'rgb(248, 0, 0)')
-            .attr('stroke-width', '2');
-        })
-        .on('mouseleave', function(event, d) {
-          d3.select(this)
-            .attr('stroke', null)
-            .attr('stroke-width', null);
-        })
-
-        .style('opacity', d => selectedNode && d !== selectedNode ? 0.5 : 1)
-        .on('click', (event, d) => {
-          selectedNode = d;
-          circles.style('opacity', d => selectedNode && d !== selectedNode ? 0.5 : 1);
-
-        });
-    }
-
-    function applyCustomCenteringForce(alpha: number) {
-      nodes.forEach(node => {
-        // Provide default values for x and y if they are undefined
-        let nodeX = node.x || width / 2; // Default to center if undefined
-        let nodeY = node.y || height / 2; // Default to center if undefined
-
-        let radiusBasedStrength = node.radius / 10 * pullStrength;
-
-        // Use the safe values of nodeX and nodeY in your calculations
-        node.vx += (width / 2 - nodeX) * radiusBasedStrength * alpha;
-        node.vy += (height / 2 - nodeY) * radiusBasedStrength * alpha;
-        // simulation.alphaTarget(0.3).restart(); //TODO: fix
-
       });
-    }
 
-    // Drag functions
+      anime({
+      targets: circles.nodes(), // Use .nodes() to get the actual DOM elements from D3 selection
+      r: d => d.__data__.r, // Animate radius to final value, accessing __data__ to get original data bound by D3
+      duration: 1000,
+      easing: 'easeInOutSine',
+      delay: anime.stagger(5) // Stagger the start times of each circle's animation
+      });
+
+
+
+// Add text to circles, only one level deep
+ // Prevents text from interfering with click events
+
+// Reset zoom when clicking outside of any circle
+
+updateText()
+
+svg.on("wheel.zoom", event => event.preventDefault())
+    .on("dblclick.zoom", null) ;
+
+
+
   });
 
-   
-  
 </script>
 
 
+
+
+<div id="circle-packing"></div>
+
+
+
+
+<style>
+  :global(.circle) {
+    fill: #495f3d; /* Example: Set text color */
     
+  }
 
-<h2>
-  {#if selectedNode}
-    Selected Node ID: {selectedNode.radius} - Value: {selectedNode.value.toFixed(2)}
-  {:else}
-    Click on a node to select it.
-  {/if}
-
-</h2>
-
-<svg bind:this={svg} width="1000" height="1000">
-  <g></g>
-</svg>
-
+</style>
+  
