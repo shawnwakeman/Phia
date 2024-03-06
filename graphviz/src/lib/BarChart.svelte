@@ -1,46 +1,90 @@
 <script lang="ts">
+    
 // chart to display issues
     import { onMount } from 'svelte';
+    import type { Node } from "../types/collection"
     import * as d3 from 'd3';
     import anime from 'animejs';
 
-    export let data1;
-    console.log(data1)
-    const data: Node = {
-    name: "root",
-    children: [
-      {
-        name: "group1",
-        children: [
-          { name: "node1", value: 10 },
-          { name: "node2", value: 15 },
-          { name: "node3", value: 5 },
-        ],
-      },
-      {
-        name: "group2",
-        children: [
-          { name: "node4", value: 8 },
-          { name: "node5", value: 12 },
-        ],
-      },
-      { name: "node6", value: 20 },
-    ],
-  };
+
+    export let data1: { nodes: Node[] };
 
 
-    interface Node {
+
+    type FlatNode = {
+        id: number;
         name: string;
-        value?: number;
-        children?: Node[];
+        parent_id: number | null;
+        value: number | null;
+    };
+
+    type WrittableNode = {
+    name: string;
+    value?: number | null;
+    children?: WrittableNode[];
+    };
+
+
+
+
+    function createHierarchy(data: Node[]): WrittableNode | null {
+    // Mapping object to store nodes by id for quick reference, and to track the parent-child relationships
+    const elements: { [key: number]: WrittableNode } = {};
+  
+    // Temporary variable to hold identified root node(s)
+    let rootCandidates: WrittableNode[] = [];
+  
+    data.forEach((d) => {
+        const element: WrittableNode = { name: d.name, value: d.value, children: [] };
+        elements[d.id] = element;
+  
+        if(d.parent_id === null) {
+            rootCandidates.push(element); // Potential root node based on missing parent_id
+        }
+    });
+  
+    if (rootCandidates.length === 0) {
+        console.error("No root node found in the data.");
+        return null; // Return null if no root node is found
+    } else if (rootCandidates.length > 1) {
+        console.warn("Multiple root nodes found. Using the first one found as the root.");
     }
+  
+    // The actual root node
+    let root = rootCandidates[0];
+  
+    data.forEach((d) => {
+        if(d.parent_id !== null && elements[d.parent_id]) {
+            elements[d.parent_id].children!.push(elements[d.id]);
+        }
+    });
+  
+    // Function to clean nodes without children by removing the empty 'children' arrays
+    const cleanChildren = (node: WrittableNode) => {
+        if (node.children && node.children.length === 0) {
+            delete node.children;
+        } else {
+            node.children?.forEach(cleanChildren);
+        }
+    };
+  
+    cleanChildren(root);
+  
+    return root;
+}
+
+// Example usage with TypeScript
 
 
-  // Generating dummy hierarchical data
 
 
+    const data = createHierarchy(data1.nodes);
 
-    onMount(() => {
+    console.log(JSON.stringify(data, null, 2));
+
+    onMount(async () => {
+
+
         const width: number = 600;
         const height: number = 600;
 
@@ -66,16 +110,22 @@
 
 
     const g = svg.append("g");
+
     
+    if (data === null) {
+        console.error("Failed to create hierarchical data.");
+        return; // or return some fallback value if needed
+    }
 
     // Prepare the data for visualization
-    const root: d3.HierarchyNode<Node> = d3.hierarchy<Node>(data)
+    const root: d3.HierarchyNode<WrittableNode> = d3.hierarchy<WrittableNode>(data)
         .sum(d => d.value ?? 0)
         .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-    const pack = d3.pack<Node>()
+    const pack = d3.pack<WrittableNode>()
         .size([width - 2, height - 2])
-        .padding(3);
+        
+        .padding(10);
 
     // Apply the pack layout to the root hierarchy. The explicit typing of `root` helps TypeScript understand the expected type.
     const nodes = pack(root);
@@ -84,7 +134,7 @@
         transform: d3.ZoomTransform;
     }
 
-    let lastClickedNode: d3.HierarchyCircularNode<Node> | null = null;
+    let lastClickedNode: d3.HierarchyCircularNode<WrittableNode> | null = null;
 
     let currentDepth = 0;
 
@@ -95,7 +145,7 @@
 
   function updateText() {
 
-    console.log(currentDepth)
+    
 
     g.selectAll("text").remove();
     g.selectAll("text")
@@ -153,7 +203,7 @@
             }
             event.stopPropagation();
             updateText(); // Prevent click event from propagating to svg
-            console.log(currentDepth)
+            
         
       });
 

@@ -1,17 +1,22 @@
 import { supabase } from "$lib/supabaseClient";
 
 
-let sa = 1000;
+
 export async function load() {
 
+  const { data, error } = await supabase
+    .from('nodes')
+    .select();
   
-  const { data } = await supabase.from("nodes").select();
+  
   return {
     nodes: data ?? [],
 
   };
   
 }
+
+
 
 
 
