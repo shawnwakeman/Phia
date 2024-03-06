@@ -4,7 +4,29 @@
     import * as d3 from 'd3';
     import anime from 'animejs';
 
-    export let data: Node[]
+    export let data1;
+    console.log(data1)
+    const data: Node = {
+    name: "root",
+    children: [
+      {
+        name: "group1",
+        children: [
+          { name: "node1", value: 10 },
+          { name: "node2", value: 15 },
+          { name: "node3", value: 5 },
+        ],
+      },
+      {
+        name: "group2",
+        children: [
+          { name: "node4", value: 8 },
+          { name: "node5", value: 12 },
+        ],
+      },
+      { name: "node6", value: 20 },
+    ],
+  };
 
 
     interface Node {
