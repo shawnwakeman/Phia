@@ -1,6 +1,7 @@
 <script lang="ts">
     import BarChart from "../lib/BarChart.svelte";
     import NodeCreator from "../lib/NodeCreator.svelte";
+    import SideBar from "../lib/Sidebar.svelte";
     import type { Node } from "../types/collection";
     import { selectedNodeId } from "../stores";
 
@@ -28,3 +29,5 @@
 <BarChart data1 = {data}/>
 
 <NodeCreator></NodeCreator>
+
+<SideBar active = {true} />

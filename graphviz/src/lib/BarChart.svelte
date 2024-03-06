@@ -75,23 +75,39 @@
 
 
 function deleteNode(root: WrittableNode | null, nodeId: number): WrittableNode | null {
-    if (!root) return root; // If the root is null, there's nothing to delete
+    if (!root) return null; // If the root is null, there's nothing to delete
 
-    // Special case: If the root is to be deleted and has no or one child
+    // Handle root node deletion separately if needed
     if (root.id === nodeId) {
-        console.warn("Root node deletion not handled.");
-        return root; // Add logic here if you want to handle root deletion
+        // Implement desired behavior for root deletion with children
+        // For simplicity, return null indicating the tree is empty or define other logic
+        return null;
     }
 
-    const parentNode = findParentNode(root, nodeId);
-    if (parentNode) {
-        // Once the parent node is found, filter out the node to be deleted from its children
-        parentNode.children = parentNode.children?.filter(child => child.id !== nodeId) ?? [];
-    } else {
-        console.error("Parent node not found for node with ID:", nodeId);
+    // Recursive function to traverse and delete the node
+    function deleteNodeRecursive(currentNode: WrittableNode, nodeId: number): boolean {
+        if (!currentNode.children) return false;
+
+        for (let i = 0; i < currentNode.children.length; i++) {
+            if (currentNode.children[i].id === nodeId) {
+                // Node found, delete it
+                currentNode.children.splice(i, 1);
+                return true; // Node deleted
+            } else {
+                // Recursively search for the node in children
+                if (deleteNodeRecursive(currentNode.children[i], nodeId)) {
+                    return true; // Node found and deleted in a deeper level
+                }
+            }
+        }
+
+        return false; // Node not found in this path
     }
 
-    return root;
+    // Start the recursive deletion from root
+    deleteNodeRecursive(root, nodeId);
+
+    return root; // Return the modified tree
 }
 
 function updateNode(root: WrittableNode | null, updatedNode: Node): WrittableNode | null {
@@ -202,27 +218,27 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
 
                 break;
             }
-            // case 'UPDATE': {
-            //     // Extract and cast the necessary properties from payload.new
-            //     const updatedNode: NodePayload = payload.new as NodePayload;
+            case 'UPDATE': {
+                // Extract and cast the necessary properties from payload.new
+                const updatedNode: NodePayload = payload.new as NodePayload;
 
-            //     data = updateNode(data, updatedNode); // Implement this function
+                data = updateNode(data, updatedNode); // Implement this function
 
-            //     break;
-            // }
-            // case 'DELETE': {
-            //     // For delete, payload.old might contain the deleted node's data
-            //     console.log("deleting ", payload.old)
-            //     const deletedNode: NodePayload = payload.old as NodePayload; // Adjust as necessary
+                break;
+            }
+            case 'DELETE': {
+                // For delete, payload.old might contain the deleted node's data
+                console.log("deleting ", payload.old)
+                const deletedNode: NodePayload = payload.old as NodePayload; // Adjust as necessary
 
-            //     data = deleteNode(data, deletedNode.id); // Implement this function
-            //     console.log("After delete", data);
-            //     break;
-            // }
-            // default:
-            //     console.warn("Unhandled event type:", payload.eventType);
+                data = deleteNode(data, deletedNode.id); // Implement this function
+                console.log("After delete", data);
+                break;
+            }
+            default:
+                console.warn("Unhandled event type:", payload.eventType);
         }
-        updateCircles(); // Refresh the UI or visualization as needed
+        updateVisuals(); // Refresh the UI or visualization as needed
     }
 
     const channels = supabase.channel('custom-all-channel')
@@ -248,13 +264,8 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
 
 
     // Initialize zoom behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-        .scaleExtent([0.5, 5])
-        .on("zoom", (event) => {
-        g.attr("transform", event.transform);
-    });
 
-    svg.call(zoom);
+
 
 
     const g = svg.append("g");
@@ -288,19 +299,94 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
 
     let selectedNode: d3.HierarchyCircularNode<WrittableNode> | null = null;
 
-    let currentSelectedNodeID: number = 13;
-
     let currentDepth = 0;
 
 
     // Stack to keep track of zoom levels
     let zoomStack: ZoomState[] = [];
 
+function updateVisuals() {
+    if (!data) {
+        console.error("Failed to create hierarchical data.");
+        return;
+    }
 
-  function updateText() {
+    const root = d3.hierarchy<WrittableNode>(data)
+        .sum(d => d.value ?? 0)
+        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-    
+    const pack = d3.pack<WrittableNode>()
+        .size([width - 2, height - 2])
+        .padding(10);
 
+    const nodes = pack(root);
+
+    updateCircles(nodes);
+    updateText(nodes);
+}
+
+
+function updateCircles(nodes: d3.HierarchyCircularNode<WrittableNode>) {
+    g.selectAll("circle")
+        .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WrittableNode>).data.id)
+
+
+        .join("circle")
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .attr("r", d => d.r)
+        .attr("fill", d => d.children ? "#555" : "#999")
+        .attr("stroke", d => d.data.id === selectedNode?.data.id ? "red" : "blue")
+        .attr("class", d => d.data.id === selectedNode?.data.id ? "circle-selected" : "circle")
+        .on("click", (event, d) => {
+            event.stopPropagation(); // Prevent click event from propagating
+            handleCircleClick(d);
+        });
+}
+
+
+function handleCircleClick(d: d3.HierarchyCircularNode<WrittableNode>) {
+    // Check if the clicked node is the currently selected node
+    if (selectedNode && d.data.id === selectedNode.data.id) {
+        // Reset selection and zoom out
+        selectedNode = null;
+        currentDepth = 0;
+        // Apply a zoom reset
+        svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+    } else {
+        // Update the selected node and current depth for a new selection
+        selectedNode = d;
+        currentDepth = d.depth;
+        // Calculate and apply zoom transformation for the new selection
+        applyZoom(d);
+    }
+    selectedNodeId.set(d.data.id)
+
+    // Refresh visuals with the updated selection or reset
+    updateVisuals();
+}
+
+
+function applyZoom(d: d3.HierarchyCircularNode<WrittableNode>) {
+    if (!selectedNode) {
+        // Reset zoom if no node is selected
+        svg.transition().duration(750).call(zoom.transform as any, d3.zoomIdentity);
+        return;
+    }
+
+    // Compute the zoom transformation based on the selected node 'd'
+    const targetDiameter = Math.min(width, height) * 0.9;
+    const scale = targetDiameter / (d.r * 2);
+    const translate = [width / 2 - scale * d.x, height / 2 - scale * d.y];
+    // Here, 'transform' is declared and assigned before its use
+    const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale);
+
+    // Now 'transform' is already assigned and can be safely used
+    svg.transition().duration(750).call(zoom.transform as any, transform);
+}
+
+
+
+function updateText(nodes: d3.HierarchyCircularNode<WrittableNode>) {
     g.selectAll("text").remove();
     g.selectAll("text")
     .data(nodes.descendants().filter(d => d.depth === currentDepth + 1), d => d.data.name)
@@ -320,91 +406,21 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
         .attr("opacity", 0) // Animate to fully transparent
         .remove())
     );
+}
 
-  }
+// Setup zoom behavior
+const zoom = d3.zoom<SVGSVGElement, unknown>()
+    .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+    });
+
+svg.call(zoom as any);
 
 
-
+// Initialize the visualization
+updateVisuals();
 
    
-function updateCircles() { 
-
-    if (data === null) {
-        console.error("Failed to create hierarchical data.");
-        return; // or return some fallback value if needed
-    }
-
-    const root: d3.HierarchyNode<WrittableNode> = d3.hierarchy<WrittableNode>(data)
-        .sum(d => d.value ?? 0)
-        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-
-        const pack = d3.pack<WrittableNode>()
-        .size([width - 2, height - 2])
-        
-        .padding(10);
-
-    // Apply the pack layout to the root hierarchy. The explicit typing of `root` helps TypeScript understand the expected type.
-        const nodes = pack(root);
-    const circles = g.selectAll("circle")
-        .data(nodes.descendants())
-        .join("circle")
-        .attr("transform", d => `translate(${d.x},${d.y})`)
-        .attr("r", d => d.r) // Initial radius set to 0 for animation
-        .attr("fill", d => d.children ? "#555" : "#999")
-        .attr("stroke", d => d.data.id === selectedNode?.data.id ? "red" : "blue")
-        .attr("class", d => d.data.id === selectedNode?.data.id ? "circle-selected" : "circle")
-        .on("click", function(event, d) {
-            d3.selectAll(".circle-selected").attr("class", "circle"); // Reset class for previously selected circles
-            
-            if (event.defaultPrevented) return;
-
-            if (selectedNode === d) {
-            // If the same node is clicked again, reset the zoom
-                selectedNode = null
-                selectedNodeId.set(1);
-                g.selectAll("circle").attr("class", "circle");
-                g.select("circle[data-id='1']").attr("class", "circle-selected");
-                svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
-                
-
-            currentDepth = 0
-            } else {
-                d3.select(this).attr("class", "circle-selected");
-            // Zoom into the node
-            const targetDiameter = Math.min(width, height) * 0.9;
-            const scale = targetDiameter / (d.r * 2);
-            const limitedScale = Math.min(Math.max(scale, zoom.scaleExtent()[0]), zoom.scaleExtent()[1]);
-            const translate = [width / 2 - limitedScale * d.x, height / 2 - limitedScale * d.y];
-            const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(limitedScale);
-            svg.transition().duration(750).call(zoom.transform, transform);
-            selectedNode = d; // Update last clicked node
-            selectedNodeId.set(d.data.id);
-            currentDepth = d.depth
-
-            }
-
-      
-            console.log("d",d.data.id)
-            
-
-            event.stopPropagation();
-            updateText(); // Prevent click event from propagating to svg
-            
-        
-      });
-  
-    }
-
-
-updateCircles()
-
-
-// Add text to circles, only one level deep
- // Prevents text from interfering with click events
-
-// Reset zoom when clicking outside of any circle
-
-updateText()
 
 svg.on("wheel.zoom", event => event.preventDefault())
     .on("dblclick.zoom", null) ;

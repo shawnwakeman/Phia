@@ -1,7 +1,8 @@
 <script lang="ts">
     import { writable } from 'svelte/store';
     import { addNode } from "$lib/supabaseClient";
-  
+    import { deleteNodeById } from "$lib/supabaseClient";
+    import { updateNodeByID } from "$lib/supabaseClient";
     const isPopupVisible = writable(false);
   
     function togglePopup() {
@@ -10,13 +11,6 @@
 
 
 
-    function deletes() {
-      isPopupVisible.update((value) => !value);
-    }
-
-    function updates() {
-      isPopupVisible.update((value) => !value);
-    }
 
   </script>
   
@@ -43,9 +37,13 @@
   {#if $isPopupVisible}
     <div class="popup visible">
       <p>This is a popup!</p>
-      <button on:click={addNode}>addNode</button>
-      <button on:click={deletes}>addDefult</button>
-      <button on:click={updates}>addDefult</button>
+      <button on:click={() => addNode("lol", 10, 272)}>Add Node</button>
+      <button on:click={() => deleteNodeById(280)}>del</button>
+      <button on:click={() => updateNodeByID(280, {
+        name: "Updated Node Name",
+        value: 10,
+        parent_id: 272
+    })}>cunm</button>
 
       <button on:click={togglePopup}>Close</button>
     </div>
