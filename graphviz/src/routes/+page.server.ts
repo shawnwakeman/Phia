@@ -1,8 +1,19 @@
 import { supabase } from "$lib/supabaseClient";
 
+
+let sa = 1000;
 export async function load() {
-  const { data } = await supabase.from("countries").select();
+
+  
+  const { data } = await supabase.from("nodes").select();
   return {
-    countries: data ?? [],
+    nodes: data ?? [],
+
   };
+  
 }
+
+
+
+// Override the type for a specific column in a view:
+

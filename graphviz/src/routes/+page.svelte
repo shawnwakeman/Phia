@@ -1,27 +1,32 @@
-<script lang="ts">
-    import { onMount } from 'svelte'
-    import { supabase } from ''
-    import type { AuthSession } from '@supabase/supabase-js'
-    import Account from './lib/Account.svelte'
-    import Auth from './lib/Auth.svelte'
-  
-    let session: AuthSession
-  
-    onMount(() => {
-      supabase.auth.getSession().then(({ data }) => {
-        session = data.session
-      })
-  
-      supabase.auth.onAuthStateChange((_event, _session) => {
-        session = _session
-      })
-    })
-  </script>
-  
-  <div class="container" style="padding: 50px 0 100px 0">
-    {#if !session}
-    <Auth />
-    {:else}
-    <Account {session} />
-    {/if}
-  </div>
+<script>
+    import BarChart from "../lib/BarChart.svelte";
+    import Database from "../database.types"
+    export let data;
+
+    
+
+    let nasd: nod
+    function buildHierarchy(nodes: any[]): Node {
+        const nodeMap = new Map(nodes.map(node => [node.id, { ...node, children: [] }]));
+
+        let root: Node = { name: "root", children: [] }; // Root node
+
+        nodes.forEach(node => {
+            if (node.parent_id === null) {
+            root.children.push(nodeMap.get(node.id));
+            } else {
+            const parentNode = nodeMap.get(node.parent_id);
+            if (parentNode) {
+                parentNode.children.push(nodeMap.get(node.id));
+            }
+            }
+        });
+
+        return root;
+    }
+
+
+</script>
+
+<BarChart />
+<p>{data}</p>
