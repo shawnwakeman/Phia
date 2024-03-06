@@ -2,17 +2,16 @@
 // chart to display issues
 
 
+    import { onMount } from 'svelte';
+    import * as d3 from 'd3';
+    import anime from 'animejs';
 
 
-  import { onMount } from 'svelte';
-  import * as d3 from 'd3';
-  import anime from 'animejs';
-
-  interface Node {
-    name: string;
-    value?: number;
-    children?: Node[];
-  }
+    interface Node {
+        name: string;
+        value?: number;
+        children?: Node[];
+    }
 
 
   // Generating dummy hierarchical data
@@ -40,25 +39,25 @@
 
 
 
-onMount(() => {
-    const width: number = 600;
-    const height: number = 600;
+    onMount(() => {
+        const width: number = 600;
+        const height: number = 600;
 
 
     // Create SVG element
     const svg = d3.select("#circle-packing")
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("text-anchor", "middle")
-      .style("font-size", "12px")
-      .style("font-family", "sans-serif");
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("text-anchor", "middle")
+        .style("font-size", "12px")
+        .style("font-family", "sans-serif");
 
 
     // Initialize zoom behavior
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 5])
-      .on("zoom", (event) => {
+        .scaleExtent([0.5, 5])
+        .on("zoom", (event) => {
         g.attr("transform", event.transform);
     });
 
@@ -70,18 +69,18 @@ onMount(() => {
 
     // Prepare the data for visualization
     const root: d3.HierarchyNode<Node> = d3.hierarchy<Node>(data)
-      .sum(d => d.value ?? 0)
-      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+        .sum(d => d.value ?? 0)
+        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
     const pack = d3.pack<Node>()
-      .size([width - 2, height - 2])
-      .padding(3);
+        .size([width - 2, height - 2])
+        .padding(3);
 
     // Apply the pack layout to the root hierarchy. The explicit typing of `root` helps TypeScript understand the expected type.
     const nodes = pack(root);
 
     interface ZoomState {
-      transform: d3.ZoomTransform;
+        transform: d3.ZoomTransform;
     }
 
     let lastClickedNode: d3.HierarchyCircularNode<Node> | null = null;
@@ -122,38 +121,38 @@ onMount(() => {
 
 
     const circles = g.selectAll("circle")
-      .data(nodes.descendants())
-      .join("circle")
-      .attr("transform", d => `translate(${d.x},${d.y})`)
-      .attr("r", 0) // Initial radius set to 0 for animation
-      .attr("fill", d => d.children ? "#555" : "#999")
-      .attr("stroke", "#fff")
-      .attr("class", "circle")
+        .data(nodes.descendants())
+        .join("circle")
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .attr("r", 0) // Initial radius set to 0 for animation
+        .attr("fill", d => d.children ? "#555" : "#999")
+        .attr("stroke", "#fff")
+        .attr("class", "circle")
       
-      .on("click", function(event, d) {
-        if (event.defaultPrevented) return;
+        .on("click", function(event, d) {
+            if (event.defaultPrevented) return;
 
-        if (lastClickedNode === d) {
-          // If the same node is clicked again, reset the zoom
+            if (lastClickedNode === d) {
+            // If the same node is clicked again, reset the zoom
 
-          svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
-          lastClickedNode = null; // Reset last clicked node
-          currentDepth = 0
-        } else {
-          // Zoom into the node
-          const targetDiameter = Math.min(width, height) * 0.9;
-          const scale = targetDiameter / (d.r * 2);
-          const limitedScale = Math.min(Math.max(scale, zoom.scaleExtent()[0]), zoom.scaleExtent()[1]);
-          const translate = [width / 2 - limitedScale * d.x, height / 2 - limitedScale * d.y];
-          const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(limitedScale);
-          svg.transition().duration(750).call(zoom.transform, transform);
-          lastClickedNode = d; // Update last clicked node
-          currentDepth = d.depth
-          
-        }
-        event.stopPropagation();
-        updateText(); // Prevent click event from propagating to svg
-        console.log(currentDepth)
+            svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+            lastClickedNode = null; // Reset last clicked node
+            currentDepth = 0
+            } else {
+            // Zoom into the node
+            const targetDiameter = Math.min(width, height) * 0.9;
+            const scale = targetDiameter / (d.r * 2);
+            const limitedScale = Math.min(Math.max(scale, zoom.scaleExtent()[0]), zoom.scaleExtent()[1]);
+            const translate = [width / 2 - limitedScale * d.x, height / 2 - limitedScale * d.y];
+            const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(limitedScale);
+            svg.transition().duration(750).call(zoom.transform, transform);
+            lastClickedNode = d; // Update last clicked node
+            currentDepth = d.depth
+            
+            }
+            event.stopPropagation();
+            updateText(); // Prevent click event from propagating to svg
+            console.log(currentDepth)
         
       });
 
@@ -163,7 +162,7 @@ onMount(() => {
       duration: 1000,
       easing: 'easeInOutSine',
       delay: anime.stagger(5) // Stagger the start times of each circle's animation
-      });
+});
 
 
 

@@ -1,9 +1,27 @@
 <script lang="ts">
-    import BarChart from "./BarChart.svelte"
+    import { onMount } from 'svelte'
+    import { supabase } from ''
+    import type { AuthSession } from '@supabase/supabase-js'
+    import Account from './lib/Account.svelte'
+    import Auth from './lib/Auth.svelte'
+  
+    let session: AuthSession
+  
+    onMount(() => {
+      supabase.auth.getSession().then(({ data }) => {
+        session = data.session
+      })
+  
+      supabase.auth.onAuthStateChange((_event, _session) => {
+        session = _session
+      })
+    })
   </script>
   
-
-<h1>D3 Bar Chart in Svelte with TypeScript</h1>
-<BarChart />
-
-  
+  <div class="container" style="padding: 50px 0 100px 0">
+    {#if !session}
+    <Auth />
+    {:else}
+    <Account {session} />
+    {/if}
+  </div>
