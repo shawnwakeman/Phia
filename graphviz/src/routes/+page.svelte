@@ -27,6 +27,8 @@
 
 <h1>{selectedNodeData?.id}, {selectedNodeData?.name}, {selectedNodeData?.parent_id}, {selectedNodeData?.value}}</h1>
 <BarChart data1 = {data}/>
+<BarChart data1 = {data}/>
+
 
 <NodeCreator></NodeCreator>
 

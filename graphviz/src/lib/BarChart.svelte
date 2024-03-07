@@ -1,41 +1,38 @@
 <script lang="ts">
     
-// chart to display issues
+
+
     import { onMount } from 'svelte';
     import type { Node } from "../types/collection"
     import * as d3 from 'd3';
-    import anime from 'animejs';
+
     import { selectedNodeId } from "../stores";
     import { supabase } from './supabaseClient'; // Import your Supabase client
     export let data1: { nodes: Node[] };
     
 
-    type FlatNode = {
-        id: number;
-        name: string;
-        parent_id: number | null;
-        value: number | null;
-    };
-
-    type WrittableNode = {
+    const primcolor = "red"
+    type WritableNode = {
     id: number
     name: string;
     value?: number | null;
-    children?: WrittableNode[];
+    children?: WritableNode[];
+    fillColor: string;
+    
 };
 
     
 
-
-    function createHierarchy(data: Node[]): WrittableNode | null {
+    
+    function createHierarchy(data: Node[]): WritableNode | null {
     // Mapping object to store nodes by id for quick reference, and to track the parent-child relationships
-    const elements: { [key: number]: WrittableNode } = {};
+    const elements: { [key: number]: WritableNode } = {};
   
     // Temporary variable to hold identified root node(s)
-    let rootCandidates: WrittableNode[] = [];
+    let rootCandidates: WritableNode[] = [];
   
     data.forEach((d) => {
-        const element: WrittableNode = { id : d.id, name: d.name, value: d.value, children: [] };
+        const element: WritableNode = { id : d.id, name: d.name, value: d.value, children: [], fillColor: primcolor };
         elements[d.id] = element;
   
         if(d.parent_id === null) {
@@ -60,7 +57,7 @@
     });
   
     // Function to clean nodes without children by removing the empty 'children' arrays
-    const cleanChildren = (node: WrittableNode) => {
+    const cleanChildren = (node: WritableNode) => {
         if (node.children && node.children.length === 0) {
             delete node.children;
         } else {
@@ -74,7 +71,7 @@
 }
     
 
-function deleteNode(root: WrittableNode | null, nodeId: number): WrittableNode | null {
+function deleteNode(root: WritableNode | null, nodeId: number): WritableNode | null {
     if (!root) return null; // If the root is null, there's nothing to delete
 
     // Handle root node deletion separately if needed
@@ -85,7 +82,7 @@ function deleteNode(root: WrittableNode | null, nodeId: number): WrittableNode |
     }
 
     // Recursive function to traverse and delete the node
-    function deleteNodeRecursive(currentNode: WrittableNode, nodeId: number): boolean {
+    function deleteNodeRecursive(currentNode: WritableNode, nodeId: number): boolean {
         if (!currentNode.children) return false;
 
         for (let i = 0; i < currentNode.children.length; i++) {
@@ -110,11 +107,11 @@ function deleteNode(root: WrittableNode | null, nodeId: number): WrittableNode |
     return root; // Return the modified tree
 }
 
-function updateNode(root: WrittableNode | null, updatedNode: Node): WrittableNode | null {
+function updateNode(root: WritableNode | null, updatedNode: Node): WritableNode | null {
     if (!root) return root; // If the root is null, there's nothing to update
 
     // Traverse the hierarchy to find the node and update it
-    const traverseAndUpdate = (node: WrittableNode) => {
+    const traverseAndUpdate = (node: WritableNode) => {
         if (node.id === updatedNode.id) {
             node.name = updatedNode.name;
             node.value = updatedNode.value;
@@ -132,8 +129,8 @@ function updateNode(root: WrittableNode | null, updatedNode: Node): WrittableNod
 
 // Example usage with TypeScript
 
-function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNode | null {
-    const newWrittableNode: WrittableNode = { id: newNode.id, name: newNode.name, value: newNode.value, children: [] };
+function updateHierarchy(root: WritableNode | null, newNode: Node): WritableNode | null {
+    const newWrittableNode: WritableNode = { id: newNode.id, name: newNode.name, value: newNode.value, children: [], fillColor: primcolor };
     console.log("asd")
     // If the newNode should be a new root
     if(newNode.parent_id === null) {
@@ -170,7 +167,7 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
 
 
 // Helper function to recursively find the parent node
-    function findParentNode(node: WrittableNode, parentId: number): WrittableNode | null {
+    function findParentNode(node: WritableNode, parentId: number): WritableNode | null {
         if (node.id === parentId) {
             return node;
         }
@@ -203,6 +200,7 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
     name: string;
     value: any; // Adjust based on the actual type of 'value'
     parent_id: number | null;
+    
 }
 
 // Assuming the payload structure is known and matches the Node interface
@@ -278,11 +276,11 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
     }
 
 
-        const root: d3.HierarchyNode<WrittableNode> = d3.hierarchy<WrittableNode>(data)
+        const root: d3.HierarchyNode<WritableNode> = d3.hierarchy<WritableNode>(data)
         .sum(d => d.value ?? 0)
         .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-        const pack = d3.pack<WrittableNode>()
+        const pack = d3.pack<WritableNode>()
         .size([width - 2, height - 2])
         
         .padding(10);
@@ -298,7 +296,7 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
         transform: d3.ZoomTransform;
     }
 
-    let selectedNode: d3.HierarchyCircularNode<WrittableNode> | null = null;
+    let selectedNode: d3.HierarchyCircularNode<WritableNode> | null = nodes;
 
     let currentDepth = 0;
 
@@ -312,11 +310,11 @@ function updateVisuals() {
         return;
     }
 
-    const root = d3.hierarchy<WrittableNode>(data)
+    const root = d3.hierarchy<WritableNode>(data)
         .sum(d => d.value ?? 0)
         .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-    const pack = d3.pack<WrittableNode>()
+    const pack = d3.pack<WritableNode>()
         .size([width - 2, height - 2])
         .padding(10);
 
@@ -327,30 +325,34 @@ function updateVisuals() {
 }
 
 
-function updateCircles(nodes: d3.HierarchyCircularNode<WrittableNode>) {
 
 
-    g.selectAll("circle")
-        .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WrittableNode>).data.id)
-        .join("circle")
-        .attr("transform", d => `translate(${d.x},${d.y})`)
-        .attr("r", d => d.r)
-        .attr("fill", d => d.children ? "#555" : "#999")
-        .attr("stroke", d => d.data.id === selectedNode?.data.id ? "red" : "blue")
-        .attr("class", d => d.data.id === selectedNode?.data.id ? "circle-selected" : "circle")
-        .on("click", (event, d) => {
-            event.stopPropagation(); // Prevent click event from propagating
-            handleCircleClick(d);
-        });
+function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
+  g.selectAll("circle")
+    .data(nodes.descendants().filter(d => d.depth > 0), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
+    .join("circle")
+    .attr("transform", d => `translate(${d.x},${d.y})`)
+    .attr("r", d => d.r)
+    .attr("fill", d => d.data.fillColor)
+    
+    .attr("stroke", d => {
+      const node = d as d3.HierarchyCircularNode<WritableNode>;
+      return node.data.id === selectedNode?.data.id ? "red" : "blue";
+    })
+    .attr("class", d => {
+      const node = d as d3.HierarchyCircularNode<WritableNode>;
+      return node.data.id === selectedNode?.data.id ? "circle-selected" : "circle";
+    })
+    .on("click", (event, d) => {
+      event.stopPropagation();
+      handleCircleClick(d);
 
-        
+    });
 }
 
 
 
-
-function handleCircleClick(d: d3.HierarchyCircularNode<WrittableNode>) {
-
+function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
 
     // Check if the clicked node is the currently selected node
     if (selectedNode && d.data.id === selectedNode.data.id) {
@@ -373,7 +375,7 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WrittableNode>) {
 }
 
 
-function applyZoom(d: d3.HierarchyCircularNode<WrittableNode>) {
+function applyZoom(d: d3.HierarchyCircularNode<WritableNode>) {
     if (!selectedNode) {
         // Reset zoom if no node is selected
         svg.transition().duration(750).call(zoom.transform as any, d3.zoomIdentity);
@@ -393,10 +395,21 @@ function applyZoom(d: d3.HierarchyCircularNode<WrittableNode>) {
 
 
 
-function updateText(nodes: d3.HierarchyCircularNode<WrittableNode>) {
+function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
+    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0;
     g.selectAll("text").remove();
     g.selectAll("text")
-    .data(nodes.descendants().filter(d => d.depth === currentDepth + 1), d => d.data.name)
+    .data(nodes.descendants().filter(d => {
+            // Show text for nodes one layer deep from the current depth
+            const isDirectlyAboveLastLayer = currentDepth === maxDepth - 1;
+
+// Show text for nodes one layer deep from the current depth,
+// and for nodes in the last layer only if we're directly above it
+            return d.depth === currentDepth + 1 || (d.depth === maxDepth && isDirectlyAboveLastLayer)
+                        
+            // And for nodes in the last layer
+           
+    }), d => (d as d3.HierarchyCircularNode<WritableNode>).data.name)
     .join(
       enter => enter.append("text")
         .attr("transform", d => `translate(${d.x},${d.y})`)
@@ -422,6 +435,7 @@ const zoom = d3.zoom<SVGSVGElement, unknown>()
     });
 
 svg.call(zoom as any);
+
 
 
 // Initialize the visualization
@@ -451,10 +465,10 @@ svg.on("wheel.zoom", event => event.preventDefault())
         transition: opacity 0.75s ease-in-out;
     }
     :global(.circle) {
-        fill: #495f3d; /* Default fill color */
+
     }
     :global(.circle-selected) {
-        fill: #f00; /* Highlighted fill color */
+
         stroke: #000;
         stroke-width: 2px;
     }
