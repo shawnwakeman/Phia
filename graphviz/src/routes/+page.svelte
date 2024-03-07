@@ -1,7 +1,7 @@
 <script lang="ts">
     import BarChart from "../lib/BarChart.svelte";
     import NodeCreator from "../lib/NodeCreator.svelte";
-    import SideBar from "../lib/Sidebar.svelte";
+    import SideBar from "../lib/SideBar.svelte";
     import type { Node } from "../types/collection";
     import { selectedNodeId } from "../stores";
 
@@ -24,10 +24,10 @@
 
 </script>
 
-<h1>{currentSelectedId}</h1>
-<h1>{selectedNodeData?.id}, bind:{selectedNodeData?.name}, {selectedNodeData?.parent_id}, {selectedNodeData?.value}}</h1>
+
+<h1>{selectedNodeData?.id}, {selectedNodeData?.name}, {selectedNodeData?.parent_id}, {selectedNodeData?.value}}</h1>
 <BarChart data1 = {data}/>
 
 <NodeCreator></NodeCreator>
 
-<SideBar active = {true} />
+<SideBar data = {data} active = {false} />

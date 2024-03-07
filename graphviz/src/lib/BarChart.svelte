@@ -24,7 +24,7 @@
     children?: WrittableNode[];
 };
 
-
+    
 
 
     function createHierarchy(data: Node[]): WrittableNode | null {
@@ -72,7 +72,7 @@
   
     return root;
 }
-
+    
 
 function deleteNode(root: WrittableNode | null, nodeId: number): WrittableNode | null {
     if (!root) return null; // If the root is null, there's nothing to delete
@@ -190,6 +190,7 @@ function updateHierarchy(root: WrittableNode | null, newNode: Node): WrittableNo
     console.log(JSON.stringify(data, null, 2));
 
         onMount(() => {
+
 
     interface RealtimePostgresInsertPayload<T> {
         eventType: string;
@@ -327,10 +328,10 @@ function updateVisuals() {
 
 
 function updateCircles(nodes: d3.HierarchyCircularNode<WrittableNode>) {
+
+
     g.selectAll("circle")
         .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WrittableNode>).data.id)
-
-
         .join("circle")
         .attr("transform", d => `translate(${d.x},${d.y})`)
         .attr("r", d => d.r)
@@ -341,10 +342,16 @@ function updateCircles(nodes: d3.HierarchyCircularNode<WrittableNode>) {
             event.stopPropagation(); // Prevent click event from propagating
             handleCircleClick(d);
         });
+
+        
 }
 
 
+
+
 function handleCircleClick(d: d3.HierarchyCircularNode<WrittableNode>) {
+
+
     // Check if the clicked node is the currently selected node
     if (selectedNode && d.data.id === selectedNode.data.id) {
         // Reset selection and zoom out
@@ -440,13 +447,16 @@ svg.on("wheel.zoom", event => event.preventDefault())
 
 
 <style>
+    .background-rect {
+        transition: opacity 0.75s ease-in-out;
+    }
     :global(.circle) {
-      fill: #495f3d; /* Default fill color */
+        fill: #495f3d; /* Default fill color */
     }
-  
     :global(.circle-selected) {
-      fill: #f00; /* Highlighted fill color */
-      stroke: #000;
-      stroke-width: 2px;
+        fill: #f00; /* Highlighted fill color */
+        stroke: #000;
+        stroke-width: 2px;
     }
+    
   </style>

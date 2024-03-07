@@ -1,13 +1,31 @@
 <script lang="ts">
-
-
+    import { selectedNodeId } from "../stores";
+    import type { Node } from "../types/collection";
 	export let active: Boolean;
+    
+    export let data: { nodes: Node[] };
+    
+    let currentSelectedId: number;
+
+    selectedNodeId.subscribe(value => {
+        currentSelectedId = value;
+    // You can now use currentSelectedId to perform any logic based on the selected node's ID
+    });
+
+    $: selectedNodeData = currentSelectedId !== null 
+        ? data.nodes.find(node => node.id === currentSelectedId) 
+        : null;
+
+
+
 </script>
+
+
 <button on:click={()=> active = !active}>
 	{active? 'Close' : 'Open'} Menu
 </button>
 <aside class:active>
-	I'm a sidebar
+	<h1>{selectedNodeData?.id}, {selectedNodeData?.name}, {selectedNodeData?.parent_id}, {selectedNodeData?.value}}</h1>
 </aside>
 
 <style>

@@ -1,15 +1,24 @@
 <script lang="ts">
-    import { writable } from 'svelte/store';
+    import { writable, get } from 'svelte/store';
+    
     import { addNode } from "$lib/supabaseClient";
     import { deleteNodeById } from "$lib/supabaseClient";
     import { updateNodeByID } from "$lib/supabaseClient";
+    import { selectedNodeId } from '../stores';
     const isPopupVisible = writable(false);
+
+    let name = '';
+    let value = 0;
+    let parentId = 0;
   
     function togglePopup() {
       isPopupVisible.update((value) => !value);
     }
 
 
+    // Implementation to add a node
+
+    
 
 
   </script>
@@ -33,19 +42,29 @@
   </style>
   
   <button on:click={togglePopup}>Toggle Popup</button>
+
   
   {#if $isPopupVisible}
-    <div class="popup visible">
-      <p>This is a popup!</p>
-      <button on:click={() => addNode("lol", 10, 272)}>Add Node</button>
-      <button on:click={() => deleteNodeById(280)}>del</button>
-      <button on:click={() => updateNodeByID(280, {
-        name: "Updated Node Name",
-        value: 10,
-        parent_id: 272
-    })}>cunm</button>
+  <div class="popup visible">
+    <p>This is a popup!</p>
+    
+    <label for="name">Name:</label>
+    <input id="name" type="text" bind:value={name} />
 
-      <button on:click={togglePopup}>Close</button>
-    </div>
-  {/if}
-  
+    <label for="value">Value:</label>
+    <input id="value" type="number" bind:value={value} />
+
+    <label for="parentId">Parent ID:</label>
+    <p>{$selectedNodeId}</p>
+    
+    <button on:click={() => addNode(name, value, get(selectedNodeId))}>Enter</button>
+    <button on:click={togglePopup}>Close</button>
+  </div>
+{/if}
+
+  <!-- <button on:click={() => deleteNodeById(280)}>del</button>
+  <button on:click={() => updateNodeByID(280, {
+    name: "Updated Node Name",
+    value: 10,
+    parent_id: 272
+})}>cunm</button> -->
