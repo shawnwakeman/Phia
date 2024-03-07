@@ -22,7 +22,10 @@
 };
 
     
-
+    let currentSelectedNodeId: number;
+        selectedNodeId.subscribe(value => {
+            currentSelectedNodeId = value;
+        });
     
     function createHierarchy(data: Node[]): WritableNode | null {
     // Mapping object to store nodes by id for quick reference, and to track the parent-child relationships
@@ -131,7 +134,7 @@ function updateNode(root: WritableNode | null, updatedNode: Node): WritableNode 
 
 function updateHierarchy(root: WritableNode | null, newNode: Node): WritableNode | null {
     const newWrittableNode: WritableNode = { id: newNode.id, name: newNode.name, value: newNode.value, children: [], fillColor: primcolor };
-    console.log("asd")
+
     // If the newNode should be a new root
     if(newNode.parent_id === null) {
         
@@ -184,7 +187,7 @@ function updateHierarchy(root: WritableNode | null, newNode: Node): WritableNode
 
     let data = createHierarchy(data1.nodes);
 
-    console.log(JSON.stringify(data, null, 2));
+
 
         onMount(() => {
 
@@ -277,16 +280,10 @@ function updateHierarchy(root: WritableNode | null, newNode: Node): WritableNode
 
 
         const root: d3.HierarchyNode<WritableNode> = d3.hierarchy<WritableNode>(data)
-        .sum(d => d.value ?? 0)
-        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-
         const pack = d3.pack<WritableNode>()
-        .size([width - 2, height - 2])
-        
-        .padding(10);
-
-    // Apply the pack layout to the root hierarchy. The explicit typing of `root` helps TypeScript understand the expected type.
         const nodes = pack(root);
+
+        
 
  
     // Prepare the data for visualization
@@ -304,21 +301,55 @@ function updateHierarchy(root: WritableNode | null, newNode: Node): WritableNode
     // Stack to keep track of zoom levels
     let zoomStack: ZoomState[] = [];
 
-function updateVisuals() {
+    function updateVisuals() {
     if (!data) {
         console.error("Failed to create hierarchical data.");
         return;
     }
 
-    const root = d3.hierarchy<WritableNode>(data)
-        .sum(d => d.value ?? 0)
-        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+    const rootPadding = 20; // Extra padding for the root node
+    const childNodePadding = 5; // Extra padding for nodes with children
 
-    const pack = d3.pack<WritableNode>()
-        .size([width - 2, height - 2])
-        .padding(10);
+// Calculate the hierarchy with adjusted values for nodes with children
+const root = d3.hierarchy<WritableNode>(data)
+    .sum(d => {
+        // Assume each child adds an extra value to the parent to ensure more space
+        let additionalValue = 0;
+        if (d.children && d.children.length > 0) {
+            additionalValue = d.children.length * 10; // Tune this based on your dataset
+        }
+        return (d.value ?? 0) + additionalValue;
+    })
+    .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-    const nodes = pack(root);
+// Pack layout with dynamic padding based on node characteristics
+// Adjust the pack layout to include conditional padding based on node properties
+const pack = d3.pack<WritableNode>()
+    .size([width, height])
+    // Apply different padding based on whether a node has children and is not the root
+
+    .padding(d => {
+        if (d.depth > 1 && d.children) { // For non-root nodes with children
+            return 6; // Increased padding for nodes with children
+        } else if (d.depth === 1) { // For direct children of the root node
+            return 6; // Standard padding for root's direct children
+        } else if (d.depth < 1) {
+            return 8; // Minimal padding for leaf nodes
+        } else {
+            return 3;
+        }
+    });
+
+
+// Apply the pack layout to your hierarchy
+let nodes = pack(root);
+
+
+
+    // Apply position adjustments
+
+
+
 
     updateCircles(nodes);
     updateText(nodes);
@@ -327,32 +358,35 @@ function updateVisuals() {
 
 
 
+
 function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
   g.selectAll("circle")
-    .data(nodes.descendants().filter(d => d.depth > 0), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
+    .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
     .join("circle")
     .attr("transform", d => `translate(${d.x},${d.y})`)
     .attr("r", d => d.r)
+// Radius is calculated by D3, taking into account the dynamic padding
     .attr("fill", d => d.data.fillColor)
-    
-    .attr("stroke", d => {
-      const node = d as d3.HierarchyCircularNode<WritableNode>;
-      return node.data.id === selectedNode?.data.id ? "red" : "blue";
-    })
-    .attr("class", d => {
-      const node = d as d3.HierarchyCircularNode<WritableNode>;
-      return node.data.id === selectedNode?.data.id ? "circle-selected" : "circle";
-    })
+    .attr("stroke", d => d.data.id === currentSelectedNodeId ? "red" : "blue")
+    .attr("class", d => d.data.id === currentSelectedNodeId ? "circle-selected" : "circle")
     .on("click", (event, d) => {
       event.stopPropagation();
       handleCircleClick(d);
-
     });
 }
 
 
-
 function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
+    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
+    console.log(maxDepth);
+    
+        if (!d.children || d.children.length === 0) {
+        console.log(d.data);
+        selectedNodeId.set(d.data.id);
+        console.log("Node ID", currentSelectedNodeId);
+        updateVisuals();
+        return; // Exit the function early
+    }
 
     // Check if the clicked node is the currently selected node
     if (selectedNode && d.data.id === selectedNode.data.id) {
@@ -396,20 +430,9 @@ function applyZoom(d: d3.HierarchyCircularNode<WritableNode>) {
 
 
 function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
-    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0;
     g.selectAll("text").remove();
     g.selectAll("text")
-    .data(nodes.descendants().filter(d => {
-            // Show text for nodes one layer deep from the current depth
-            const isDirectlyAboveLastLayer = currentDepth === maxDepth - 1;
-
-// Show text for nodes one layer deep from the current depth,
-// and for nodes in the last layer only if we're directly above it
-            return d.depth === currentDepth + 1 || (d.depth === maxDepth && isDirectlyAboveLastLayer)
-                        
-            // And for nodes in the last layer
-           
-    }), d => (d as d3.HierarchyCircularNode<WritableNode>).data.name)
+    .data(nodes.descendants().filter(d => d.depth === currentDepth + 1), d => (d as d3.HierarchyCircularNode<WritableNode>).data.name)
     .join(
       enter => enter.append("text")
         .attr("transform", d => `translate(${d.x},${d.y})`)
@@ -461,10 +484,9 @@ svg.on("wheel.zoom", event => event.preventDefault())
 
 
 <style>
-    .background-rect {
-        transition: opacity 0.75s ease-in-out;
-    }
+
     :global(.circle) {
+        stroke: #fff;
 
     }
     :global(.circle-selected) {
