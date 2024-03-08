@@ -21,6 +21,7 @@
     
 };
 
+
     
     let currentSelectedNodeId: number;
         selectedNodeId.subscribe(value => {
@@ -131,6 +132,20 @@ function updateNode(root: WritableNode | null, updatedNode: Node): WritableNode 
 
 
 // Example usage with TypeScript
+
+function findNodeById(node: d3.HierarchyCircularNode<WritableNode> | null, id: string): d3.HierarchyCircularNode<WritableNode> | null {
+    if (!node) return null;
+    if (node.id === id) return node;
+
+    if (node.children) {
+        for (const child of node.children) {
+            const result = findNodeById(child as d3.HierarchyCircularNode<WritableNode>, id);
+            if (result) return result;
+        }
+    }
+
+    return null;
+}
 
 function updateHierarchy(root: WritableNode | null, newNode: Node): WritableNode | null {
     const newWrittableNode: WritableNode = { id: newNode.id, name: newNode.name, value: newNode.value, children: [], fillColor: primcolor };
@@ -380,7 +395,7 @@ function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
     if (selectedNode && d) {
         // Display the circle if the depth difference is less than 3
         // This condition assumes selectedNode and d are defined and have a depth property
-        return Math.abs(selectedNode.depth - d.depth) < 4 ? d.r : 0;
+        return Math.abs(selectedNode.depth - d.depth) < 3 ? d.r : 0;
     } else {
         // If no node is selected, or if there's an issue with the selectedNode or d, set a default
         // This could be 0 (to hide) or d.r (or another logic) to show circles
@@ -438,7 +453,8 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
 
             if (selectedNode && d.data.id === selectedNode.data.id) {
                 // Reset selection and zoom out
-                selectedNode = null;
+                const parent = nodes.find(node => node.depth === 0 && node.parent === null) || null;
+                selectedNode = parent
                 currentDepth = 0;
                 selectedNodeId.set(data?.id || 1)
                 // Apply a zoom reset
@@ -447,11 +463,13 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
             if ((!d.children || d.children.length === 0) && (data && d.parent && d.parent.data.id === data.id) ) {
                 selectedNode = d
                 selectedNodeId.set(d.data.id);
-                applyZoom(d)
+                
             } else {
                 selectedNode = d
                 selectedNodeId.set(d.data.id);
             }
+
+            applyZoom(d)
 
 
         }
@@ -468,7 +486,8 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
     // Check if the clicked node is the currently selected node
     if (selectedNode && d.data.id === selectedNode.data.id) {
         // Reset selection and zoom out
-        selectedNode = null;
+        const parent = nodes.find(node => node.depth === 0 && node.parent === null) || null;
+        selectedNode = parent
         currentDepth = 0;
         selectedNodeId.set(data?.id || 1)
         
