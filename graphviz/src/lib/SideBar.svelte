@@ -5,6 +5,7 @@
     import type { Issue } from "../types/collection";
     import { updateNodeByID } from "./supabaseClient";
     import { fetchNestedIssues } from "./supabaseClient";
+    import IssueSection from "./IssueSection.svelte";
     export let active: boolean;
 
 
@@ -15,13 +16,7 @@
     // Subscribe to the selectedNodeStore
     let issues: Issue[] = [];
     
-    $: if (currentSelectedNode) {
-        fetchNestedIssues(currentSelectedNode.id).then(fetchedIssues => {
-            issues = fetchedIssues;
-        });
-    } else {
-        issues = []; // Reset issues if no node is selected
-    }
+
 
     // Subscribe to the selectedNodeStore
     selectedNodeStore.subscribe(value => {
@@ -61,18 +56,7 @@
     <h1>{currentSelectedNode?.id}, {currentSelectedNode?.name}, {currentSelectedNode?.parent_id}, {currentSelectedNode?.value}</h1>
     <input type="text" bind:value={text} on:input={sendUpdateForText} />
     <h1>Nested Issues</h1>
-    {#if issues.length > 0}
-        <ul>
-            {#each issues as issue}
-                <li>
-                    <strong>{issue.title}</strong>: {issue.description}
-                    <!-- Add more details as needed -->
-                </li>
-            {/each}
-        </ul>
-    {:else}
-        <p>No issues found.</p>
-    {/if}
+
 </aside>
 
 <style>
