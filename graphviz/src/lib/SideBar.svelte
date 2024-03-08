@@ -1,38 +1,78 @@
 <script lang="ts">
-    import { selectedNodeId } from "../stores";
+    import { onMount } from "svelte";
+    import { selectedNodeStore } from "../stores";
     import type { Node } from "../types/collection";
+    import type { Issue } from "../types/collection";
     import { updateNodeByID } from "./supabaseClient";
+    import { fetchNestedIssues } from "./supabaseClient";
     export let active: boolean;
-    export let data: { nodes: Node[] };
-    
-    let currentSelectedId: number | null = null; // Initialize as null to handle cases where no ID is selected
-    let text = ''; // A reactive variable to hold the text box's value
 
-    selectedNodeId.subscribe(value => {
-        currentSelectedId = value;
+
+    
+    let currentSelectedNode: Node | null = null; // To handle cases where no node is selected
+    let text = ''; // A reactive variable to hold the input text value
+
+    // Subscribe to the selectedNodeStore
+    let issues: Issue[] = [];
+    
+    $: if (currentSelectedNode) {
+        fetchNestedIssues(currentSelectedNode.id).then(fetchedIssues => {
+            issues = fetchedIssues;
+        });
+    } else {
+        issues = []; // Reset issues if no node is selected
+    }
+
+    // Subscribe to the selectedNodeStore
+    selectedNodeStore.subscribe(value => {
+        currentSelectedNode = value;
+        text = value?.name || ''; // Set text to the current node's name, or empty if no node is selected
     });
 
-    $: selectedNodeData = currentSelectedId !== null 
-        ? data.nodes.find(node => node.id === currentSelectedId) 
-        : null;
 
+    onMount(async () => {
+        
+        
+        issues = await fetchNestedIssues(currentSelectedNode?.id || 0);
 
-    // Corrected the on:input handler to be a function
-    function handleInput() {
-        if(currentSelectedId !== null) { // Check if currentSelectedId is not null
-            updateNodeByID(currentSelectedId, {
-                name: text,
-                // Ensure value is a number or undefined, but not null
-                value: selectedNodeData?.value === null ? undefined : selectedNodeData?.value,
-                parent_id: currentSelectedId
+    })
+
+    // Function to send an update for the current node
+    function sendUpdateForText() {
+        if (currentSelectedNode) {
+            updateNodeByID(currentSelectedNode.id, {
+                name: text, // Update the name with the value from the text input
+                value: currentSelectedNode.value ?? undefined, // Keep the existing value
+                parent_id: currentSelectedNode.parent_id ?? undefined// Keep the existing parent ID
+            }).then(() => {
+                console.log('Update successful');
+                // Optionally: Refresh data or notify the user of the update success
+            }).catch((error) => {
+                console.error('Update failed', error);
+                // Handle the error, perhaps by notifying the user
             });
         }
     }
+
+    // Optionally: Use a Svelte action for the input field to call sendUpdate on every input
 </script>
 
 <aside class:active>
-    <h1>{selectedNodeData?.id}, {selectedNodeData?.name}, {selectedNodeData?.parent_id}, {selectedNodeData?.value}</h1>
-    <input type="text" bind:value={text} on:input={handleInput} />
+    <h1>{currentSelectedNode?.id}, {currentSelectedNode?.name}, {currentSelectedNode?.parent_id}, {currentSelectedNode?.value}</h1>
+    <input type="text" bind:value={text} on:input={sendUpdateForText} />
+    <h1>Nested Issues</h1>
+    {#if issues.length > 0}
+        <ul>
+            {#each issues as issue}
+                <li>
+                    <strong>{issue.title}</strong>: {issue.description}
+                    <!-- Add more details as needed -->
+                </li>
+            {/each}
+        </ul>
+    {:else}
+        <p>No issues found.</p>
+    {/if}
 </aside>
 
 <style>
@@ -47,6 +87,6 @@
         background-color: #efefef;
     }
     .active {
-        left: 0px
+        left: 0px;
     }
 </style>

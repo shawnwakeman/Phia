@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
-
+import type { Issue } from '../types/collection'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -11,10 +11,35 @@ export const supabase = createClient<Database>(
 
 
 
+interface RpcParams {
+    node_id: number;
+}
+  
+export async function fetchNestedIssues(nodeId: number) {
+    const params: RpcParams = { node_id: nodeId };
+    const { data, error } = await supabase
+        .rpc('get_nested_issues', params as any);
+
+
+    if (error) {
+        console.error('Error fetching nested issues:', error);
+        return [];
+    }
+
+    return data;
+}
+
+// Execute the function to fetch the data
+
+
+
+
 
 
   
 export async function addNode(name: string, value: number, parent_id: number | null) {
+    console.log(name, parent_id);
+    
     const { data, error } = await supabase
         .from('nodes')
         .insert([

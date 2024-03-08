@@ -11,6 +11,9 @@
 
     selectedNodeId.subscribe(value => {
         currentSelectedId = value;
+
+        
+        
     // You can now use currentSelectedId to perform any logic based on the selected node's ID
     });
 
@@ -28,8 +31,6 @@
 <h1>{selectedNodeData?.id}, {selectedNodeData?.name}, {selectedNodeData?.parent_id}, {selectedNodeData?.value}}</h1>
 <BarChart data1 = {data}/>
 
-
-
 <NodeCreator></NodeCreator>
+<SideBar active = {true}/>
 
-<SideBar data = {data} active = {true} />

@@ -1,8 +1,10 @@
 // src/stores.ts
 import { writable } from 'svelte/store';
+import type { Node } from './types/collection'
 
 
-// Assuming WrittableNode is imported or defined here as well
+  // Initialize the selectedNode store with a default value or null if no default is desired
+export const selectedNodeStore = writable<Node | null>(null);
 
 
 export const selectedNodeId = writable<number>(1);
