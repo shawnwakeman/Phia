@@ -1,11 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { selectedNodeStore } from "../stores";
-    import type { Node } from "../types/collection";
-    import type { Issue } from "../types/collection";
-    import { updateNodeByID } from "./supabaseClient";
-    import { fetchNestedIssues } from "./supabaseClient";
+    import { selectedNodeStore } from "../../stores";
+    import type { Node } from "../../types/collection";
+
+    import { updateNodeByID } from "../supabaseClient";
+
     import IssueSection from "./IssueSection.svelte";
+
     export let active: boolean;
 
 
@@ -14,7 +15,7 @@
     let text = ''; // A reactive variable to hold the input text value
 
     // Subscribe to the selectedNodeStore
-    let issues: Issue[] = [];
+
     
 
 
@@ -25,12 +26,7 @@
     });
 
 
-    onMount(async () => {
-        
-        
-        issues = await fetchNestedIssues(currentSelectedNode?.id || 0);
 
-    })
 
     // Function to send an update for the current node
     function sendUpdateForText() {
@@ -56,7 +52,7 @@
     <h1>{currentSelectedNode?.id}, {currentSelectedNode?.name}, {currentSelectedNode?.parent_id}, {currentSelectedNode?.value}</h1>
     <input type="text" bind:value={text} on:input={sendUpdateForText} />
     <h1>Nested Issues</h1>
-
+    <IssueSection/>
 </aside>
 
 <style>
