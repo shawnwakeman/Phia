@@ -1,20 +1,38 @@
-FROM node:18-alpine AS external-website
-
-LABEL Developers="Shawn Wakeman"
-
+# stage build
+FROM node:20-alpine as build
 
 WORKDIR /app
 
-
+# copy everything to the container
 COPY . .
 
+# clean install all dependencies
+RUN npm install
 
-RUN npm ci
-
+# remove potential security issues
+RUN npm audit fix
+    
+# build SvelteKit app
 RUN npm run build
 
-RUN rm -rf src/ static/ emailTemplates/ docker-compose.yml
 
-USER node:node
+# stage run
+FROM node:20-alpine
 
-CMD ["node","build/index.js"]
+WORKDIR /app
+
+# copy dependency list
+COPY --from=build /app/package*.json ./
+
+# clean install dependencies, no devDependencies, no prepare script
+RUN npm ci --production --ignore-scripts
+
+# remove potential security issues
+RUN npm audit fix
+
+# copy built SvelteKit app to /app
+COPY --from=build /app/build ./
+
+EXPOSE 3000
+
+CMD ["node", "./index.js"]
