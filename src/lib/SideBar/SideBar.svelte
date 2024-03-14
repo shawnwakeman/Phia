@@ -6,6 +6,11 @@
     import { updateNodeByID } from "../supabaseClient";
 
     import IssueSection from "./IssueSection.svelte";
+    import { goto } from '$app/navigation';
+
+        function navigateToAbout() {
+        goto('/issues');
+    }
 
     export let active: boolean;
 
@@ -50,6 +55,7 @@
 
 <aside class:active>
     <h1>{currentSelectedNode?.id}, {currentSelectedNode?.name}, {currentSelectedNode?.parent_id}, {currentSelectedNode?.value}</h1>
+    <button on:click={navigateToAbout}>issues</button>
     <input type="text" bind:value={text} on:input={sendUpdateForText} />
     <h1>Nested Issues</h1>
     <IssueSection/>
