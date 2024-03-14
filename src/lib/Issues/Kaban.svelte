@@ -1,18 +1,22 @@
 <script>
     // Sample data for the Kanban board
-    let tasks = {
-      todo: [
-        { id: 1, title: 'Task 1', description: 'Description for Task 1' },
-        { id: 2, title: 'Task 2', description: 'Description for Task 2' },
-      ],
-      inProgress: [
-        { id: 3, title: 'Task 3', description: 'Description for Task 3' },
-      ],
-      done: [
-        { id: 4, title: 'Task 4', description: 'Description for Task 4' },
-        { id: 5, title: 'Task 5', description: 'Description for Task 5' },
-      ],
-    };
+
+    export let rows;
+    let tasks = rows.reduce((acc, row) => {
+  // Assuming 'state' values are exactly 'todo', 'inProgress', and 'done'
+  // Normalize the state to match the keys in the 'tasks' object if needed
+    const stateKey = row.state; // Adjust if your state values need normalization
+
+    // Initialize the array if this is the first task in this state
+    if (!acc[stateKey]) {
+        acc[stateKey] = [];
+    }
+
+    // Add the task to the correct state
+    acc[stateKey].push(row);
+
+    return acc;
+    }, {});
   </script>
   
   <style>

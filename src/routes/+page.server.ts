@@ -1,5 +1,5 @@
 import { supabase } from "$lib/supabaseClient";
-
+import { nodesStore } from '../stores';
 
 
 export async function load() {
@@ -9,10 +9,7 @@ export async function load() {
     .select();
   
   
-  return {
-    nodes: data ?? [],
-
-  };
+    nodesStore.set(data ?? []);
   
 }
 

@@ -1,9 +1,7 @@
-<script>
-    let rows = [
-      { id: 1, name: 'Item 1', quantity: 10 },
-      { id: 2, name: 'Item 2', quantity: 20 },
-      { id: 3, name: 'Item 3', quantity: 30 },
-    ];
+<script lang="ts">
+    export let rows;
+    let columnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
+    console.log(rows);
   </script>
   
   <style>
@@ -31,19 +29,18 @@
   <table>
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Quantity</th>
+        {#each columnNames as columnName}
+          <th>{columnName}</th>
+        {/each}
       </tr>
     </thead>
     <tbody>
       {#each rows as row}
         <tr>
-          <td>{row.id}</td>
-          <td>{row.name}</td>
-          <td>{row.quantity}</td>
+          {#each columnNames as columnName}
+            <td>{row[columnName]}</td>
+          {/each}
         </tr>
       {/each}
     </tbody>
   </table>
-  

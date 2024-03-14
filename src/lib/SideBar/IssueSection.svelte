@@ -1,5 +1,5 @@
 <script lang="ts">
-import { onMount } from "svelte";
+
 import { selectedNodeStore } from "../../stores";
 import { fetchNestedIssues } from "../supabaseClient";
 

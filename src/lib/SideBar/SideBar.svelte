@@ -14,9 +14,9 @@
 
     export let active: boolean;
 
-
+    export let currentSelectedNode: Node | null = null;
     
-    let currentSelectedNode: Node | null = null; // To handle cases where no node is selected
+    
     let text = ''; // A reactive variable to hold the input text value
 
     // Subscribe to the selectedNodeStore
@@ -25,10 +25,6 @@
 
 
     // Subscribe to the selectedNodeStore
-    selectedNodeStore.subscribe(value => {
-        currentSelectedNode = value;
-        text = value?.name || ''; // Set text to the current node's name, or empty if no node is selected
-    });
 
 
 

@@ -5,9 +5,12 @@
  
     import IssueSection from "../lib/SideBar/IssueSection.svelte";
     import type { Node } from "../types/collection";
-    import { selectedNodeId } from "../stores";
+    import { selectedNodeId, nodesStore } from "../stores";
 
-    export let data: { nodes: Node[] };
+    let data: Node[] = [];
+    nodesStore.subscribe(value => {
+        data = value;
+    })
 
     let currentSelectedId: number;
 
@@ -33,6 +36,6 @@
 <h1>{selectedNodeData?.id}, {selectedNodeData?.name}, {selectedNodeData?.parent_id}, {selectedNodeData?.value}}</h1>
 <BarChart data1 = {data}/>
 <NodeCreator/>
-<SideBar active = {true}/>
+<SideBar active = {true} currentSelectedNode= {selectedNodeData}/>
 
 
