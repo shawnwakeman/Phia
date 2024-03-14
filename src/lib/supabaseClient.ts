@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
 import type { Issue } from '../types/collection'
+import { nodesStore } from '../stores';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -30,6 +31,20 @@ export async function fetchNestedIssues(nodeId: number) {
     
     return data;
 }
+
+
+export async function loadNodeData() {
+
+    const { data, error } = await supabase
+      .from('nodes')
+      .select();
+  
+    
+    nodesStore.set(data ?? []);
+    
+    let selectedNodeData 
+    
+  }
 
 // Execute the function to fetch the data
 

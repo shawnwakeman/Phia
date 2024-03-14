@@ -1,18 +1,21 @@
-import { supabase } from "$lib/supabaseClient";
+import { supabase, loadNodeData } from "$lib/supabaseClient";
 import { nodesStore } from '../stores';
+
+import { get } from 'svelte/store';
+
+
 
 
 export async function load() {
 
-  const { data, error } = await supabase
-    .from('nodes')
-    .select();
+  loadNodeData() // does not go on every load 
   
-  
-    nodesStore.set(data ?? []);
+  return {
+    nodes: get(nodesStore) ?? [],
+
+  };
   
 }
-
 
 
 
