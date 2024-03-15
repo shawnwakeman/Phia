@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
 import type { Issue } from '../types/collection'
-import { nodesStore } from '../stores';
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -33,24 +33,7 @@ export async function fetchNestedIssues(nodeId: number) {
 }
 
 
-export async function loadNodeData() {
-
-    const { data, error } = await supabase
-      .from('nodes')
-      .select();
-  
-    
-    nodesStore.set(data ?? []);
-    
-    let selectedNodeData 
-    
-  }
-
 // Execute the function to fetch the data
-
-
-
-
 
 
   
@@ -118,12 +101,41 @@ export async function deleteNodeById(nodeId: number) {
 
 
   
+/// isssues crud -----
+
 
 
 
     
+export async function addIssue(parent_id: number | null, ) {
 
+    if (parent_id) {
+        const { data, error } = await supabase
+            .from('issues')
+            .insert([
+                {
+                    description: '', // Empty string as default
+                    node_id: parent_id, // Assuming 0 as a placeholder, adjust accordingly
+                    priority: null, // Assuming null as an appropriate default
+                    state: null, // Assuming null as an appropriate default
+                    title: '', // Empty string as default
+                }
+            ]);
+
+        if (error) {
+            console.error('Error adding node:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log('Added issue:', data);
+        return { success: true, data: data };
+    }
+
+
+
+}
 
     
+
 
 

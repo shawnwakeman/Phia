@@ -6,6 +6,7 @@
     import { updateNodeByID } from "../supabaseClient";
 
     import IssueSection from "./IssueSection.svelte";
+
     import { goto } from '$app/navigation';
 
         function navigateToAbout() {
@@ -14,8 +15,8 @@
 
     export let active: boolean;
 
-    export let currentSelectedNode: Node | null = null;
-    
+    let currentSelectedNode: Node | null = null
+    $: currentSelectedNode = $selectedNodeStore;
     
     let text = ''; // A reactive variable to hold the input text value
 

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     // Sample data for the Kanban board
 
     export let rows;
@@ -17,7 +17,7 @@
 
     return acc;
     }, {});
-  </script>
+</script>
   
   <style>
     .kanban-board {

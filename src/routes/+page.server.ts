@@ -1,34 +1,27 @@
-import { supabase, loadNodeData } from "$lib/supabaseClient";
-import { nodesStore } from '../stores';
+import { supabase } from "$lib/supabaseClient";
 
-import { get } from 'svelte/store';
 
 
 
 
 export async function load() {
 
-  loadNodeData() // does not go on every load 
+  const { data, error } = await supabase
+    .from('nodes')
+    .select();
   
-  return {
-    nodes: get(nodesStore) ?? [],
 
-  };
+  return {
+    nodes: data ?? [],
+
+  };	
   
 }
 
 
 
 
-const channels = supabase.channel('custom-all-channel')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'nodes' },
-    (payload) => {
-      console.log('Change received!', payload)
-    }
-  )
-  .subscribe()
+
 
 
 

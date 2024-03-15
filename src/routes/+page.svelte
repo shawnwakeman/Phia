@@ -2,27 +2,22 @@
     import BarChart from "../lib/BarChart.svelte";
     import NodeCreator from "../lib/NodeCreator.svelte";
     import SideBar from "../lib/SideBar/SideBar.svelte";
-    
-    import IssueSection from "../lib/SideBar/IssueSection.svelte";
+    import { onMount } from 'svelte';
     import type { Node } from "../types/collection";
-    import { selectedNodeId, nodesStore } from "../stores";
+    import { selectedNodeId, selectedNodeStore} from "../stores";
 
 
     export let data: { nodes: Node[] };
 
-    let currentSelectedId: number;
+    $: $selectedNodeId, updateSelectedNodeStore();
 
-    selectedNodeId.subscribe(value => {
-        currentSelectedId = value;
-
-        
-        
-    // You can now use currentSelectedId to perform any logic based on the selected node's ID
+    function updateSelectedNodeStore() {
+        const selectedNode = data.nodes.find(node => node.id === $selectedNodeId);
+            selectedNodeStore.set(selectedNode || null);
+    }
+    onMount(() => {
+        updateSelectedNodeStore();
     });
-
-    $: selectedNodeData = currentSelectedId !== null 
-        ? data.nodes.find(node => node.id === currentSelectedId) 
-        : null;
 
 
 
@@ -31,7 +26,12 @@
 </script>
 
 
-<h1>{selectedNodeData?.id}, {selectedNodeData?.name}, {selectedNodeData?.parent_id}, {selectedNodeData?.value}}</h1>
+<h1>
+    {$selectedNodeStore?.id}, 
+    {$selectedNodeStore?.name}, 
+    {$selectedNodeStore?.parent_id}, 
+    {$selectedNodeStore?.value}
+  </h1>
 <BarChart data1 = {data}/>
 <NodeCreator/>
 <SideBar active = {true}/>
