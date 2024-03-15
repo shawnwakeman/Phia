@@ -3,7 +3,6 @@ import { supabase } from "$lib/supabaseClient";
 
 
 
-
 export async function load() {
 
   const { data, error } = await supabase
@@ -11,11 +10,14 @@ export async function load() {
     .select();
   
 
+	
   return {
     nodes: data ?? [],
 
-  };	
-  
+	};	
+	
+
+	
 }
 
 

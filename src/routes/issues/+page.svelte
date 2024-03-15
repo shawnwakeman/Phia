@@ -5,7 +5,7 @@
     import Sidebar from '../../lib/Issues/Sidebar.svelte'
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
-    import { fetchNestedIssues, addIssue, supabase } from "../../lib/supabaseClient";
+    import { addIssue, supabase } from "../../lib/supabaseClient";
     import { selectedNodeStore } from "../../stores";
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
@@ -14,7 +14,10 @@
     function navigateToNodes () {
         goto('/');
     }
-    export let data: PageData;
+
+    export let data: { props: { nodes: Node[]; issues: Issue[] } };
+
+    const { nodes, issues } = data.props;
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}]
 
@@ -27,7 +30,7 @@
         currentViewID = viewid;
     }
 
-    let issues: Issue[] = [];
+
 
 
     let currentSelectedNode: Node | null = null
@@ -43,58 +46,16 @@
     }
 
 
-    $: if (currentSelectedNode) {
-        fetchNestedIssues(currentSelectedNode.id).then(fetchedIssues => {
-            issues = fetchedIssues;
-            
-        });
-    } else {
-        issues = []; // Reset issues if no node is selected
-    }
 
-    // Subscribe to the selectedNodeStore
-    selectedNodeStore.subscribe(value => {
-        currentSelectedNode = value;     
-    });
+
+
+    console.error("1", data.issues);
 
 
 
 
-    const dataDeepNested =  {
-  "name": "Root",
-  "children": [
-    {
-      "name": "Category 1",
-      "children": [
-        { 
-          "name": "Subcategory 1", 
-          "children": [
-            { "name": "Item 2", "value": 30 },
-            { "name": "Item 2", "value": 30 }
-          ]
-        },
-        { 
-          "name": "Subcategory 2", 
-          "value": 50 
-        }
-      ]
-    },
-    {
-      "name": "Category 2",
-      "children": [
-        {
-          "name": "Subcategory 3",
-          "value": 150
-        },
-        {
-          "name": "Subcategory 4",
-          "value": 150
-        }
-      ]
-    }
-  ]
-};
 onMount(() => {
+    
     
     interface RealtimePostgresInsertPayload<T> {
         eventType: string;
@@ -140,11 +101,13 @@ onMount(() => {
 </script>
 
 <h1>Issue Tracker</h1>
+
+
 <h1>{currentSelectedNode?.id}</h1>
 <button on:click={() => navigateToNodes()}>back</button>
 <button>search</button>
 <h1>root . bread . etc</h1>
-<Treemap data={dataDeepNested} />
+<Treemap issues= {issues} nodes ={nodes} />
 <div>
     {#each tabs as tab}
         <button on:click={() => setCurrentView(tab.id)}>{tab.name}</button>

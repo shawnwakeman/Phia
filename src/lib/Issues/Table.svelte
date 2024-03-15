@@ -1,5 +1,6 @@
 <script lang="ts">
-    export let rows;
+    import type { Issue } from "../../types/collection";
+    export let rows: Issue[];
     let columnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
     console.log(rows);
   </script>

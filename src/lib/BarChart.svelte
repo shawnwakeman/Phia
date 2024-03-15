@@ -477,7 +477,7 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
         
         
         selectedNodeStore.set(convertToNodeType(selectedNode))
-
+        
         
         updateVisuals();
         return; // Exit the function early

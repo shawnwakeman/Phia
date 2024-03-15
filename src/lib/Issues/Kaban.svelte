@@ -1,7 +1,7 @@
 <script lang="ts">
     // Sample data for the Kanban board
 
-    export let rows;
+    export let rows: I;
     let tasks = rows.reduce((acc, row) => {
   // Assuming 'state' values are exactly 'todo', 'inProgress', and 'done'
   // Normalize the state to match the keys in the 'tasks' object if needed

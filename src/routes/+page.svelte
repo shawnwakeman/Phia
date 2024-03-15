@@ -4,10 +4,12 @@
     import SideBar from "../lib/SideBar/SideBar.svelte";
     import { onMount } from 'svelte';
     import type { Node } from "../types/collection";
-    import { selectedNodeId, selectedNodeStore} from "../stores";
+    import { selectedNodeId, selectedNodeStore, dbNodeStore} from "../stores";
 
 
     export let data: { nodes: Node[] };
+
+    
 
     $: $selectedNodeId, updateSelectedNodeStore();
 
@@ -15,8 +17,14 @@
         const selectedNode = data.nodes.find(node => node.id === $selectedNodeId);
             selectedNodeStore.set(selectedNode || null);
     }
+
+
     onMount(() => {
         updateSelectedNodeStore();
+
+        dbNodeStore.set(data.nodes)
+ 
+        
     });
 
 

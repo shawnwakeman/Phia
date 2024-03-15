@@ -27,7 +27,7 @@ export async function fetchNestedIssues(nodeId: number) {
         console.error('Error fetching nested issues:', error);
         return [];
     }
-    console.log(data);
+
     
     return data;
 }
