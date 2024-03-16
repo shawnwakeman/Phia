@@ -4,10 +4,11 @@
     import SideBar from "../lib/SideBar/SideBar.svelte";
     import { onMount } from 'svelte';
     import type { Node } from "../types/collection";
-    import { selectedNodeId, selectedNodeStore, dbNodeStore} from "../stores";
+    import { selectedNodeId, selectedNodeStore, nodesDataStore} from "../stores";
 
 
     export let data: { nodes: Node[] };
+
 
     
 
@@ -18,21 +19,25 @@
             selectedNodeStore.set(selectedNode || null);
     }
 
-
+    nodesDataStore.set(data.nodes);
+    
     onMount(() => {
         updateSelectedNodeStore();
+       
 
-        dbNodeStore.set(data.nodes)
- 
+        
         
     });
 
 
 
-
-
 </script>
 
+<ul>
+    {#each $nodesDataStore as node}
+      <li>{node.name}</li>
+    {/each}
+  </ul>
 
 <h1>
     {$selectedNodeStore?.id}, 
@@ -40,6 +45,6 @@
     {$selectedNodeStore?.parent_id}, 
     {$selectedNodeStore?.value}
   </h1>
-<BarChart data1 = {data}/>
+<BarChart/>
 <NodeCreator/>
 <SideBar active = {true}/>

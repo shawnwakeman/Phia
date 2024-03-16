@@ -51,7 +51,7 @@
     {#each issues as issue}
         <button class="issue-item {expandedIssueId === issue.id ? 'expanded' : ''}" 
                 on:click={() => toggleExpand(issue.id)}>
-            <strong>{issue.title}</strong> - {issue.state}
+            <strong>{issue.name}</strong> - {issue.state}
             <div class="content">
                 <p>{issue.description}</p>
                 <!-- Additional content -->

@@ -28,10 +28,9 @@ export async function fetchNestedIssues(nodeId: number) {
         return [];
     }
 
-    
+
     return data;
 }
-
 
 // Execute the function to fetch the data
 
@@ -118,7 +117,7 @@ export async function addIssue(parent_id: number | null, ) {
                     node_id: parent_id, // Assuming 0 as a placeholder, adjust accordingly
                     priority: null, // Assuming null as an appropriate default
                     state: null, // Assuming null as an appropriate default
-                    title: '', // Empty string as default
+                    name: '', // Empty string as default
                 }
             ]);
 

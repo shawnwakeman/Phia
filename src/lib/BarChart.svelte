@@ -6,9 +6,11 @@
     import type { Node } from "../types/collection"
     import * as d3 from 'd3';
     import { selectedNodeStore } from "../stores";
-    import { selectedNodeId } from "../stores";
-    import { supabase } from './supabaseClient'; // Import your Supabase client
-    export let data1: { nodes: Node[] };
+    import { selectedNodeId, nodesDataStore } from "../stores";
+    import { supabase } from './supabaseClient'; 
+    import {  get } from "svelte/store";
+
+
     
 
     const primcolor = "red"
@@ -200,12 +202,22 @@ function updateHierarchy(root: WritableNode | null, newNode: Node): WritableNode
         return null; // Parent node not found
     }
 
-    let data = createHierarchy(data1.nodes);
+    let data: WritableNode | null;
 
 
+        
 
-        onMount(() => {
+    onMount(async () => {
 
+
+   
+        const unsubscribe = nodesDataStore.subscribe((value) => {
+        console.log(value);
+        
+            data = createHierarchy(value)
+        }); // logs 'got a subscriber', then '1'
+        unsubscribe(); // logs 'no more subscribers'
+    
 
     interface RealtimePostgresInsertPayload<T> {
         eventType: string;
@@ -477,7 +489,7 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
         
         
         selectedNodeStore.set(convertToNodeType(selectedNode))
-        
+
         
         updateVisuals();
         return; // Exit the function early

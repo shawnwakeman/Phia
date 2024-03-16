@@ -1,8 +1,36 @@
 <script lang="ts">
     import type { Issue } from "../../types/collection";
-    export let rows: Issue[];
-    let columnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
+    import { selectedNodeStore } from "../../stores";
+    import { fetchNestedIssues } from "../supabaseClient";
+
+    import { onMount } from 'svelte';
+   
+
+    let rows: Issue[] = [];
+    let currentSelectedNode: Node | null = null;
+
+    $: if (currentSelectedNode) {
+        fetchNestedIssues(currentSelectedNode.id).then(fetchedIssues => {
+            rows = fetchedIssues;
+        });
+    } else {
+        rows = []; // Reset issues if no node is selected
+    }
+
+    // Subscribe to the selectedNodeStore
+    selectedNodeStore.subscribe(value => {
+        currentSelectedNode = value;     
+    });
+
     console.log(rows);
+    
+
+    let columnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
+
+    
+
+
+
   </script>
   
   <style>

@@ -1,55 +1,75 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { Node, Issue } from "../../types/collection";
+    import { selectedNodeStore, nodesDataStore, issuesDataStore } from "../../stores";
     import * as d3 from 'd3';
   
-    export let nodes: Node[] = [];
-    export let issues: Issue[] = [];
 
 
-    const nodeMap = new Map(nodes.map(node => [node.id, { 
-    id: node.id, 
-    name: node.name, 
-    parent_id: node.parent_id, 
-    children: [] 
-    }]));
+    function buildHierarchy(nodes: Node[], issues: Issue[]) {
+        
+        
+        const nodeMap = new Map(nodes.map(node => [node.id, { 
+            id: node.id, 
+            name: node.name, 
+            parent_id: node.parent_id, 
+            children: [] 
+        }]));
 
-// Step 2: Transform issues and add to corresponding nodes with 'value' set to 5
-    issues.forEach(issue => {
-        const issueTransformed = {
-            ...issue,
-            value: 5, // Set value for issues only
-            children: [] // Assuming issues might have children (if not, this can be removed)
+        // Transform issues and add to corresponding nodes
+        issues.forEach(issue => {
+            const issueTransformed = {
+                ...issue,
+                value: 5, // Set value for issues only
+                children: [] // Assuming issues might have children
+            };
+            if(nodeMap.has(issue.node_id)) {
+                nodeMap.get(issue.node_id).children.push(issueTransformed);
+            }
+        });
+
+        // Construct hierarchical structure
+        let hierarchy = {
+            name: "Root",
+            children: []
         };
-        if(nodeMap.has(issue.node_id)) {
-            nodeMap.get(issue.node_id).children.push(issueTransformed);
-        }
-    });
 
-// Step 3: Construct hierarchical structure
-    let hierarchy = {
-        name: "Root",
-        children: []
-    };
+        nodes.forEach(node => {
+            if(node.parent_id === null) {
+                hierarchy.children.push(nodeMap.get(node.id));
+            } else if(nodeMap.has(node.parent_id)) {
+                nodeMap.get(node.parent_id).children.push(nodeMap.get(node.id));
+            }
+        });
 
-    nodes.forEach(node => {
-        if(node.parent_id === null) {
-            hierarchy.children.push(nodeMap.get(node.id));
-        } else if(nodeMap.has(node.parent_id)) {
-            nodeMap.get(node.parent_id).children.push(nodeMap.get(node.id));
-        }
-    });
-        // `root` now contains the hierarchical structure including nodes and issues
-        console.log(JSON.stringify(hierarchy, null, 2));
+        return hierarchy;
+    }
 
-        
+    let data
   
+    onMount(async () => {
+    // Subscribe to nodesDataStore and issuesDataStore and rebuild the hierarchy on changes
+
+    let issues: Issue[]
+    let nodes: Node[]
+
+        const unsubscribeNodes = nodesDataStore.subscribe(value => {
+            nodes = value; // Ensure you import `get` from 'svelte/store'
+
+        });
+
+        const unsubscribeIssues = issuesDataStore.subscribe(value => {
+            issues = value
+            // drawTreeMap(); // Update the visualization with the new hierarchy
+        });
+        unsubscribeNodes();
+        unsubscribeIssues();
+
+        // Cleanup function to unsubscribe from stores when the component is destroyed
         
-    const data = nodeMap.get(nodes[0].id)
-  
-    onMount(() => {
-      drawTreeMap();
-    });
+        data = buildHierarchy(nodes, issues)
+        drawTreeMap()
+});
   
     function drawTreeMap() {
         const width = 600; // Adjusted from 800
@@ -85,11 +105,7 @@ nodes.append("rect")
     .attr("fill", d => color(d.depth))
     .attr("width", d => d.x1 - d.x0)
     .attr("height", d => d.y1 - d.y0);
-    .on("click", (event, d) => {
 
-
-      
-    });
 // Adding text for all nodes
 nodes.append("text")
     .selectAll("tspan")

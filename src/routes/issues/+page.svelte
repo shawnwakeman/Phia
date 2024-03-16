@@ -6,18 +6,19 @@
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
     import { addIssue, supabase } from "../../lib/supabaseClient";
-    import { selectedNodeStore } from "../../stores";
+    import { selectedNodeStore, issuesDataStore, nodesDataStore } from "../../stores";
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
 
+    import { get } from 'svelte/store';
 
     function navigateToNodes () {
         goto('/');
     }
 
-    export let data: { props: { nodes: Node[]; issues: Issue[] } };
 
-    const { nodes, issues } = data.props;
+    export let data: { issues: Issue[] };
+
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}]
 
@@ -49,48 +50,52 @@
 
 
 
-    console.error("1", data.issues);
 
-
-
-
-onMount(() => {
+    issuesDataStore.set(data.issues);
     
-    
-    interface RealtimePostgresInsertPayload<T> {
-        eventType: string;
-        new?: T;
-        old?: T;
-    }
-    function handleRealtimeEvent(payload: RealtimePostgresInsertPayload<{ [key: string]: any }>) {
-        switch (payload.eventType) {
-            case 'INSERT': {
-                // Extract and cast the necessary properties from payload.new
-                console.log("insering", payload.new)
-                const newNode: Issue = payload.new as Issue;
-                break;
-            }
-            case 'UPDATE': {
-                // Extract and cast the necessary properties from payload.new
-              
 
-                break;
+    onMount(() => {
+
+
+        
+        
+        
+        interface RealtimePostgresInsertPayload<T> {
+            eventType: string;
+            new?: T;
+            old?: T;
+        }
+        function handleRealtimeEvent(payload: RealtimePostgresInsertPayload<{ [key: string]: any }>) {
+            switch (payload.eventType) {
+                case 'INSERT': {
+                    // Extract and cast the necessary properties from payload.new
+                    console.log("insering", payload.new)
+                    const newNode: Issue = payload.new as Issue;
+                    
+                    break;
+                }
+                case 'UPDATE': {
+                    // Extract and cast the necessary properties from payload.new
+                
+
+                    break;
+                }
+                case 'DELETE': {
+                    // For delete, payload.old might contain the deleted node's data
+                
+                    break;
+                }
+                default:
+                    console.warn("Unhandled event type:", payload.eventType);
             }
-            case 'DELETE': {
-                // For delete, payload.old might contain the deleted node's data
-            
-                break;
-            }
-            default:
-                console.warn("Unhandled event type:", payload.eventType);
+
         }
 
-    }
+        const channels = supabase.channel('custom-all-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'issues' }, handleRealtimeEvent)
+        .subscribe();
+    });
 
-    const channels = supabase.channel('custom-all-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'issues' }, handleRealtimeEvent)
-    .subscribe();
-});
 
 
 
@@ -107,16 +112,19 @@ onMount(() => {
 <button on:click={() => navigateToNodes()}>back</button>
 <button>search</button>
 <h1>root . bread . etc</h1>
-<Treemap issues= {issues} nodes ={nodes} />
+<Treemap/>
 <div>
     {#each tabs as tab}
         <button on:click={() => setCurrentView(tab.id)}>{tab.name}</button>
     {/each}
 </div>
 {#if currentViewID === 'table'}
-  <Table rows={issues} />
+
+    
+    <Table/>
+
 {:else if currentViewID === 'kaban'}
-  <Kaban rows={issues} />
+  <Kaban rows={data.issues} />
 
 {/if}
 <button on:click={() => { show = !show; sidebarWidth = '50%'; }}>Expand Half Width</button>
@@ -127,7 +135,7 @@ onMount(() => {
 <button on:click={() => createNewNode()}>add</button>
 
 
-<style>
+<style> 
     #treemap {
       display: block;
       margin: auto;
