@@ -2,6 +2,8 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
 import type { Issue } from '../types/collection'
+import { issuesDataStore, nodesDataStore } from "../stores";
+import { get } from 'svelte/store';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -43,18 +45,38 @@ export async function addNode(name: string, value: number, parent_id: number | n
         .from('nodes')
         .insert([
             { name: name, value: value, parent_id: parent_id }
-        ]);
+        ])
+        .select();
 
     if (error) {
         console.error('Error adding node:', error);
         return { success: false, error: error.message };
     }
 
+    
+    if (data) {
+        console.log('Added issue:', data);
+        console.error(get(issuesDataStore));
+        
+        // Update the issuesDataStore with the new data
+        nodesDataStore.update(currentIssues => {
+            const newIssue = data[0]; // Assuming the inserted data is returned
+            
+            
+            return [...currentIssues, newIssue];
+        });
+
+        console.error(get(issuesDataStore));
+    } else {
+        console.error('No data returned from the database');
+        // Optionally, update the store to indicate that no data was returned
+    }
+
     console.log('Added node:', data);
     return { success: true, data: data };
 }
 
-
+//  these need to be updated to refecte changes in nodestore
   
 export async function updateNodeByID(nodeId: number, updatedValues: {
     name?: string;
@@ -97,6 +119,19 @@ export async function deleteNodeById(nodeId: number) {
 }
 
 
+export async function findRootNodes() {
+    const { data, error } = await supabase
+      .from('nodes') // Replace 'nodes' with your actual table name
+      .select('*') // Selects all columns, replace '*' with specific columns if needed
+      .is('parent_id', null); // Finds nodes where 'parent_id' is NULL
+  
+    if (error) {
+      console.error('Error fetching root nodes:', error);
+      return;
+    }
+  
+    return data; // Contains the rows of nodes with 'parent_id' NULL
+  }
 
 
   
@@ -105,13 +140,19 @@ export async function deleteNodeById(nodeId: number) {
 
 
 
-    
-export async function addIssue(parent_id: number | null, ) {
 
-    if (parent_id) {
+export async function addIssue(parent_id: number | null,) {
+    
+    if (!parent_id) {
+        console.error('Parent ID is null');
+        // Optionally, you can update the store with an error or handle this case as needed
+        return;
+    }
+
+
         const { data, error } = await supabase
             .from('issues')
-            .insert([
+            .upsert([
                 {
                     description: '', // Empty string as default
                     node_id: parent_id, // Assuming 0 as a placeholder, adjust accordingly
@@ -119,22 +160,57 @@ export async function addIssue(parent_id: number | null, ) {
                     state: null, // Assuming null as an appropriate default
                     name: '', // Empty string as default
                 }
-            ]);
+            ])
+            .select()
+            
+        
+        
 
-        if (error) {
-            console.error('Error adding node:', error);
-            return { success: false, error: error.message };
-        }
+        if (data) {
+            console.log('Added issue:', data);
+            console.error(get(issuesDataStore));
+            
+            // Update the issuesDataStore with the new data
+            issuesDataStore.update(currentIssues => {
+                const newIssue = data[0]; // Assuming the inserted data is returned
+                
+                
+                return [...currentIssues, newIssue];
+            });
 
-        console.log('Added issue:', data);
-        return { success: true, data: data };
+            console.error(get(issuesDataStore));
+        } else {
+            console.error('No data returned from the database');
+            // Optionally, update the store to indicate that no data was returned
     }
+    
+
+
+        return { success: true, data: data };
+
 
 
 
 }
 
+
+export async function fetchDataFromDB() {
+
+
+
     
 
+        
+    
+	const { data, error } = await supabase
+		.from('issues')
+			.select();
+        console.log("newLoad");
+        
+		return {
+			issues : data ?? [],
+		};
+ 
+}
 
 

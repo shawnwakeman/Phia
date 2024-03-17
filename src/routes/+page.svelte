@@ -5,6 +5,7 @@
     import { onMount } from 'svelte';
     import type { Node } from "../types/collection";
     import { selectedNodeId, selectedNodeStore, nodesDataStore} from "../stores";
+    import { get } from "svelte/store";
 
 
     export let data: { nodes: Node[] };
@@ -15,7 +16,7 @@
     $: $selectedNodeId, updateSelectedNodeStore();
 
     function updateSelectedNodeStore() {
-        const selectedNode = data.nodes.find(node => node.id === $selectedNodeId);
+        const selectedNode = get(nodesDataStore).find(node => node.id === $selectedNodeId);
             selectedNodeStore.set(selectedNode || null);
     }
 

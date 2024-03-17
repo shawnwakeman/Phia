@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import type { Node, Issue } from "../../types/collection";
     import { selectedNodeStore, nodesDataStore, issuesDataStore } from "../../stores";
+    import { get } from "svelte/store";
     import * as d3 from 'd3';
   
 
@@ -45,33 +46,43 @@
         return hierarchy;
     }
 
-    let data
+    let issues: Issue[] = []
+    let nodes: Node[] = []
+
+    
+    $: if ($issuesDataStore) {
+        updateIssuesAndNodes();
+    }
+
+
+    async function updateIssuesAndNodes() {
+    // Assuming the current state of issuesDataStore influences both issues and nodes,
+    // and fetchNodesBasedOnIssues is a function you define to fetch nodes based on the current issues.
+    try {
+
+        // Optionally, update local component state if necessary.
+        issues = get(issuesDataStore);
+        nodes = get(nodesDataStore);
+
+            const data = buildHierarchy(nodes, issues);
+            drawTreeMap(data); // Assuming drawTreeMap() takes the hierarchy data as an argument
+        } catch (error) {
+        console.error("Failed to update issues and nodes:", error);
+        }
+
+
+    }
+
+    onMount(() => {
+    updateIssuesAndNodes();
+  });
+
+
   
-    onMount(async () => {
-    // Subscribe to nodesDataStore and issuesDataStore and rebuild the hierarchy on changes
+    function drawTreeMap(data) {
+     
 
-    let issues: Issue[]
-    let nodes: Node[]
-
-        const unsubscribeNodes = nodesDataStore.subscribe(value => {
-            nodes = value; // Ensure you import `get` from 'svelte/store'
-
-        });
-
-        const unsubscribeIssues = issuesDataStore.subscribe(value => {
-            issues = value
-            // drawTreeMap(); // Update the visualization with the new hierarchy
-        });
-        unsubscribeNodes();
-        unsubscribeIssues();
-
-        // Cleanup function to unsubscribe from stores when the component is destroyed
         
-        data = buildHierarchy(nodes, issues)
-        drawTreeMap()
-});
-  
-    function drawTreeMap() {
         const width = 600; // Adjusted from 800
         const height = 200; // Adjusted from 600
 
@@ -90,16 +101,19 @@
 
         const root = treemap(data);
 
+        
+
         const svg = d3.select("#treemap")
+   
         .attr("viewBox", [0, 0, width, height])
         .style("font", "10px sans-serif");
 
         
-
+        svg.selectAll("*").remove()
         const nodes = svg.selectAll("g")
-    .data(root.descendants())
-    .join("g")
-    .attr("transform", d => `translate(${d.x0},${d.y0})`);
+            .data(root.descendants())
+            .join("g")
+            .attr("transform", d => `translate(${d.x0},${d.y0})`);
 
 nodes.append("rect")
     .attr("fill", d => color(d.depth))

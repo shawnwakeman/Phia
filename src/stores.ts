@@ -8,6 +8,7 @@ import type { Node, Issue } from './types/collection'
 export const selectedNodeStore = writable<Node | null>(null);
 
 export const nodesDataStore = writable<Node[]>([]);
+
 export const issuesDataStore = writable<Issue[]>([]);
 // not perfect seeting 
 export const selectedNodeId = writable<number>(1);

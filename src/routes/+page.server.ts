@@ -6,7 +6,9 @@ import { nodesDataStore } from '../stores';
 export async function load() {
 	const currentNodes = get(nodesDataStore);
 
-	if (currentNodes.length === 0) {
+	
+		console.log("loading loa", currentNodes);
+		
 		const { data, error } = await supabase
 		.from('nodes')
 			.select();
@@ -14,11 +16,7 @@ export async function load() {
 		return {
 			nodes: data ?? [],
 		};
-	} else {
-		return {
-			nodes: currentNodes ?? [],
-		};
-	}
+
 
 	
 

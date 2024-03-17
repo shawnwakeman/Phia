@@ -7,31 +7,36 @@ import type { Issue } from "../../types/collection";
 
 export async function load() {
 
-	const currentIssues = get(issuesDataStore);
+    let nodes = get(nodesDataStore);
 
-
-
+    console.log("dassadasddas", nodes);
     
-    if (currentIssues.length === 0) {
+    if (nodes.length === 0) {
+        // Fetch nodes data if nodesDataStore is empty
+        const { data: nodesData, error: nodesError } = await supabase
+          .from('nodes')
+          .select();
+    
+        if (nodesData) {
+          nodesDataStore.set(nodesData);
+          nodes = nodesData; // Update local nodes variable with the fetched data
+        }
         
-    
-	const { data, error } = await supabase
-		.from('issues')
-			.select();
-		
-		return {
-			issues : data ?? [],
-		};
-	} else {
-		return {
-			issues : currentIssues ?? [],
-		};
-	}
+        
+    } else {
+        console.log("a");
+    }
 
+    const { data: issuesData, error: issuesError } = await supabase
+        .from('issues')
+        .select();
 
-	
+        
+    return {
+        nodes: nodes, // Use the local nodes variable which may have been updated
+        issues: issuesData ?? [],
+    };
 
-	
 
 }
 

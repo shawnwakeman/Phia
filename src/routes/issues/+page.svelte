@@ -5,24 +5,21 @@
     import Sidebar from '../../lib/Issues/Sidebar.svelte'
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
-    import { addIssue, supabase } from "../../lib/supabaseClient";
-    import { selectedNodeStore, issuesDataStore, nodesDataStore } from "../../stores";
-    import { goto } from '$app/navigation';
+    import { addIssue, supabase, findRootNodes } from "../../lib/supabaseClient";
+    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId } from "../../stores";
+
     import { onMount } from 'svelte';
 
     import { get } from 'svelte/store';
 
-    function navigateToNodes () {
-        goto('/');
-    }
 
 
-    export let data: { issues: Issue[] };
+    export let data: { nodes: Node[], issues: Issue[] };
 
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}]
 
-    let currentViewID = "treemap"
+    let currentViewID = "table"
 
     let show = false;
     let sidebarWidth: string = "50%"
@@ -47,18 +44,27 @@
     }
 
 
+ 
 
 
 
 
+    
+    function updateSelectedNodeStore() {
+        const selectedNode = data.nodes.find(node => node.id === $selectedNodeId);
+            selectedNodeStore.set(selectedNode || null);
+    }
+    
+            
+    nodesDataStore.set(data.nodes)
     issuesDataStore.set(data.issues);
     
 
-    onMount(() => {
-
-
+    onMount(async () => {
+       
+   
         
-        
+        updateSelectedNodeStore()
         
         interface RealtimePostgresInsertPayload<T> {
             eventType: string;
@@ -109,7 +115,14 @@
 
 
 <h1>{currentSelectedNode?.id}</h1>
-<button on:click={() => navigateToNodes()}>back</button>
+
+<a data-sveltekit-preload-data="hover" href="/">
+
+	Get current stonk values
+</a>
+
+
+
 <button>search</button>
 <h1>root . bread . etc</h1>
 <Treemap/>
@@ -121,10 +134,10 @@
 {#if currentViewID === 'table'}
 
     
-    <Table/>
+ 
 
 {:else if currentViewID === 'kaban'}
-  <Kaban rows={data.issues} />
+  <Kaban/>
 
 {/if}
 <button on:click={() => { show = !show; sidebarWidth = '50%'; }}>Expand Half Width</button>

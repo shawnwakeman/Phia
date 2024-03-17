@@ -1,7 +1,18 @@
 <script lang="ts">
     // Sample data for the Kanban board
+    import type { Issue } from "../../types/collection";
+    import { selectedNodeStore, issuesDataStore } from "../../stores";
+    import { fetchNestedIssues } from "../supabaseClient";
 
-    export let rows: I;
+    let rows: Issue[] = [];
+
+    $: if ($selectedNodeStore && $issuesDataStore) {
+        fetchNestedIssues($selectedNodeStore.id).then(fetchedIssues => {
+            rows = fetchedIssues;
+            // Update columnNames based on the keys of the first issue, if not already set
+        }).catch(error => console.error("Failed to fetch nested issues:", error));
+    }
+    
     let tasks = rows.reduce((acc, row) => {
   // Assuming 'state' values are exactly 'todo', 'inProgress', and 'done'
   // Normalize the state to match the keys in the 'tasks' object if needed

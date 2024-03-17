@@ -1,39 +1,32 @@
 <script lang="ts">
     import type { Issue } from "../../types/collection";
-    import { selectedNodeStore } from "../../stores";
+    import { selectedNodeStore, issuesDataStore } from "../../stores";
     import { fetchNestedIssues } from "../supabaseClient";
 
     import { onMount } from 'svelte';
-   
 
     let rows: Issue[] = [];
-    let currentSelectedNode: Node | null = null;
+    let columnNames: string[] = [];
 
-    $: if (currentSelectedNode) {
-        fetchNestedIssues(currentSelectedNode.id).then(fetchedIssues => {
+    $: if ($selectedNodeStore && $issuesDataStore) {
+        fetchNestedIssues($selectedNodeStore.id).then(fetchedIssues => {
             rows = fetchedIssues;
-        });
-    } else {
-        rows = []; // Reset issues if no node is selected
+            // Update columnNames based on the keys of the first issue, if not already set
+            if (rows.length > 0 && columnNames.length === 0) {
+                columnNames = Object.keys(rows[0]);
+            }
+            console.log("Issues updated");
+        }).catch(error => console.error("Failed to fetch nested issues:", error));
     }
 
-    // Subscribe to the selectedNodeStore
-    selectedNodeStore.subscribe(value => {
-        currentSelectedNode = value;     
-    });
+    function getPropertyValue(row: Issue, propertyName: string): string {
+        const key: keyof Issue = propertyName as keyof Issue;
+        return row[key] ? String(row[key]) : 'null';
+    }
+</script>
 
-    console.log(rows);
-    
-
-    let columnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
-
-    
-
-
-
-  </script>
   
-  <style>
+<style>
     table {
       width: 100%;
       border-collapse: collapse;
@@ -54,22 +47,25 @@
       background-color: #f5f5f5;
     }
   </style>
-  
-  <table>
+
+<!-- Table Structure -->
+<table>
+    <!-- Table Header -->
     <thead>
-      <tr>
-        {#each columnNames as columnName}
-          <th>{columnName}</th>
-        {/each}
-      </tr>
-    </thead>
-    <tbody>
-      {#each rows as row}
         <tr>
-          {#each columnNames as columnName}
-            <td>{row[columnName]}</td>
-          {/each}
+            {#each columnNames as columnName}
+                <th>{columnName}</th>
+            {/each}
         </tr>
-      {/each}
+    </thead>
+    <!-- Table Body -->
+    <tbody>
+        {#each rows as row}
+            <tr>
+                {#each columnNames as columnName}
+                    <td>{getPropertyValue(row, columnName)}</td>
+                {/each}
+            </tr>
+        {/each}
     </tbody>
-  </table>
+</table>
