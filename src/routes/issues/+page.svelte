@@ -134,7 +134,7 @@
 {#if currentViewID === 'table'}
 
     
- 
+    <Table/>
 
 {:else if currentViewID === 'kaban'}
   <Kaban/>

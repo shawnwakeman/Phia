@@ -25,6 +25,7 @@ export async function fetchNestedIssues(nodeId: number) {
         .rpc('get_nested_issues', params as any);
 
 
+    
     if (error) {
         console.error('Error fetching nested issues:', error);
         return [];
@@ -194,23 +195,60 @@ export async function addIssue(parent_id: number | null,) {
 }
 
 
-export async function fetchDataFromDB() {
-
-
-
-    
-
-        
-    
-	const { data, error } = await supabase
-		.from('issues')
-			.select();
-        console.log("newLoad");
-        
-		return {
-			issues : data ?? [],
-		};
- 
+function sanitizeIssue(rawIssue: any): Issue {
+    return {
+        created_at: String(rawIssue.created_at),
+        customcolumns: rawIssue.customcolumns, // Assuming this needs to be a JSON object; validation might be needed depending on use case
+        description: String(rawIssue.description),
+        id: Number(rawIssue.id),
+        name: String(rawIssue.name),
+        node_id: rawIssue.node_id === null ? null : Number(rawIssue.node_id),
+        priority: rawIssue.priority === null ? null : String(rawIssue.priority),
+        state: rawIssue.state === null ? null : String(rawIssue.state),
+    };
 }
 
 
+
+export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes an 'id' field
+    if (!issue || !issue.id) {
+        console.error('Issue or Issue ID is null or undefined');
+        return { success: false, error: 'Invalid issue object' };
+    }
+
+    issue = sanitizeIssue(issue)
+
+
+    // Update the issue in the database
+    const { data, error } = await supabase
+        .from('issues')
+        .update({
+        // Specify the fields to update
+            description: issue.description,
+            node_id: issue.node_id,
+            priority: issue.priority,
+            state: issue.state,
+            name: issue.name,
+        })
+        .eq('id', issue.id); // Match the issue 'id' for updating
+
+    if (error) {
+        console.error('Failed to update issue:', error);
+        return { success: false, error: error.message };
+    }
+
+    console.log('Updated issue:', data);
+
+    // Optionally, update the local issues store to reflect the update
+    issuesDataStore.update(currentIssues => {
+        const index = currentIssues.findIndex(i => i.id === issue.id);
+        if (index !== -1) {
+        const updatedIssues = [...currentIssues];
+        updatedIssues[index] = { ...updatedIssues[index], ...issue };
+        return updatedIssues;
+        }
+        return currentIssues;
+    });
+
+    return { success: true, data: data };
+}

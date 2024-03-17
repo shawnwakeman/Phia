@@ -1,36 +1,64 @@
 <script lang="ts">
     // Sample data for the Kanban board
+    
     import type { Issue } from "../../types/collection";
     import { selectedNodeStore, issuesDataStore } from "../../stores";
     import { fetchNestedIssues } from "../supabaseClient";
 
-    let rows: Issue[] = [];
+
+
+    interface CategorizedIssues {
+        [key: string]: Issue[];
+    }
+
+    let issues: Issue[] = [];
+
+    let issuesDataStoreLength = 0
+
 
     $: if ($selectedNodeStore && $issuesDataStore) {
-        fetchNestedIssues($selectedNodeStore.id).then(fetchedIssues => {
-            rows = fetchedIssues;
+
+            
+        if ($issuesDataStore.length - issuesDataStoreLength != 0) {
+            fetchNestedIssues($selectedNodeStore.id).then(fetchedIssues => {
+            issues = fetchedIssues;
             // Update columnNames based on the keys of the first issue, if not already set
+
+            console.log("Issues updated");
+            issuesDataStoreLength = $issuesDataStore.length
         }).catch(error => console.error("Failed to fetch nested issues:", error));
-    }
+        }
     
-    let tasks = rows.reduce((acc, row) => {
-  // Assuming 'state' values are exactly 'todo', 'inProgress', and 'done'
-  // Normalize the state to match the keys in the 'tasks' object if needed
-    const stateKey = row.state; // Adjust if your state values need normalization
+            
+        
 
-    // Initialize the array if this is the first task in this state
-    if (!acc[stateKey]) {
-        acc[stateKey] = [];
     }
 
-    // Add the task to the correct state
-    acc[stateKey].push(row);
 
-    return acc;
-    }, {});
+
+
+    let categorizedIssues: CategorizedIssues = {};
+
+
+    $: categorizedIssues = categorizeIssues(issues);
+
+    let entries: [string, Issue[]][] = [];
+
+    $: entries = Object.entries(categorizedIssues) as [string, Issue[]][];
+
+    function categorizeIssues(issues: Issue[]): CategorizedIssues {
+        return issues.reduce<CategorizedIssues>((acc, issue) => {
+        const state = issue.state || 'undefined';
+        if (!acc[state]) {
+            acc[state] = [];
+        }
+        acc[state].push(issue);
+        return acc;
+        }, {});
+    }
 </script>
   
-  <style>
+<style>
     .kanban-board {
       display: flex;
       gap: 20px;
@@ -60,16 +88,16 @@
   </style>
   
   <div class="kanban-board">
-    {#each Object.entries(tasks) as [column, tasks]}
+    {#each Object.entries(categorizedIssues) as [state, tasks]}
       <div class="column">
-        <div class="column-header">{column}</div>
-        {#each tasks as task}
+        <div class="column-header">{state}</div>
+        {#each tasks as task (task.id)}
           <div class="task">
-            <div><strong>{task.title}</strong></div>
+            <div><strong>{task.name}</strong></div>
             <div>{task.description}</div>
+            <!-- You can add more issue details here -->
           </div>
         {/each}
       </div>
     {/each}
   </div>
-  

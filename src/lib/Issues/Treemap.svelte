@@ -8,6 +8,7 @@
 
 
     function buildHierarchy(nodes: Node[], issues: Issue[]) {
+        console.log(issues);
         
         
         const nodeMap = new Map(nodes.map(node => [node.id, { 
@@ -63,15 +64,22 @@
         // Optionally, update local component state if necessary.
         issues = get(issuesDataStore);
         nodes = get(nodesDataStore);
-
+            
             const data = buildHierarchy(nodes, issues);
+            console.error("asd", issues);
+            console.error("ddets", data);
+            
             drawTreeMap(data); // Assuming drawTreeMap() takes the hierarchy data as an argument
+           
+            console.log( JSON.stringify(data, null, 2));
+            
         } catch (error) {
         console.error("Failed to update issues and nodes:", error);
         }
 
 
     }
+    
 
     onMount(() => {
     updateIssuesAndNodes();
@@ -79,10 +87,7 @@
 
 
   
-    function drawTreeMap(data) {
-     
-
-        
+  function drawTreeMap(data) {
         const width = 600; // Adjusted from 800
         const height = 200; // Adjusted from 600
 
@@ -101,19 +106,16 @@
 
         const root = treemap(data);
 
-        
-
         const svg = d3.select("#treemap")
-   
         .attr("viewBox", [0, 0, width, height])
         .style("font", "10px sans-serif");
 
         
         svg.selectAll("*").remove()
         const nodes = svg.selectAll("g")
-            .data(root.descendants())
-            .join("g")
-            .attr("transform", d => `translate(${d.x0},${d.y0})`);
+    .data(root.descendants())
+    .join("g")
+    .attr("transform", d => `translate(${d.x0},${d.y0})`);
 
 nodes.append("rect")
     .attr("fill", d => color(d.depth))

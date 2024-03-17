@@ -12,3 +12,6 @@ export const nodesDataStore = writable<Node[]>([]);
 export const issuesDataStore = writable<Issue[]>([]);
 // not perfect seeting 
 export const selectedNodeId = writable<number>(1);
+
+
+export const currentSelectedIssue = writable<Issue>()
