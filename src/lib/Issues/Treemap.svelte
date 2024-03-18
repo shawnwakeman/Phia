@@ -8,7 +8,7 @@
 
 
     function buildHierarchy(nodes: Node[], issues: Issue[]) {
-        console.log(issues);
+      
         
         
         const nodeMap = new Map(nodes.map(node => [node.id, { 
@@ -66,12 +66,11 @@
         nodes = get(nodesDataStore);
             
             const data = buildHierarchy(nodes, issues);
-            console.error("asd", issues);
-            console.error("ddets", data);
+       
             
             drawTreeMap(data); // Assuming drawTreeMap() takes the hierarchy data as an argument
            
-            console.log( JSON.stringify(data, null, 2));
+  
             
         } catch (error) {
         console.error("Failed to update issues and nodes:", error);

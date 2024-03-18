@@ -15,3 +15,5 @@ export const selectedNodeId = writable<number>(1);
 
 
 export const currentSelectedIssue = writable<Issue>()
+
+export const addedIssue = writable<boolean>(false)

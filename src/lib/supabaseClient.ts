@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
 import type { Issue } from '../types/collection'
-import { issuesDataStore, nodesDataStore } from "../stores";
+import { issuesDataStore, nodesDataStore, addedIssue } from "../stores";
 import { get } from 'svelte/store';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -153,7 +153,7 @@ export async function addIssue(parent_id: number | null,) {
 
         const { data, error } = await supabase
             .from('issues')
-            .upsert([
+            .insert([
                 {
                     description: '', // Empty string as default
                     node_id: parent_id, // Assuming 0 as a placeholder, adjust accordingly
@@ -170,7 +170,7 @@ export async function addIssue(parent_id: number | null,) {
         if (data) {
             console.log('Added issue:', data);
             console.error(get(issuesDataStore));
-            
+            addedIssue.set(true)
             // Update the issuesDataStore with the new data
             issuesDataStore.update(currentIssues => {
                 const newIssue = data[0]; // Assuming the inserted data is returned
@@ -205,6 +205,7 @@ function sanitizeIssue(rawIssue: any): Issue {
         node_id: rawIssue.node_id === null ? null : Number(rawIssue.node_id),
         priority: rawIssue.priority === null ? null : String(rawIssue.priority),
         state: rawIssue.state === null ? null : String(rawIssue.state),
+        columnIndex: Number(rawIssue.columnIndex)
     };
 }
 
@@ -229,6 +230,7 @@ export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes a
             priority: issue.priority,
             state: issue.state,
             name: issue.name,
+            columnIndex: issue.columnIndex
         })
         .eq('id', issue.id); // Match the issue 'id' for updating
 
@@ -236,7 +238,7 @@ export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes a
         console.error('Failed to update issue:', error);
         return { success: false, error: error.message };
     }
-
+    
     console.log('Updated issue:', data);
 
     // Optionally, update the local issues store to reflect the update
@@ -251,4 +253,35 @@ export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes a
     });
 
     return { success: true, data: data };
+}
+
+
+export async function deleteIssue(issue: Issue) {
+    if (!issue.id) {
+        console.error('Issue ID is null');
+        // Optionally, you can update the store with an error or handle this case as needed
+        return { success: false, error: 'Issue ID is null' };
+    }
+
+    console.log("dasd", issue.id);
+    
+
+    const { data, error } = await supabase
+        .from('issues')
+        .delete()
+        .match({ id: issue.id }); // Adjust the column name if your identifier column is named differently
+
+    if (error) {
+        console.error('Failed to delete issue:', error);
+        // Optionally, update the store or handle the error as needed
+        return { success: false, error: error };
+    } 
+
+    console.log('Deleted issue:', data);
+    // Optionally, update the issuesDataStore to remove the deleted issue
+    issuesDataStore.update(currentIssues => {
+        return currentIssues.filter(currentIssue => currentIssue.id !== issue.id);
+    });
+    return { success: true, data: data };
+    
 }

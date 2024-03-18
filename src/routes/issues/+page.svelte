@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Kaban from '../../lib/Issues/Kaban.svelte'
+    import Kaban from '../../lib/Issues/Kaban/Kaban.svelte'
     import Table from '../../lib/Issues/Table.svelte'
     import Treemap from '../../lib/Issues/Treemap.svelte'
     import Sidebar from '../../lib/Issues/Sidebar.svelte'
@@ -17,7 +17,7 @@
     export let data: { nodes: Node[], issues: Issue[] };
 
 
-    let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}]
+    let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
 
     let currentViewID = "table"
 
@@ -103,7 +103,7 @@
     });
 
 
-
+   
 
 
 
@@ -125,7 +125,7 @@
 
 <button>search</button>
 <h1>root . bread . etc</h1>
-<Treemap/>
+
 <div>
     {#each tabs as tab}
         <button on:click={() => setCurrentView(tab.id)}>{tab.name}</button>
@@ -133,12 +133,12 @@
 </div>
 {#if currentViewID === 'table'}
 
-    
     <Table/>
 
 {:else if currentViewID === 'kaban'}
   <Kaban/>
-
+{:else if currentViewID === 'treemap'}
+    <Treemap/>
 {/if}
 <button on:click={() => { show = !show; sidebarWidth = '50%'; }}>Expand Half Width</button>
 <button on:click={() => { show = !show; sidebarWidth = '100%'; }}>Expand Full Width</button>
