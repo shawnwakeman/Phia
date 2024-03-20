@@ -6,7 +6,7 @@
     import { selectedNodeStore, issuesDataStore, addedIssue } from "../../../stores";
     import { fetchNestedIssues } from "../../supabaseClient";
     import { get } from 'svelte/store';
-    import Popover from './Popover.svelte';
+  
 
     let board = []; // Define board at the top level
     const columns = [

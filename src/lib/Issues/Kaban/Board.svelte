@@ -3,7 +3,7 @@
     import { flip } from 'svelte/animate';
     import { dndzone } from 'svelte-dnd-action';
     import { updateIssue } from "$lib/supabaseClient";
-    import Popover from './Popover.svelte';
+
     export let columnItems;
 
 
