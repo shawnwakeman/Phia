@@ -3,7 +3,9 @@
     import { flip } from 'svelte/animate';
     import { dndzone } from 'svelte-dnd-action';
     import { updateIssue } from "$lib/supabaseClient";
+    import Popover from './Popover.svelte';
     export let columnItems;
+
 
     console.log(columnItems);
     
@@ -49,8 +51,9 @@
             }
         });
     }
-    function handleClick(e) {
-        alert('dragabble elements are still clickable :)');
+    function handleClick(event: MouseEvent) {
+
+        alert('Draggable elements are still clickable :)');
     }
 </script>
 <style>
@@ -108,6 +111,7 @@
                     <div class="card" animate:flip="{{duration: flipDurationMs}}" on:click={handleClick}>
                         {item.name}
                         {item.id}
+                        
                     </div>
                 {/each}
             </div>

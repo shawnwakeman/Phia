@@ -88,7 +88,7 @@
   
   function drawTreeMap(data) {
         const width = 600; // Adjusted from 800
-        const height = 200; // Adjusted from 600
+        const height = 600; // Adjusted from 600
 
         const format = d3.format(",d");
         const color = d3.scaleOrdinal(d3.schemeCategory10);

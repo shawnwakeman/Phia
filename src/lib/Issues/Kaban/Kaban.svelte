@@ -104,5 +104,5 @@ function transformIssuesToBoard(issues) {
 	}
 </style>
 
-<Popover/>
+
 <Board columnItems={board}></Board>
