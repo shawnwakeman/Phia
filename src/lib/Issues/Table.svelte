@@ -2,6 +2,7 @@
     import type { Issue, Node } from "../../types/collection";
     import { selectedNodeStore, issuesDataStore, nodesDataStore} from "../../stores";
     import { fetchNestedIssues, updateIssue, deleteIssue } from "../supabaseClient";
+    import * as Table from "$lib/components/ui/table";
   
 
   
@@ -78,59 +79,39 @@
     }
   </script>
 
-  
-<style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-  
-    th, td {
-      padding: 8px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-  
-    th {
-      background-color: #f2f2f2;
-    }
-  
-    tr:hover {
-      background-color: #f5f5f5;
-    }
-  </style>
 
-<!-- Table Structure -->
-<!-- Table Structure -->
-<table>
-    <!-- Table Header -->
-    <thead>
-      <tr>
+
+  <Table.Root>
+
+    <Table.Caption>A list of your recent invoices.</Table.Caption>
+    <Table.Header>
+      <Table.Row>
         {#each columnNames as columnName}
-          <th>{columnName}</th>
+            <Table.Head class="w-[100px]">{columnName}</Table.Head>
         {/each}
-        <th>Actions</th> <!-- Column for actions like saving changes -->
-      </tr>
-    </thead>
-    <!-- Table Body -->
-    <tbody>
-      {#each rows as row, index}
-        <tr>
+
+      </Table.Row>
+    </Table.Header>
+
+    <Table.Body>
+        {#each rows as row}
+        <Table.Row>
           {#each columnNames as columnName}
-            <td>
-               
+            
+                <Table.Cell class="font-medium">{row[columnName]}</Table.Cell>
               <!-- Editable input field, bound to the issue property -->
-              <input type="text" bind:value={row[columnName]} />
-            </td>
+           
+            
           {/each}
-          <td>
+         
             <!-- Save button -->
             <button on:click={() => saveChanges(row)}>Save Changes</button>
             <button on:click={() => deleteRows(row)}>DeleteRow</button>
-          </td>
-        </tr>
+         
+        </Table.Row>
       {/each}
-    </tbody>
-  </table>
+
+    </Table.Body>
+
+  </Table.Root>
   

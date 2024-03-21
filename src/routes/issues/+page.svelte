@@ -1,6 +1,7 @@
 <script lang="ts">
     import Kaban from '../../lib/Issues/Kaban/Kaban.svelte'
     import Table from '../../lib/Issues/Table.svelte'
+    import DataTable from '../../lib/Issues/DataTable/DataTable.svelte'
     import Treemap from '../../lib/Issues/Treemap.svelte'
     import Sidebar from '../../lib/Issues/Sidebar.svelte'
     import type { PageData } from './$types';
@@ -134,6 +135,8 @@
 {#if currentViewID === 'table'}
 
     <Table/>
+    <h1>---------------------------</h1>
+    <DataTable/>
 
 {:else if currentViewID === 'kaban'}
   <Kaban/>
