@@ -18,6 +18,23 @@ export const supabase = createClient<Database>(
 interface RpcParams {
     node_id: number;
 }
+
+
+
+export async function fetchConfig(configKey: string) {
+    let { data, error } = await supabase
+        .from('configurations') // Assuming your table name is 'configurations'
+        .select('*')
+        .eq('config_key', configKey);
+
+    if (error) {
+        console.error('Error fetching config:', error);
+        return null;
+    }
+
+    return data;
+}
+
   
 export async function fetchNestedIssues(nodeId: number) {
     const params: RpcParams = { node_id: nodeId };

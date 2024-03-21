@@ -4,19 +4,15 @@
 
     import { onMount } from 'svelte';
     import { selectedNodeStore, issuesDataStore, addedIssue } from "../../../stores";
-    import { fetchNestedIssues } from "../../supabaseClient";
+    import { fetchNestedIssues, fetchConfig } from "../../supabaseClient";
     import { get } from 'svelte/store';
   
 
     let board = []; // Define board at the top level
-    const columns = [
-        { id: 1, name: "TODO" },
-        { id: 2, name: "DOING" },
-        { id: 3, name: "DONE" },
-        { id: 4, name: "UNFILTERED" }
-    ];
-    onMount(() => {
+    let columns = [];
+    onMount( async  () => {
         updateBoard()
+        columns = await fetchConfig('kanban_columns') || [];
     });
 
     function updateBoard() {
