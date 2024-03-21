@@ -11,20 +11,17 @@
     import { writable } from 'svelte/store';
     import * as Table from "$lib/components/ui/table";
     import DataTableActions from "./DataTableActions.svelte";
-
+    import DataTableNameBox from "./DataTableNameBox.svelte";
     import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { cn } from "$lib/utils.js";
     
-    
-    
-    type Payment = {
-      id: string;
-      amount: number;
-      status: "pending" | "processing" | "success" | "failed";
-      email: string;
-    };
+    import type { Issue, Node } from "../../../types/collection";
+    import { selectedNodeStore, issuesDataStore, nodesDataStore, currentSelectedIssue} from "../../../stores";
+
+
+
 
     const activeRowId = writable<string>("");
 
@@ -45,49 +42,19 @@
     } else {
         // Set the clicked row as active
         activeRowId.set(rowId);
+        
         console.log(`Row with ID ${rowId} was clicked and activated.`);
     }
 
     // Example navigation logic could be placed here, adjusted based on the new activeRowId state
 }
    
-    const data: Payment[] = [
-      {
-        id: "m5gr84i9",
-        amount: 316,
-        status: "success",
-        email: "ken99@yahoo.com",
-      },
-      {
-        id: "asdads2",
-        amount: 3156,
-        status: "success",
-        email: "dadd99@yahoo.com",
-      },
-      {
-        id: "m5gras84i9",
-        amount: 312416,
-        status: "success",
-        email: "sdaasdasdas@yahoo.com",
-      },
 
-
-     
-      //...
-    ];
-
-        const initialPageIndex = 0; // Start from the first page
-        const initialPageSize = 50; // Set page size to 50 as required
-        const serverSide = true; // Assuming you want server-side pagination
-        const serverItemCount = 1000; // This should be the total count of items from the server, adjust as necessary
-
- 
-        
 
 
    
-	const table = createTable(writable(data), {
-		sort: addSortBy({ disableMultiSort: true }),
+	const table = createTable(issuesDataStore, {
+		sort: addSortBy(),
 		page: addPagination({ initialPageSize: 50}),
 		filter: addTableFilter({
 			fn: ({ filterValue, value }) => value.includes(filterValue),
@@ -97,60 +64,75 @@
 	});
    
     const columns = table.createColumns([
+  // ID column
+  table.column({
+    accessor: "id",
+    header: "ID",
+
+  }),
+  // Name column
+
     table.column({
-        accessor: "id",
-      header: "ID",
-      plugins: {
-        sort: {
-          disable: true,
-        },
-        filter: {
-          exclude: true,
-        },
-      },
+        accessor: "name",
+
+        header: "Name",
+        
+
     }),
-    table.column({
-      accessor: "status",
-      header: "Status",
-      plugins: {
-        filter: {
-          exclude: true,
-        },
-      },
-    }),
-    table.column({
-      accessor: "email",
-      header: "Email",
-    }),
-    table.column({
-      accessor: "amount",
-      header: "Amount",
-      cell: ({ value }) => {
-        const formatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(value);
-        return formatted;
-      },
-      plugins: {
-        filter: {
-          exclude: true,
-        },
-      },
-    }),
-    table.column({
-      accessor: ({ id }) => id,
+  // Description column
+  table.column({
+    accessor: "description",
+    header: "Description",
+
+  }),
+  // Priority column
+  table.column({
+    accessor: "priority",
+    header: "Priority",
+
+  }),
+  // State column
+  table.column({
+    accessor: "state",
+    header: "State",
+
+  }),
+  // Created At column
+  table.column({
+    accessor: "created_at",
+    header: "Created At",
+    cell: ({ value }) => {
+      const date = new Date(value);
+      return date.toLocaleDateString("en-US");
+    },
+  }),
+  // Column Index column (if you decide it's necessary to display)
+  table.column({
+    accessor: "columnIndex",
+    header: "Column Index",
+  }),
+  // Custom Columns column - you might need to format or select data to display
+  table.column({
+    accessor: "customcolumns",
+    header: "Custom Columns",
+    cell: ({ value }) => JSON.stringify(value), // This is a simple approach; adjust as needed
+  }),
+  // Node ID column (if relevant for display)
+  table.column({
+    accessor: "node_id",
+    header: "Node ID",
+  }),
+  table.column({
+        accessor: (issue) => issue, // Here, the entire issue object is returned
       header: "",
       cell: ({ value }) => {
-        return createRender(DataTableActions, { id: value });
-      },
-      plugins: {
-        sort: {
-          disable: true,
-        },
+        return createRender(DataTableActions, { issue: value });
       },
     }),
-  ]);
+  // Additional or actions column as per your requirement
+  // This can include buttons for editing, deleting, etc., based on your app's functionality
+]);
+     
  
   const {
     headerRows,
@@ -174,7 +156,9 @@
     .filter(([, hide]) => !hide)
     .map(([id]) => id);
  
-    const hidableCols = ["status", "email", "amount"];
+    const hidableCols = ["customcolumns", "email", "amount"];
+
+    
   </script>
 
 
@@ -226,13 +210,19 @@
 												<Render of={cell.render()} />
                                                 
 											</div>
-										{:else if cell.id === "email"}
+										{:else if cell.id === "id"}
+                                           
 											<Button variant="ghost" on:click={props.sort.toggle}>
 												<Render of={cell.render()} />
 
 											</Button>
+                                        
 										{:else}
-											<Render of={cell.render()} />
+                                            <Button variant="ghost" on:click={props.sort.toggle}>
+                                                <Render of={cell.render()} />
+
+                                            </Button>
+											
 										{/if}
 									</Table.Head>
 								</Subscribe>
@@ -245,6 +235,7 @@
                 {#each $pageRows as row (row.id)}
                 <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
                    
+
                     <Table.Row
                         {...rowAttrs}
                         data-state={$selectedDataIds[row.id] && "selected"} 
@@ -254,13 +245,18 @@
                         {#each row.cells as cell (cell.id)}
                             <Subscribe attrs={cell.attrs()} let:attrs>
                                 <Table.Cell class="[&:has([role=checkbox])]:pl-3" {...attrs}>
-                                    {#if cell.id === "amount"}
+                                    {#if cell.id === "id"}
                                         <div 
                                             on:click={() => handleRowClick(row.id)}
                                             class="cursor-pointer { $activeRowId === row.id ? 'bg-blue-100' : '' }"
                                             >
                                                 <Render of={cell.render()} />
+                                                
                                         </div>
+
+                                    {:else if cell.id === "name"}
+                                        <DataTableNameBox issueID = {row.id}/>
+                                    
                                     {:else}
                                             <div
                                             
