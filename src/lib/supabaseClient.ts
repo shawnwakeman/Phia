@@ -1,7 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
-import type { Issue } from '../types/collection'
+import type { Issue, Config } from '../types/collection'
 import { issuesDataStore, nodesDataStore, addedIssue } from "../stores";
 import { get } from 'svelte/store';
 

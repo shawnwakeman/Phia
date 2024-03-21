@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 
 	import Board from './Board.svelte';
 
@@ -6,14 +6,31 @@
     import { selectedNodeStore, issuesDataStore, addedIssue } from "../../../stores";
     import { fetchNestedIssues, fetchConfig } from "../../supabaseClient";
     import { get } from 'svelte/store';
-  
+    import type { Config, Issue } from "../../../types/collection";
 
-    let board = []; // Define board at the top level
-    let columns = [];
-    onMount( async  () => {
-        updateBoard()
-        columns = await fetchConfig('kanban_columns') || [];
-    });
+
+    interface BoardColumn {
+        id: number;
+        name: string;
+        items: Issue[]; // Assuming 'Issue' is a type that fits items within a column
+    }
+
+    let board: BoardColumn[] = []; // Define board at the top level
+        const columns = [
+        { name: "TODO" },
+        { name: "DOING" },
+        { name: "DONE" },
+        { name: "UNFILTERED" }
+    ];
+    // onMount( async  () => {
+    //     updateBoard()
+    //     const fetchedColumns = await fetchConfig('kanban_columns');
+    //     if (fetchedColumns) {
+    //     columns = fetchedColumns;
+    //     board = fetchedColumns; // If 'board' should mirror 'columns', assign it here
+    // }
+        
+    // });
 
     function updateBoard() {
     if ($selectedNodeStore) {
@@ -29,68 +46,35 @@
   $: $selectedNodeStore, updateBoard();
 
   $: if ($addedIssue) {
-    board = transformIssuesToBoard(get(issuesDataStore)); // Use get() if you need to access the store value outside a reactive context
-    console.log(board); // Logging the transformed board for debugging
-
-
-    addedIssue.set(false)
+    const issues: Issue[] = get(issuesDataStore); // Ensure 'issuesDataStore' stores 'Issue[]'
+    board = transformIssuesToBoard(issues);
+    console.log(board);
+    addedIssue.set(false);
   }
 
 
 
 // Function to transform the issues array into the Kanban board structure
-function transformIssuesToBoard(issues) {
+function transformIssuesToBoard(issues: Issue[]): BoardColumn[] {
+        // Assuming issues are sorted and have an 'id', 'name', 'state', and other properties
+        // Ensure 'columns' are used correctly with 'id' and 'name'
 
-    issues.sort((a, b) => a.columnIndex - b.columnIndex);
+        let board: BoardColumn[] = columns.map(column => ({
+            id: column.id, // Assuming 'column.id' exists and is unique
+            name: column.name,
+            items: []
+        }));
 
-    // Sort columns by ID to ensure they are in the correct order
-    const sortedColumns = columns.sort((a, b) => a.id - b.id);
+        // Map issues to their respective columns based on state
+        issues.forEach(issue => {
+            const column = board.find(col => col.name === issue.state);
+            if (column) {
+                column.items.push(issue); // Directly push 'issue' assuming it fits the 'Issue' type
+            }
+        });
 
-    // Generate initial board structure from sorted columns array
-    let board = sortedColumns.map(column => ({
-    id: column.id, // Use the ID from the sorted columns array
-    name: column.name,
-    items: []
-    }));
-
-  // Map issues to their respective columns based on state
-  issues.forEach(issue => {
-    const column = board.find(col => col.name === issue.state);
-    if (column) {
-      column.items.push({
-        id: issue.id,
-        name: issue.name,
-        created_at: issue.created_at,
-        customcolumns: issue.customcolumns,
-        description: issue.description,
-        node_id: issue.node_id,
-        priority: issue.priority,
-        columnIndex: issue.columnIndex
-        // Assuming 'state' is already used to determine the column
-      });
-    } else {
-      // This else part might actually be redundant now,
-      // as we already default to "UNFILTERED" in the find method above.
-      // However, keeping it for the sake of explicitness or future changes.
-      const unfilteredColumn = board.find(col => col.name === "UNFILTERED");
-      unfilteredColumn.items.push({
-        id: issue.id,
-        name: issue.name,
-        created_at: issue.created_at,
-        customcolumns: issue.customcolumns,
-        description: issue.description,
-        node_id: issue.node_id,
-        priority: issue.priority,
-        columnIndex: issue.columnIndex
-      });
+        return board;
     }
-  });
-
-  return board;
-}
-
-
-
 </script>
 
 <style>
