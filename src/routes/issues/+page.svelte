@@ -7,7 +7,7 @@
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
     import { addIssue, supabase, findRootNodes } from "../../lib/supabaseClient";
-    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId } from "../../stores";
+    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue } from "../../stores";
 
     import { onMount } from 'svelte';
 
@@ -20,7 +20,7 @@
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
 
-    let currentViewID = "table"
+    let currentViewID = "kaban"
 
     let show = false;
     let sidebarWidth: string = "50%"
@@ -45,10 +45,6 @@
     }
 
 
- 
-
-
-
 
     
     function updateSelectedNodeStore() {
@@ -56,14 +52,15 @@
             selectedNodeStore.set(selectedNode || null);
     }
     
-            
+    console.log("sadddddddd");
+    
     nodesDataStore.set(data.nodes)
     issuesDataStore.set(data.issues);
     
 
     onMount(async () => {
        
-   
+
         
         updateSelectedNodeStore()
         
@@ -111,10 +108,14 @@
 
 
 </script>
-
+<ul>
+    {#each $nodesDataStore as node}
+      <li>{node.name}</li>
+    {/each}
+  </ul>
 <h1>Issue Tracker</h1>
 
-
+<h1>{$currentSelectedIssue?.id}</h1>
 <h1>{currentSelectedNode?.id}</h1>
 
 <a data-sveltekit-preload-data="hover" href="/">
@@ -134,8 +135,7 @@
 </div>
 {#if currentViewID === 'table'}
 
-    <Table/>
-    <h1>---------------------------</h1>
+
     <DataTable/>
 
 {:else if currentViewID === 'kaban'}

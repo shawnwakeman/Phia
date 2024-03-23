@@ -1,6 +1,5 @@
 <script lang="ts">
-
-	import Board from './Board.svelte';
+    import Board from './Board.svelte';
 
     import { onMount } from 'svelte';
     import { selectedNodeStore, issuesDataStore, addedIssue } from "../../../stores";
@@ -15,35 +14,45 @@
         items: Issue[]; // Assuming 'Issue' is a type that fits items within a column
     }
 
-    let board: BoardColumn[] = []; // Define board at the top level
-        const columns = [
-        { name: "TODO" },
-        { name: "DOING" },
-        { name: "DONE" },
-        { name: "UNFILTERED" }
-    ];
-    // onMount( async  () => {
-    //     updateBoard()
-    //     const fetchedColumns = await fetchConfig('kanban_columns');
-    //     if (fetchedColumns) {
-    //     columns = fetchedColumns;
-    //     board = fetchedColumns; // If 'board' should mirror 'columns', assign it here
-    // }
-        
-    // });
+    interface Config {
+        config_key: string;
+        config_value: any; // Use any or a more specific type if you know the structure
+        id: number;
+    }
+
+    let columns: BoardColumn[] = [];
+    let board: BoardColumn[] = [];
+
+
+    onMount(async () => {
+        const configs: Config[] | null = await fetchConfig('kanban_columns');
+        if (configs) {
+            const kanbanColumnsConfig = configs.find(config => config.config_key === 'kanban_columns');
+            if (kanbanColumnsConfig && kanbanColumnsConfig.config_value) {
+                // Assuming config_value directly contains the array of columns
+                // and needs parsing if it's a JSON string
+                let parsedColumns = Array.isArray(kanbanColumnsConfig.config_value) 
+                    ? kanbanColumnsConfig.config_value 
+                    : JSON.parse(kanbanColumnsConfig.config_value);
+
+                // Sort columns by their id
+                parsedColumns.sort((a, b) => a.id - b.id);
+
+                columns = parsedColumns as BoardColumn[];
+                board = columns.map(column => ({ ...column, items: [] }));
+                updateBoard()
+            }
+        }
+    });
 
     function updateBoard() {
-    if ($selectedNodeStore) {
-      fetchNestedIssues($selectedNodeStore.id).then(issues => {
+        const issues: Issue[] = get(issuesDataStore); // Ensure 'issuesDataStore' stores 'Issue[]'
         board = transformIssuesToBoard(issues);
         console.log(board);
-      }).catch(error => {
-        console.error('Failed to fetch nested issues:', error);
-      });
-    }
+        addedIssue.set(false);
   }
 
-  $: $selectedNodeStore, updateBoard();
+
 
   $: if ($addedIssue) {
     const issues: Issue[] = get(issuesDataStore); // Ensure 'issuesDataStore' stores 'Issue[]'
@@ -54,27 +63,39 @@
 
 
 
-// Function to transform the issues array into the Kanban board structure
-function transformIssuesToBoard(issues: Issue[]): BoardColumn[] {
-        // Assuming issues are sorted and have an 'id', 'name', 'state', and other properties
-        // Ensure 'columns' are used correctly with 'id' and 'name'
+  function transformIssuesToBoard(issues: Issue[]): BoardColumn[] {
+    // Initialize the board with empty columns based on the predefined columns array
+    let board: BoardColumn[] = columns.map(column => ({
+        id: column.id,
+        name: column.name,
+        items: []
+    }));
 
-        let board: BoardColumn[] = columns.map(column => ({
-            id: column.id, // Assuming 'column.id' exists and is unique
-            name: column.name,
-            items: []
-        }));
+    // Map issues to their respective columns based on their state
+    // If an issue's state is null, assign it to the "UNFILTERED" column
+    issues.forEach(issue => {
+        // Use the issue's state if it's not null, otherwise set it to "UNFILTERED"
+        let issueState = issue.state || "UNFILTERED";
 
-        // Map issues to their respective columns based on state
-        issues.forEach(issue => {
-            const column = board.find(col => col.name === issue.state);
-            if (column) {
-                column.items.push(issue); // Directly push 'issue' assuming it fits the 'Issue' type
-            }
-        });
+        // Find the column by name, assuming the issue's state directly corresponds to the column name
+        // This includes the "UNFILTERED" column for issues with no specified state
+        const column = board.find(col => col.name === issueState);
 
-        return board;
-    }
+        if (column) {
+            column.items.push(issue);
+        } else {
+            // Optionally handle the case where no matching column is found
+            // This could happen if there's no "UNFILTERED" column defined, for example
+            console.warn(`No column found for state: ${issueState}`, issue);
+        }
+    });
+
+    return board;
+}
+
+
+    console.log(board);
+    
 </script>
 
 <style>
@@ -85,4 +106,4 @@ function transformIssuesToBoard(issues: Issue[]): BoardColumn[] {
 </style>
 
 
-<Board columnItems={board}></Board>
+<Board columnItems={board}/>

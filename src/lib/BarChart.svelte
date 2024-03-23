@@ -72,7 +72,7 @@
     };
   
     cleanChildren(root);
-  
+    
     return root;
 }
     

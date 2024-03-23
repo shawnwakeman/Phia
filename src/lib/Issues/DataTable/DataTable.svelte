@@ -27,24 +27,27 @@
 
         function handleRowClick(rowId: string) {
     // Initialize currentActiveRowId with an empty string
-    let currentActiveRowId: string = "";
+        let currentActiveRowId: string = "";
 
-    // Immediately subscribe to and unsubscribe from the activeRowId store to get its current value
-    const unsubscribe = activeRowId.subscribe(value => {
-        currentActiveRowId = value;
-    });
-    unsubscribe(); // Immediately unsubscribe to avoid memory leaks
+        // Immediately subscribe to and unsubscribe from the activeRowId store to get its current value
+        const unsubscribe = activeRowId.subscribe(value => {
+            currentActiveRowId = value;
+        });
+        unsubscribe(); // Immediately unsubscribe to avoid memory leaks
 
-    if (currentActiveRowId === rowId) {
-        // If the clicked row is already active, remove the active state by setting it to an empty string
-        activeRowId.set("");
-        console.log(`Row with ID ${rowId} was deactivated.`);
-    } else {
-        // Set the clicked row as active
-        activeRowId.set(rowId);
-        
-        console.log(`Row with ID ${rowId} was clicked and activated.`);
-    }
+        if (currentActiveRowId === rowId) {
+            // If the clicked row is already active, remove the active state by setting it to an empty string
+            activeRowId.set("");
+            currentSelectedIssue.set(null) 
+  
+            console.log(`Row with ID ${rowId} was deactivated.`);
+        } else {
+            // Set the clicked row as active
+            activeRowId.set(rowId);
+            let issueIndex = parseInt(rowId, 10);
+            currentSelectedIssue.set($issuesDataStore[issueIndex]) 
+            console.log(`Row with ID ${rowId} was clicked and activated.`);
+        }
 
     // Example navigation logic could be placed here, adjusted based on the new activeRowId state
 }

@@ -3,12 +3,20 @@
     import { flip } from 'svelte/animate';
     import { dndzone } from 'svelte-dnd-action';
     import { updateIssue } from "$lib/supabaseClient";
+    import { currentSelectedIssue} from "../../../stores";
 
     export let columnItems;
 
 
     console.log(columnItems);
-    
+    let searchTerm = '';
+
+    $: filteredColumnItems = columnItems.map(column => ({
+        ...column,
+        items: column.items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    }));
+
+
     const flipDurationMs = 100;
     function handleDndConsiderColumns(e) {
         columnItems = e.detail.items;
@@ -24,6 +32,8 @@
         columnItems = [...columnItems];
     }
     function handleDndFinalizeCards(cid, e) {
+        console.log("ads");
+        
         const colIdx = columnItems.findIndex(c => c.id === cid);
         const newColumn = columnItems[colIdx];
         const updatedItems = e.detail.items.map((item, index) => ({
@@ -51,10 +61,36 @@
             }
         });
     }
-    function handleClick(event: MouseEvent) {
+    function handleClick(event) {
+    // Directly retrieve the 'data-id' attribute from the event target
+    const issueId = event.target.dataset.id;
 
-        alert('Draggable elements are still clickable :)');
+    if (issueId) {
+        // Attempt to find the clicked issue from 'columnItems'
+        const clickedIssue = columnItems
+            .flatMap(column => column.items)
+            .find(issue => issue.id === parseInt(issueId, 10)); // Convert string ID back to number
+
+        if (clickedIssue) {
+            currentSelectedIssue.set(clickedIssue);
+            console.log('Selected issue:', clickedIssue);
+        } else {
+            console.log("Issue not found with ID:", issueId);
+        }
+    } else {
+        console.log("No issue ID found on the clicked element.");
     }
+
+    // Optional: Prevent event from bubbling if necessary
+    // event.stopPropagation();
+}
+
+
+
+
+
+
+
 </script>
 <style>
     .board {
@@ -68,7 +104,7 @@
         margin-bottom: 40px;
     }
     .column {
-        min-height: 100%;
+        min-height: 50%;
         min-width: 250px; /* Use min-width to ensure content dictates size, but not smaller than 250px */
         padding: 0.5em;
         margin: 1em;
@@ -100,21 +136,22 @@
     }
 </style>
 
+<input type="text" placeholder="Search issues..." bind:value={searchTerm} />
 
-<section class="board">
-    {#each columnItems as column (column.id)}
-        <div class="column" animate:flip="{{duration: flipDurationMs}}">
-            <div class="column-title">{column.name}</div>
-            <div class="column-content" use:dndzone={{items: column.items, flipDurationMs}}
-                 on:consider={(e) => handleDndConsiderCards(column.id, e)} on:finalize={(e) => handleDndFinalizeCards(column.id, e)}>
-                {#each column.items as item (item.id)}
-                    <div class="card" animate:flip="{{duration: flipDurationMs}}" on:click={handleClick}>
-                        {item.name}
-                        {item.id}
-                        
-                    </div>
-                {/each}
-            </div>
+<!-- Use filteredColumnItems for rendering -->
+<section class="board" use:dndzone={{items:columnItems, flipDurationMs, type:'columns'}} on:consider={handleDndConsiderColumns} on:finalize={handleDndFinalizeColumns}>
+    {#each filteredColumnItems as column (column.id)}
+    <div class="column" animate:flip="{{duration: flipDurationMs}}">
+        <div class="column-title">{column.name}</div>
+        <div class="column-content" use:dndzone={{items:column.items, flipDurationMs}}
+             on:consider={(e) => handleDndConsiderCards(column.id, e)} on:finalize={(e) => handleDndFinalizeCards(column.id, e)}>
+            {#each column.items as item (item.id)}
+                <div class="card" data-id={item.id} animate:flip="{{duration: flipDurationMs}}" on:click={handleClick}>
+                    {item.name}
+                </div>
+            {/each}
         </div>
-    {/each}
+    </div>
+{/each}
+
 </section>

@@ -74,17 +74,16 @@ export async function addNode(name: string, value: number, parent_id: number | n
     
     if (data) {
         console.log('Added issue:', data);
-        console.error(get(issuesDataStore));
-        
+
         // Update the issuesDataStore with the new data
         nodesDataStore.update(currentIssues => {
             const newIssue = data[0]; // Assuming the inserted data is returned
             
             
+            
             return [...currentIssues, newIssue];
         });
 
-        console.error(get(issuesDataStore));
     } else {
         console.error('No data returned from the database');
         // Optionally, update the store to indicate that no data was returned

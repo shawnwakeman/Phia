@@ -12,11 +12,7 @@
 
     $: issueIndex, issue = $issuesDataStore[issueIndex];
     
-    $: if (issue) {
-        console.log(issue);
-    } else {
-        console.log("Issue is undefined.");
-    }
+
 
 
     async function saveChanges(issue: Issue) {
@@ -43,7 +39,7 @@
     
   </script>
   
-  
+
 {#if issue}
   <Input type="text" bind:value={issue.name} on:blur={handleBlur} />
 {/if}

@@ -14,6 +14,7 @@ export const issuesDataStore = writable<Issue[]>([]);
 export const selectedNodeId = writable<number>(1);
 
 
-export const currentSelectedIssue = writable<Issue>()
+export const currentSelectedIssue = writable<Issue | null>()
 
 export const addedIssue = writable<boolean>(false)
+
