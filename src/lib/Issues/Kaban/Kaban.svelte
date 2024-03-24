@@ -64,35 +64,32 @@
 
 
   function transformIssuesToBoard(issues: Issue[]): BoardColumn[] {
-    // Initialize the board with empty columns based on the predefined columns array
-    let board: BoardColumn[] = columns.map(column => ({
-        id: column.id,
-        name: column.name,
-        items: []
-    }));
+  // Initialize the board with empty columns based on the predefined columns array
+  let board: BoardColumn[] = columns.map(column => ({
+      id: column.id,
+      name: column.name,
+      items: []
+  }));
 
-    // Map issues to their respective columns based on their state
-    // If an issue's state is null, assign it to the "UNFILTERED" column
-    issues.forEach(issue => {
-        // Use the issue's state if it's not null, otherwise set it to "UNFILTERED"
-        let issueState = issue.state || "UNFILTERED";
+  // Map issues to their respective columns based on their state
+  issues.forEach(issue => {
+      let issueState = issue.state || "UNFILTERED";
+      const column = board.find(col => col.name === issueState);
 
-        // Find the column by name, assuming the issue's state directly corresponds to the column name
-        // This includes the "UNFILTERED" column for issues with no specified state
-        const column = board.find(col => col.name === issueState);
+      if (column) {
+          column.items.push(issue);
+      } else {
+          console.warn(`No column found for state: ${issueState}`, issue);
+      }
+  });
 
-        if (column) {
-            column.items.push(issue);
-        } else {
-            // Optionally handle the case where no matching column is found
-            // This could happen if there's no "UNFILTERED" column defined, for example
-            console.warn(`No column found for state: ${issueState}`, issue);
-        }
-    });
+  // Now, sort the items within each column by their columnIndex property
+  board.forEach(column => {
+      column.items.sort((a, b) => a.columnIndex - b.columnIndex);
+  });
 
-    return board;
+  return board;
 }
-
 
     console.log(board);
     

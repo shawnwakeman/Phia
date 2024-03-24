@@ -2,7 +2,7 @@
 	// This is done in a single file for clarity. A more factored version here: https://svelte.dev/repl/288f827275db4054b23c437a572234f6?version=3.38.2
     import { flip } from 'svelte/animate';
     import { dndzone } from 'svelte-dnd-action';
-    import { updateIssue } from "$lib/supabaseClient";
+    import { updateIssue, addOrUpdateConfig } from "$lib/supabaseClient";
     import { currentSelectedIssue} from "../../../stores";
 
     export let columnItems;
@@ -23,9 +23,34 @@
         
         
     }
-    function handleDndFinalizeColumns(e) {
+    async function handleDndFinalizeColumns(e) {
         columnItems = e.detail.items;
+
+        // Prepare the data for updating the database
+        // Assuming your backend expects an array of objects with id and newIndex fields
+        const updates = columnItems.map((column, newIndex) => ({
+            id: column.id, // The column's ID
+            newIndex: newIndex // The new position of the column
+        }));
+
+        // Update each column's position in the database
+        for (const update of updates) {
+            try {
+                const result = await addOrUpdateConfig(update.id, update.newIndex);
+                if (!result.success) {
+                    console.error('Failed to update column position in database', result.error);
+                } else {
+                    console.log(`Column ${update.id} position updated to ${update.newIndex}`);
+                }
+            } catch (error) {
+                console.error('Error updating column position', error);
+            }
+        }
     }
+
+    // Dummy function - replace with your actual database update logic
+
+
     function handleDndConsiderCards(cid, e) {
         const colIdx = columnItems.findIndex(c => c.id === cid);
         columnItems[colIdx].items = e.detail.items;

@@ -21,6 +21,27 @@ interface RpcParams {
 
 
 
+// This function adds a new configuration or updates an existing one based on the configKey
+export async function addOrUpdateConfig(configKey: string, configValue: any) {
+    const { data, error } = await supabase
+        .from('configurations')
+        .upsert({
+            config_key: configKey,
+            config_value: configValue
+        }, {
+            onConflict: 'config_key'
+        });
+
+    if (error) {
+        console.error('Error adding/updating config:', error);
+        return { success: false, error };
+    }
+
+    return { success: true, data };
+}
+
+
+
 export async function fetchConfig(configKey: string) {
     let { data, error } = await supabase
         .from('configurations') // Assuming your table name is 'configurations'
