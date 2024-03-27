@@ -7,9 +7,12 @@
 
     export let columnItems;
 
+    let exportingColumns = columnItems
+
 
     console.log(columnItems);
     let searchTerm = '';
+    
 
     $: filteredColumnItems = columnItems.map(column => ({
         ...column,
@@ -22,9 +25,11 @@
         columnItems = e.detail.items;
         
         
+        
     }
     async function handleDndFinalizeColumns(e) {
         columnItems = e.detail.items;
+   
 
         // Prepare the data for updating the database
         // Assuming your backend expects an array of objects with id and newIndex fields
@@ -34,19 +39,52 @@
         }));
 
         // Update each column's position in the database
-        for (const update of updates) {
+ 
             try {
-                const result = await addOrUpdateConfig(update.id, update.newIndex);
-                if (!result.success) {
-                    console.error('Failed to update column position in database', result.error);
-                } else {
-                    console.log(`Column ${update.id} position updated to ${update.newIndex}`);
-                }
+
+
+// Apply the new IDs to the original data, maintaining the order in the original data array
+                const a = updateColumnPositions(columnItems, updates)
+           
+             
+      
+                await addOrUpdateConfig("kanban_columns", a)
             } catch (error) {
                 console.error('Error updating column position', error);
             }
-        }
+     
+
+        
     }
+
+    function updateColumnPositions(columns, updates) {
+    // Deep clone the columns array to avoid direct mutations
+    // This ensures the original columns and any nested objects are not modified
+    let updatedColumns = columns.map(column => ({ ...column, items: [...(column.items || [])] }));
+
+    // Temporary storage for new ID assignments to avoid conflicts during updates
+    let tempIds = {};
+
+    updates.forEach(update => {
+        const columnIndex = updatedColumns.findIndex(column => column.id === update.id);
+        if (columnIndex !== -1) {
+            // Assign a new temporary ID to avoid conflicts
+            tempIds[columnIndex] = update.newIndex;
+        }
+    });
+
+    // Apply the new IDs from the temporary storage, ensuring no direct conflicts
+    // This operation updates the id property of each column and sets the items array to empty.
+    Object.keys(tempIds).forEach(index => {
+        const idx = parseInt(index);
+        updatedColumns[idx].id = tempIds[index];
+        updatedColumns[idx].items = []; // Explicitly setting items to an empty array
+    });
+
+    return updatedColumns;
+}
+
+
 
     // Dummy function - replace with your actual database update logic
 

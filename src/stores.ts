@@ -1,6 +1,6 @@
 // src/stores.ts
 import { writable } from 'svelte/store';
-import type { Node, Issue } from './types/collection'
+import type { Node, Issue, FilePath } from './types/collection'
 
 
 
@@ -8,6 +8,8 @@ import type { Node, Issue } from './types/collection'
 export const selectedNodeStore = writable<Node | null>(null);
 
 export const nodesDataStore = writable<Node[]>([]);
+
+export const filePathDataStore = writable<FilePath[]>([]);
 
 export const issuesDataStore = writable<Issue[]>([]);
 // not perfect seeting 

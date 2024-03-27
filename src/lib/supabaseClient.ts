@@ -322,3 +322,34 @@ export async function deleteIssue(issue: Issue) {
     return { success: true, data: data };
     
 }
+
+
+
+
+
+
+async function uploadFileToNodeFolder(nodeId: number, file) {
+    // Assuming `userId` and `nodeId` are available and valid
+    // const bucketName = `bucket-${userId}`; // Construct the bucket name based on user ID
+    const bucketName = `testBucket`;
+    const nodeName = await getNodeNameById(nodeId); // Retrieve the node name from your database
+    const filePath = `${nodeName}/${file.name}`; // Construct the file path with the node name
+  
+    const { data, error } = await supabase
+      .storage
+      .from(bucketName)
+      .upload(filePath, file);
+  
+    if (error) {
+      throw error;
+    }
+  
+    return data; // Returns the uploaded file's data, including its path
+  }
+  
+  // Function to retrieve the node name by its ID (simplified example)
+  async function getNodeNameById(nodeId: number) {
+    // Your logic here to retrieve the node name based on its ID from your database
+    // This is a placeholder function. You'll need to implement this based on your actual database schema and logic.
+    return 'exampleNodeName'; // Placeholder return
+  }

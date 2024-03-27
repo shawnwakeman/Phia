@@ -397,7 +397,7 @@ let nodes = pack(root);
 
 
 
-function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
+    function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
   g.selectAll("circle")
     .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
     .join("circle")

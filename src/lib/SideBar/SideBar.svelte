@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import { selectedNodeStore } from "../../stores";
     import type { Node } from "../../types/collection";
-
+    import Treemap from "$lib/Issues/Treemap.svelte";
     import { updateNodeByID } from "../supabaseClient";
 
     import IssueSection from "./IssueSection.svelte";

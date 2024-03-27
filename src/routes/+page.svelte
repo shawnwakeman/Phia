@@ -34,6 +34,25 @@
 
 </script>
 
+
+<ul>
+    <a data-sveltekit-preload-data="hover" href="/issues">
+    
+        fuckin issys
+    </a>
+
+    <a data-sveltekit-preload-data="hover" href="/documents">
+
+        fuckin docs
+    </a>
+
+
+            
+
+ 
+</ul>
+
+
 <ul>
     {#each $nodesDataStore as node}
       <li>{node.name}</li>

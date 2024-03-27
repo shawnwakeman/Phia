@@ -20,7 +20,7 @@
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
 
-    let currentViewID = "kaban"
+    let currentViewID = "table"
 
     let show = false;
     let sidebarWidth: string = "50%"
@@ -120,7 +120,7 @@
 
 <a data-sveltekit-preload-data="hover" href="/">
 
-	Get current stonk values
+	fuckin shi
 </a>
 
 
