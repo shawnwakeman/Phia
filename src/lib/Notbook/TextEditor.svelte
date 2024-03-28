@@ -9,10 +9,9 @@
       // Dynamically import Editor.js to ensure it's only loaded client-side
       const EditorJS = (await import('@editorjs/editorjs')).default;
       const Header = (await import('@editorjs/header')).default;
-      const List = (await import('@editorjs/list')).default;
       const DragDrop = (await import('editorjs-drag-drop')).default;
-      
-
+      const NestedList  = (await import('@editorjs/nested-list')).default;
+      const Checklist = (await import('@editorjs/checklist')).default;
 
       const savedData = {
         "time": 1711602401164,
@@ -60,11 +59,17 @@
             shortcut: '/'
           },
           list: {
-            class: List,
+            class: NestedList,
             inlineToolbar: true,
-            shortcut: 'CMD+SHIFT+L'
+            shortcut: 'CMD+SHIFT+L',
+            config: {
+                defaultStyle: 'unordered'
+            },
           },
-
+          checklist: {
+            class: Checklist,
+            inlineToolbar: true,
+        },
 
           
         },
@@ -111,7 +116,7 @@
   <style >
     main {
       font-family: sans-serif;
-      text-align: center;
+
 
     }
 
