@@ -10,13 +10,25 @@
     import DirectedGraph from "$lib/Notbook/DirectedGraph.svelte";
     export let data: { files: FilePath[], nodes: Node[] };
 
-    
+    import TextEditor from "$lib/Notbook/TextEditor.svelte"
+    import NodePad from "$lib/Notbook/NotePad.svelte"
     filePathDataStore.set(data.files)
     nodesDataStore.set(data.nodes)
     
     console.log($nodesDataStore);
     
-    let selectedNodeId = writable(null); // Store to keep track of the currently selected folder
+
+    
+    export const activeNode = writable<null | Node>(null);
+
+// Editor type state ('text' or 'canvas')
+    export const editorType = writable<'text' | 'canvas'>('text');
+    
+    function handleNodeClick(node: Node) {
+        activeNode.set(node);
+        // Optionally reset the editor type on new selection
+        editorType.set('text');
+    }// Store to keep track of the currently selected folder
 
 // Add Folder function
 function addFolder() {
@@ -36,24 +48,33 @@ function updateSelectedNodeId(nodeId) {
 }
 </script>
 
+
+
 <div>
 <button on:click={addFolder}>Add Folder</button>
 <button on:click={addFile}>Add File</button>
 </div>
 
-<Accordion.Root>
 {#each $nodesDataStore as node (node.id)}
-  <Accordion.Item value={node.id.toString()} on:click={() => updateSelectedNodeId(node.id)}>
-    <Accordion.Trigger>{node.name}</Accordion.Trigger>
-    <Accordion.Content>
-      {#each $filePathDataStore as file}
-        {#if file.node_id === node.id}
-          <div>{file.file_id}</div>
-        {/if}
-      {/each}
-    </Accordion.Content>
-  </Accordion.Item>
+    <button on:click={() => handleNodeClick(node)}>{node.name}</button>
+    <br>
+  
 {/each}
-</Accordion.Root>
+
+<select bind:value={$editorType}>
+    <option value="text">Text Editor</option>
+    <option value="canvas">Canvas</option>
+  </select>
+
+<div>
+    {#if $activeNode}
+      {#if $editorType === 'text'}
+        <TextEditor/>
+      {:else if $editorType === 'canvas'}
+        <NodePad/>
+      {/if}
+    {/if}
+  </div>
+
 
 <DirectedGraph nodes={$nodesDataStore} files={$filePathDataStore}/>

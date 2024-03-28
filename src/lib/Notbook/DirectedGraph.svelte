@@ -1,7 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     import * as d3 from 'd3';
-
+import { writable } from 'svelte/store';
     let linkDistance = 50;
     
     let centerForce = 0.06
@@ -13,8 +13,8 @@
 
     // Links use numeric IDs for source and target
     let links = [];
-    let currentRootId = 1;
-    let newNodes = []
+    // let currentRootId = 1;
+    // let newNodes = []
     if (nodes) {
 
  
@@ -31,15 +31,15 @@
             
 
         });
-        // TODO: still shit need to fix somthime 
-        files.forEach(file => {
-        const newNodeId = Math.max(...nodes.map(n => n.id), ...newNodes.map(n => n.id)) + 1; // Generate a unique ID
-        const newNode = { id: newNodeId, name: file.id, value: 5, parent_id: file.node_id };
-        newNodes.push(newNode);
-        links.push({ source: file.node_id, target: newNodeId, level: 1 });
-    });
+
+    //     files.forEach(file => {
+    //     const newNodeId = Math.max(...nodes.map(n => n.id), ...newNodes.map(n => n.id)) + 1; // Generate a unique ID
+    //     const newNode = { id: newNodeId, name: file.id, value: 5, parent_id: file.node_id };
+    //     newNodes.push(newNode);
+    //     links.push({ source: file.node_id, target: newNodeId, level: 1 });
+    // });
     }
-    nodes = [...nodes, ...newNodes];
+    // nodes = [...nodes, ...newNodes];
 
   
     onMount(() => {
