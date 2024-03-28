@@ -16,40 +16,47 @@
       const Alert  = (await import('editorjs-alert')).default;
       const Table   = (await import('@editorjs/table')).default;
       const Undo    = (await import('editorjs-undo')).default;
+      const LinkTool     = (await import('@editorjs/link')).default;
+
+      const Embed      = (await import('@editorjs/embed')).default;
+
+
       const savedData = {
-        "time": 1711602401164,
-        "blocks": [
-            {
-            "id": "ZIByANQSy9",
-            "type": "paragraph",
-            "data": {
-                "text": "shawn wakeman<br>"
-            }
-            },
-            {
-            "id": "RvQCXSVykZ",
-            "type": "paragraph",
-            "data": {
-                "text": "jashdasd"
-            }
-            },
-            {
-            "id": "_jydlR_jqa",
-            "type": "paragraph",
-            "data": {
-                "text": "asdlajshd"
-            }
-            },
-            {
-            "id": "PDREjYnOaK",
-            "type": "paragraph",
-            "data": {
-                "text": "asdjhahsd"
-            }
-            }
-        ],
-        "version": "2.29.1"
-        };
+  "time": 1711665684764,
+  "blocks": [
+    {
+      "id": "R5fD_2vgFE",
+      "type": "linkTool",
+      "data": {
+        "link": "https://github.com/editor-js/link",
+        "meta": {
+          "title": "GitHub - editor-js/link: Link Tool for Editor.js 2.0",
+          "description": "Link Tool for Editor.js 2.0. Contribute to editor-js/link development by creating an account on GitHub.",
+          "image": {
+            "url": "https://opengraph.githubassets.com/5c3b96c96123cca2f267c652da91c589a9af47ad85e655c84259ff2030a28db6/editor-js/link"
+          }
+        }
+      }
+    },
+    {
+      "id": "Dra7qP78Z_",
+      "type": "linkTool",
+      "data": {
+        "link": "https://www.npmjs.com/package/@editorjs/nested-list",
+        "meta": {
+          "title": "@editorjs/nested-list - npm",
+          "description": "Nested list Tool for EditorJS. Latest version: 1.4.2, last published: 4 months ago. Start using @editorjs/nested-list in your project by running `npm i @editorjs/nested-list`. There are 24 other projects in the npm registry using @editorjs/nested-list.",
+          "image": {
+            "url": "https://static-production.npmjs.com/338e4905a2684ca96e08c7780fc68412.png"
+          }
+        }
+      }
+    }
+  ],
+  "version": "2.29.1"
+};
+
+        
       editorInstance = new EditorJS({
 
         
@@ -91,7 +98,13 @@
                 messagePlaceholder: 'Enter something',
             },
         },
-
+        linkTool: {
+            class: LinkTool,
+            config: {
+                endpoint: '/documents'
+            }
+        },
+        embed: Embed,
 
           
         },
@@ -100,9 +113,8 @@
             new DragDrop(editorInstance);
             new Undo({ editorInstance });
         },
-        // data: savedData
-      });
-
+        data: savedData
+      })
 
     });
   
