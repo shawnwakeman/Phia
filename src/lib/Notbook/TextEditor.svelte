@@ -4,32 +4,14 @@
     let editorInstance;
   
 
-    class SimpleTune {
-    constructor({ api }) {
-        this.api = api;
-        // State of the tune
-        this._state = false;
-    }
 
-    render() {
-        // Menu item configuration
-        return {
-        icon: '<svg>...</svg>', // SVG icon
-        label: 'Toggle Highlight',
-        onActivate: () => {
-            this._state = !this._state;
-            this.api.blocks.toggleBlockHighlight(this.api.blocks.getCurrentBlockIndex(), this._state);
-        },
-        isActive: this._state,
-        toggle: true
-        };
-    }
-    }
     onMount(async () => {
       // Dynamically import Editor.js to ensure it's only loaded client-side
       const EditorJS = (await import('@editorjs/editorjs')).default;
       const Header = (await import('@editorjs/header')).default;
       const List = (await import('@editorjs/list')).default;
+      const DragDrop = (await import('editorjs-drag-drop')).default;
+      
 
 
       const savedData = {
@@ -70,15 +52,13 @@
 
         
         holder: 'editorjs',
+
         tools: {
-            header: {
-                class: Header,
-                config: {
-                placeholder: 'Enter a header',
-                levels: [1, 2, 3, 4, 5, 6],
-                defaultLevel: 3,
-                },
-            },
+          header: {
+            class: Header,
+            inlineToolbar: ['link'],
+            shortcut: '/'
+          },
           list: {
             class: List,
             inlineToolbar: true,
@@ -87,6 +67,10 @@
 
 
           
+        },
+
+        onReady: () => {
+            new DragDrop(editorInstance);
         },
         // data: savedData
       });
@@ -115,3 +99,5 @@
   <div id="editorjs"></div>
   <button on:click={saveContent}>Save Content</button>
   
+  <h1>1</h1>
+<h2>1</h2>
