@@ -52,7 +52,7 @@
 
         
         holder: 'editorjs',
-
+        autofocus: true,
         tools: {
           header: {
             class: Header,
@@ -74,6 +74,8 @@
         },
         // data: savedData
       });
+
+
     });
   
     onDestroy(() => {
@@ -96,8 +98,26 @@
     }
   </script>
   
-  <div id="editorjs"></div>
+
   <button on:click={saveContent}>Save Content</button>
   
-  <h1>1</h1>
-<h2>1</h2>
+
+  
+  <main>
+    <div id="editorjs"></div>
+  </main>
+
+
+  <style >
+    main {
+      font-family: sans-serif;
+      text-align: center;
+
+    }
+
+
+/* use to style editor js components  */
+    :global(body .ce-popover-item__secondary-title) {
+        display: none !important;
+    }
+  </style>
