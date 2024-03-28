@@ -12,7 +12,10 @@
       const DragDrop = (await import('editorjs-drag-drop')).default;
       const NestedList  = (await import('@editorjs/nested-list')).default;
       const Checklist = (await import('@editorjs/checklist')).default;
-
+   
+      const Alert  = (await import('editorjs-alert')).default;
+      const Table   = (await import('@editorjs/table')).default;
+      const Undo    = (await import('editorjs-undo')).default;
       const savedData = {
         "time": 1711602401164,
         "blocks": [
@@ -55,6 +58,7 @@
         tools: {
           header: {
             class: Header,
+       
             inlineToolbar: ['link'],
             shortcut: '/'
           },
@@ -70,12 +74,31 @@
             class: Checklist,
             inlineToolbar: true,
         },
+        table: {
+            class: Table,
+            inlineToolbar: true,
+            config: {
+                rows: 2,
+                cols: 3,
+            },
+        },
+        alert: {
+            class: Alert,
+            inlineToolbar: true,
+            shortcut: 'CMD+SHIFT+A',
+            config: {
+                defaultType: 'primary',
+                messagePlaceholder: 'Enter something',
+            },
+        },
+
 
           
         },
 
         onReady: () => {
             new DragDrop(editorInstance);
+            new Undo({ editorInstance });
         },
         // data: savedData
       });
