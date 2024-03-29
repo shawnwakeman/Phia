@@ -29,6 +29,14 @@
         const MermaidTool       = (await import('editorjs-mermaid')).default;
 
       const Strikethrough        = (await import('@sotaproject/strikethrough')).default;
+      const Marker         = (await import('@editorjs/marker')).default;
+      const Delimiter          = (await import('@editorjs/delimiter')).default;
+
+      const ToggleBlock           = (await import('editorjs-toggle-block')).default;
+
+      const CodeBox              = (await import('@bomdi/codebox')).default;
+
+      
     //   const Tooltip        = (await import('editorjs-tooltip')).default;
 
       const savedData = {
@@ -98,6 +106,7 @@
         },
         underline: Underline,
         strikethrough: Strikethrough,
+        delimiter: Delimiter,
         table: {
             class: Table,
             inlineToolbar: true,
@@ -106,6 +115,11 @@
                 cols: 3,
             },
         },
+        Marker: {
+            class: Marker,
+            shortcut: 'CMD+SHIFT+M',
+        },
+        
         alert: {
             class: Alert,
             inlineToolbar: true,
@@ -121,6 +135,11 @@
                 endpoint: '/documents'
             }
         },
+        toggle: {
+            class: ToggleBlock,
+            inlineToolbar: true,
+        },
+
         inlineCode: {
             class: InlineCode,
             shortcut: 'CMD+SHIFT+M',
@@ -128,6 +147,15 @@
 
         mermaid: MermaidTool,
         embed: Embed,
+ 
+        codeBox: {
+            class: CodeBox,
+            config: {
+            themeURL: 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.1/build/styles/dracula.min.css', // Optional
+            themeName: 'atom-one-dark', // Optional
+            useDefaultTheme: 'light' // Optional. This also determines the background color of the language select drop-down
+            }
+        },
 
         },
        
