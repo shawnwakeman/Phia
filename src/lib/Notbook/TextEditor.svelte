@@ -5,9 +5,11 @@
   
 
 
+
     onMount(async () => {
       // Dynamically import Editor.js to ensure it's only loaded client-side
       const EditorJS = (await import('@editorjs/editorjs')).default;
+      const Paragraph = (await import('@editorjs/paragraph')).default;
       const Header = (await import('@editorjs/header')).default;
       const DragDrop = (await import('editorjs-drag-drop')).default;
       const NestedList  = (await import('@editorjs/nested-list')).default;
@@ -20,6 +22,14 @@
 
       const Embed      = (await import('@editorjs/embed')).default;
 
+
+    
+    //   const Underline       = (await import('@editorjs/underline')).default;
+    //   const InlineCode       = (await import('@editorjs/inline-code')).default;
+
+      const ColorPlugin        = (await import('editorjs-text-color-plugin')).default;
+    //   const Strikethrough        = (await import('@sotaproject/strikethrough')).default;
+    //   const Tooltip        = (await import('editorjs-tooltip')).default;
 
       const savedData = {
   "time": 1711665684764,
@@ -63,6 +73,10 @@
         holder: 'editorjs',
         autofocus: true,
         tools: {
+            paragraph: {
+                class: Paragraph,
+                inlineToolbar: true,
+            },
           header: {
             class: Header,
        
@@ -81,6 +95,7 @@
             class: Checklist,
             inlineToolbar: true,
         },
+
         table: {
             class: Table,
             inlineToolbar: true,
@@ -104,9 +119,10 @@
                 endpoint: '/documents'
             }
         },
+
+     
         embed: Embed,
 
-          
         },
 
         onReady: () => {
@@ -137,7 +153,7 @@
         }
     }
   </script>
-  
+
 
   <button on:click={saveContent}>Save Content</button>
   
@@ -149,11 +165,11 @@
 
 
   <style >
-    main {
+    /* main {
       font-family: sans-serif;
 
 
-    }
+    } */
 
 
 /* use to style editor js components  */

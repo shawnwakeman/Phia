@@ -39,6 +39,7 @@
     "@editorjs/link": "^2.6.2",
     "@editorjs/list": "^1.9.0",
     "@editorjs/nested-list": "^1.4.2",
+    "@editorjs/paragraph": "^2.11.3",
     "@editorjs/table": "^2.3.0",
     "@supabase/supabase-js": "^2.39.7",
     "@sveltejs/adapter-node": "^5.0.1",
