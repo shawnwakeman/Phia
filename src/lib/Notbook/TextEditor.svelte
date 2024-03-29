@@ -24,11 +24,11 @@
 
 
     
-    //   const Underline       = (await import('@editorjs/underline')).default;
-    //   const InlineCode       = (await import('@editorjs/inline-code')).default;
+      const Underline       = (await import('@editorjs/underline')).default;
+      const InlineCode       = (await import('@editorjs/inline-code')).default;
+        const MermaidTool       = (await import('editorjs-mermaid')).default;
 
-      const ColorPlugin        = (await import('editorjs-text-color-plugin')).default;
-    //   const Strikethrough        = (await import('@sotaproject/strikethrough')).default;
+      const Strikethrough        = (await import('@sotaproject/strikethrough')).default;
     //   const Tooltip        = (await import('editorjs-tooltip')).default;
 
       const savedData = {
@@ -83,6 +83,7 @@
             inlineToolbar: ['link'],
             shortcut: '/'
           },
+
           list: {
             class: NestedList,
             inlineToolbar: true,
@@ -95,7 +96,8 @@
             class: Checklist,
             inlineToolbar: true,
         },
-
+        underline: Underline,
+        strikethrough: Strikethrough,
         table: {
             class: Table,
             inlineToolbar: true,
@@ -119,15 +121,20 @@
                 endpoint: '/documents'
             }
         },
+        inlineCode: {
+            class: InlineCode,
+            shortcut: 'CMD+SHIFT+M',
+        },
 
-     
+        mermaid: MermaidTool,
         embed: Embed,
 
         },
-
+       
         onReady: () => {
             new DragDrop(editorInstance);
             new Undo({ editorInstance });
+            MermaidTool.config({ 'theme': 'neutral' })
         },
         data: savedData
       })
