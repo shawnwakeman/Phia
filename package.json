@@ -45,6 +45,7 @@
     "@editorjs/marker": "^1.4.0",
     "@editorjs/nested-list": "^1.4.2",
     "@editorjs/paragraph": "^2.11.3",
+    "@editorjs/simple-image": "^1.6.0",
     "@editorjs/table": "^2.3.0",
     "@editorjs/underline": "^1.1.0",
     "@sotaproject/strikethrough": "^1.0.1",

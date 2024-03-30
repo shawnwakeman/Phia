@@ -36,7 +36,7 @@
 
       const CodeBox              = (await import('@bomdi/codebox')).default;
 
-      
+      const SimpleImage =    (await import('@editorjs/simple-image')).default;
     //   const Tooltip        = (await import('editorjs-tooltip')).default;
 
       const savedData = {
@@ -91,7 +91,7 @@
             inlineToolbar: ['link'],
             shortcut: '/'
           },
-
+          image: SimpleImage,
           list: {
             class: NestedList,
             inlineToolbar: true,
