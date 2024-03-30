@@ -39,8 +39,10 @@
       const SimpleImage =    (await import('@editorjs/simple-image')).default;
     //   const Tooltip        = (await import('editorjs-tooltip')).default;
 
+    const LinkAutocomplete =    (await import('@editorjs/link-autocomplete')).default;
+    
       const savedData = {
-  "time": 1711665684764,
+  "time": 1711769155440,
   "blocks": [
     {
       "id": "R5fD_2vgFE",
@@ -68,6 +70,13 @@
             "url": "https://static-production.npmjs.com/338e4905a2684ca96e08c7780fc68412.png"
           }
         }
+      }
+    },
+    {
+      "id": "fJfRkKPEc-",
+      "type": "paragraph",
+      "data": {
+        "text": "<a href=\"https://codex.so/editor\" data-name=\"The first item\" data-description=\"Description for the first item\">shawn</a><br>"
       }
     }
   ],
@@ -104,6 +113,13 @@
             class: Checklist,
             inlineToolbar: true,
         },
+        link: {
+        class: LinkAutocomplete,
+        config: {
+            endpoint: '/subdoc',
+            queryParam: 'search'
+        }
+        },
         underline: Underline,
         strikethrough: Strikethrough,
         delimiter: Delimiter,
@@ -135,6 +151,7 @@
                 endpoint: '/documents'
             }
         },
+
         toggle: {
             class: ToggleBlock,
             inlineToolbar: true,
@@ -155,38 +172,107 @@
             themeName: 'atom-one-dark', // Optional
             useDefaultTheme: 'light' // Optional. This also determines the background color of the language select drop-down
             }
+
+    
         },
 
         },
        
         onReady: () => {
-            new DragDrop(editorInstance);
             new Undo({ editorInstance });
+            new DragDrop(editorInstance);
+           
             MermaidTool.config({ 'theme': 'neutral' })
         },
+
+        onChange: () => {
+            editorInstance.save().then((outputData) => {
+                parseLinks(outputData);
+            });
+        },
+
+        
         data: savedData
       })
+      const links = document.querySelectorAll('a[data-name]');
 
+        // Loop through each link and change its color
+        links.forEach(link => {
+        link.style.color = 'red'; // Change 'red' to any color you prefer
+        });
     });
   
     onDestroy(() => {
       if (editorInstance) {
         editorInstance.destroy();
       }
+
+
+
     });
 
+    async function parseLinks(data) {
+  // Helper function to extract <a> tags from text
+  // Define a helper function to extract <a> tags from text
+        const extractATags = (text) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        return Array.from(doc.querySelectorAll('a')).map(a => a.href);
+    };
 
-    async function saveContent() {
-        try {
-            
-        const savedData = await editorInstance.save();
-     
-        console.log('Article data:', savedData);
-        // Here you can also POST the savedData to your backend server
-        } catch (error) {
-        console.error('Saving failed:', error);
+    const links = [];
+
+    for (const block of data.blocks) {
+        if (block.type === 'paragraph' && block.data.text.includes('<a')) {
+        // Extract <a> tags from paragraph block
+        const aTags = extractATags(block.data.text);
+        links.push(...aTags);
         }
     }
+
+    // Log all found links
+    console.log('Found links:', links);
+    }
+    function generateRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    async function saveContent() {
+
+    const styleElement = document.createElement('style');
+    document.head.appendChild(styleElement);
+    const links = document.querySelectorAll('a[data-name]');
+
+    links.forEach((link, index) => {
+  // Generate a random color for each link
+        const color = generateRandomColor();
+        // Create a unique class name for this color
+        const className = `custom-link-color-${index}`;
+        // Insert a new CSS rule for this class in the style element
+        styleElement.sheet.insertRule(`.${className} { color: ${color}; }`, styleElement.sheet.cssRules.length);
+        // Apply the newly created class to the link
+        link.classList.add(className);
+    });
+    const startTime = performance.now(); // Start timing
+
+    try {
+        const savedData = await editorInstance.save();
+        console.log('Article data:', savedData);
+        // Here you can also POST the savedData to your backend server
+    } catch (error) {
+        console.error('Saving failed:', error);
+    } finally {
+        const endTime = performance.now(); // End timing
+        console.log(`saveContent took ${endTime - startTime} milliseconds`);
+    }
+}
+
+
   </script>
 
 
@@ -199,7 +285,9 @@
   </main>
 
 
-  <style >
+<style >
+
+
     /* main {
       font-family: sans-serif;
 
@@ -211,4 +299,4 @@
     :global(body .ce-popover-item__secondary-title) {
         display: none !important;
     }
-  </style>
+</style>

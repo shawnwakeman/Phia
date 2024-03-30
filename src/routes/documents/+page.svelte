@@ -66,6 +66,13 @@ function updateSelectedNodeId(nodeId) {
     <option value="canvas">Canvas</option>
   </select>
 
+
+  <a data-sveltekit-preload-data="hover" href="/">
+    
+    fuckin issys
+</a>
+
+
 <div>
     {#if $activeNode}
       {#if $editorType === 'text'}
@@ -75,6 +82,8 @@ function updateSelectedNodeId(nodeId) {
       {/if}
     {/if}
   </div>
+  
 
 
-<DirectedGraph nodes={$nodesDataStore} files={$filePathDataStore}/>
+<!-- <DirectedGraph nodes={$nodesDataStore} files={$filePathDataStore}/>
+ -->

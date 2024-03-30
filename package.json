@@ -10,6 +10,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch"
   },
   "devDependencies": {
+    "@editorjs/link-autocomplete": "^0.1.0",
     "@sveltejs/adapter-auto": "^3.0.0",
     "@sveltejs/adapter-vercel": "^5.1.1",
     "@sveltejs/kit": "^2.0.0",
@@ -61,6 +62,7 @@
     "node-fetch": "^3.3.2",
     "svelte-dnd-action": "^0.9.42",
     "svelte-radix": "^1.1.0",
+    "svelvet": "^10.0.2",
     "tailwind-merge": "^2.2.2",
     "tailwind-variants": "^0.2.1"
   }

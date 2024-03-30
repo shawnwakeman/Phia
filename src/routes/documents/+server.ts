@@ -64,4 +64,7 @@ async function fetchLinkMetadata(url: string) {
       console.error(`Error fetching metadata for ${url}:`, error);
       throw new Error('Failed to fetch link metadata');
     }
-  }
+}
+  
+
+
