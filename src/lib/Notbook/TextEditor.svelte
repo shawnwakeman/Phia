@@ -8,38 +8,51 @@
 
     onMount(async () => {
       // Dynamically import Editor.js to ensure it's only loaded client-side
-      const EditorJS = (await import('@editorjs/editorjs')).default;
-      const Paragraph = (await import('@editorjs/paragraph')).default;
-      const Header = (await import('@editorjs/header')).default;
-      const DragDrop = (await import('editorjs-drag-drop')).default;
-      const NestedList  = (await import('@editorjs/nested-list')).default;
-      const Checklist = (await import('@editorjs/checklist')).default;
-   
-      const Alert  = (await import('editorjs-alert')).default;
-      const Table   = (await import('@editorjs/table')).default;
-      const Undo    = (await import('editorjs-undo')).default;
-      const LinkTool     = (await import('@editorjs/link')).default;
-
-      const Embed      = (await import('@editorjs/embed')).default;
-
-
-    
-      const Underline       = (await import('@editorjs/underline')).default;
-      const InlineCode       = (await import('@editorjs/inline-code')).default;
-        const MermaidTool       = (await import('editorjs-mermaid')).default;
-
-      const Strikethrough        = (await import('@sotaproject/strikethrough')).default;
-      const Marker         = (await import('@editorjs/marker')).default;
-      const Delimiter          = (await import('@editorjs/delimiter')).default;
-
-      const ToggleBlock           = (await import('editorjs-toggle-block')).default;
-
-      const CodeBox              = (await import('@bomdi/codebox')).default;
-
-      const SimpleImage =    (await import('@editorjs/simple-image')).default;
-    //   const Tooltip        = (await import('editorjs-tooltip')).default;
-
-    const LinkAutocomplete =    (await import('@editorjs/link-autocomplete')).default;
+      const [
+        EditorJS,
+        Paragraph,
+        Header,
+        DragDrop,
+        NestedList,
+        Checklist,
+        Alert,
+        Table,
+        Undo,
+        LinkTool,
+        Embed,
+        Underline,
+        InlineCode,
+        MermaidTool,
+        Strikethrough,
+        Marker,
+        Delimiter,
+        ToggleBlock,
+        CodeBox,
+        SimpleImage,
+        LinkAutocomplete,
+    ] = await Promise.all([
+        import('@editorjs/editorjs').then(module => module.default),
+        import('@editorjs/paragraph').then(module => module.default),
+        import('@editorjs/header').then(module => module.default),
+        import('editorjs-drag-drop').then(module => module.default),
+        import('@editorjs/nested-list').then(module => module.default),
+        import('@editorjs/checklist').then(module => module.default),
+        import('editorjs-alert').then(module => module.default),
+        import('@editorjs/table').then(module => module.default),
+        import('editorjs-undo').then(module => module.default),
+        import('@editorjs/link').then(module => module.default),
+        import('@editorjs/embed').then(module => module.default),
+        import('@editorjs/underline').then(module => module.default),
+        import('@editorjs/inline-code').then(module => module.default),
+        import('editorjs-mermaid').then(module => module.default),
+        import('@sotaproject/strikethrough').then(module => module.default),
+        import('@editorjs/marker').then(module => module.default),
+        import('@editorjs/delimiter').then(module => module.default),
+        import('editorjs-toggle-block').then(module => module.default),
+        import('@bomdi/codebox').then(module => module.default),
+        import('@editorjs/simple-image').then(module => module.default),
+        import('@editorjs/link-autocomplete').then(module => module.default),
+    ]);
     
       const savedData = {
   "time": 1711769155440,
