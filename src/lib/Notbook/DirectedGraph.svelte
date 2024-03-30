@@ -151,7 +151,7 @@ import { writable } from 'svelte/store';
       }
 
    
-      invalidation.then(() => simulation.stop());
+
     });
 
 

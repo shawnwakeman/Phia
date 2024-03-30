@@ -85,5 +85,5 @@ function updateSelectedNodeId(nodeId) {
   
 
 
-<!-- <DirectedGraph nodes={$nodesDataStore} files={$filePathDataStore}/>
- -->
+<DirectedGraph nodes={$nodesDataStore} files={$filePathDataStore}/>
+
