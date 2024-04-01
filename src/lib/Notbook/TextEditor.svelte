@@ -22,12 +22,11 @@
         Embed,
         Underline,
         InlineCode,
-        MermaidTool,
         Strikethrough,
         Marker,
         Delimiter,
         ToggleBlock,
-        CodeBox,
+        CodeTool,
         SimpleImage,
         LinkAutocomplete,
     ] = await Promise.all([
@@ -44,12 +43,11 @@
         import('@editorjs/embed').then(module => module.default),
         import('@editorjs/underline').then(module => module.default),
         import('@editorjs/inline-code').then(module => module.default),
-        import('editorjs-mermaid').then(module => module.default),
         import('@sotaproject/strikethrough').then(module => module.default),
         import('@editorjs/marker').then(module => module.default),
         import('@editorjs/delimiter').then(module => module.default),
         import('editorjs-toggle-block').then(module => module.default),
-        import('@bomdi/codebox').then(module => module.default),
+        import('@editorjs/code').then(module => module.default),
         import('@editorjs/simple-image').then(module => module.default),
         import('@editorjs/link-autocomplete').then(module => module.default),
     ]);
@@ -111,7 +109,11 @@
             class: Header,
        
             inlineToolbar: ['link'],
-            shortcut: '/'
+            shortcut: '/',
+
+            config: {
+                defaultLevel: 1
+            }
           },
           image: SimpleImage,
           list: {
@@ -126,13 +128,7 @@
             class: Checklist,
             inlineToolbar: true,
         },
-        link: {
-        class: LinkAutocomplete,
-        config: {
-            endpoint: '/subdoc',
-            queryParam: 'search'
-        }
-        },
+
         underline: Underline,
         strikethrough: Strikethrough,
         delimiter: Delimiter,
@@ -175,20 +171,13 @@
             shortcut: 'CMD+SHIFT+M',
         },
 
-        mermaid: MermaidTool,
+
         embed: Embed,
  
-        codeBox: {
-            class: CodeBox,
-            config: {
-            themeURL: 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.1/build/styles/dracula.min.css', // Optional
-            themeName: 'atom-one-dark', // Optional
-            useDefaultTheme: 'light' // Optional. This also determines the background color of the language select drop-down
-            }
+        code: CodeTool,
 
     
-        },
-
+    
         },
        
         onReady: () => {
@@ -309,6 +298,10 @@
 
 
 /* use to style editor js components  */
+    :global(body .ce-inline-tool--link) {
+        display: none !important;
+    }
+
     :global(body .ce-popover-item__secondary-title) {
         display: none !important;
     }

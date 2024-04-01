@@ -11,7 +11,7 @@
     export let data: { files: FilePath[], nodes: Node[] };
 
     import TextEditor from "$lib/Notbook/TextEditor.svelte"
-    import NodePad from "$lib/Notbook/Canvas/NotePad.svelte"
+
 
     import { toggleMode } from "mode-watcher";
     import { Button } from "$lib/components/ui/button/index.js";
@@ -83,17 +83,10 @@ function updateSelectedNodeId(nodeId) {
     <span class="sr-only">Toggle theme</span>
   </Button>
 
-<!-- <div>
-    {#if $activeNode}
-      {#if $editorType === 'text'}
-        <TextEditor/>
-      {:else if $editorType === 'canvas'}
-        <NodePad/>
-      {/if}
-    {/if}
-  </div>
-   -->
 
-  <NodePad/>
+    <TextEditor/>
+  
+
+
 <!-- <DirectedGraph/> -->
 
