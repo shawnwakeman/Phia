@@ -63,7 +63,7 @@
   </script>
   
   <main>
-    <SvelteFlow {nodes} {edges} fitView on:dragover={onDragOver} on:drop={onDrop}>
+    <SvelteFlow {nodes} {nodeTypes} {edges} fitView on:dragover={onDragOver} on:drop={onDrop}>
       <Controls />
       <Background variant={BackgroundVariant.Dots} />
       <MiniMap />
