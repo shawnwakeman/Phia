@@ -11,7 +11,11 @@
     export let data: { files: FilePath[], nodes: Node[] };
 
     import TextEditor from "$lib/Notbook/TextEditor.svelte"
-    import NodePad from "$lib/Notbook/NotePad.svelte"
+    import NodePad from "$lib/Notbook/Canvas/NotePad.svelte"
+
+    import { toggleMode } from "mode-watcher";
+    import { Button } from "$lib/components/ui/button/index.js";
+    
     filePathDataStore.set(data.files)
     nodesDataStore.set(data.nodes)
     
@@ -73,7 +77,13 @@ function updateSelectedNodeId(nodeId) {
 </a>
 
 
-<div>
+<Button on:click={toggleMode} variant="outline" size="icon">
+    <h1>one</h1>
+   
+    <span class="sr-only">Toggle theme</span>
+  </Button>
+
+<!-- <div>
     {#if $activeNode}
       {#if $editorType === 'text'}
         <TextEditor/>
@@ -82,8 +92,8 @@ function updateSelectedNodeId(nodeId) {
       {/if}
     {/if}
   </div>
-  
+   -->
 
-
-<DirectedGraph nodes={$nodesDataStore} files={$filePathDataStore}/>
+  <NodePad/>
+<!-- <DirectedGraph/> -->
 

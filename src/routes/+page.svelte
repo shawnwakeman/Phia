@@ -7,7 +7,8 @@
     import { selectedNodeId, selectedNodeStore, nodesDataStore} from "../stores";
     import { get } from "svelte/store";
 
-
+    import { toggleMode } from "mode-watcher";
+    import { Button } from "$lib/components/ui/button/index.js";
     export let data: { nodes: Node[] };
 
 
@@ -59,6 +60,15 @@
     {/each}
   </ul>
 
+
+
+
+   
+  <Button on:click={toggleMode} variant="outline" size="icon">
+    <h1>one</h1>
+   
+    <span class="sr-only">Toggle theme</span>
+  </Button>
 <h1>
     {$selectedNodeStore?.id}, 
     {$selectedNodeStore?.name}, 
@@ -68,3 +78,4 @@
 <BarChart/>
 <NodeCreator/>
 <SideBar active = {true}/>
+

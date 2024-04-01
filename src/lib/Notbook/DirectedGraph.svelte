@@ -1,24 +1,25 @@
 <script>
     import { onMount } from 'svelte';
     import * as d3 from 'd3';
-import { writable } from 'svelte/store';
+    import { writable } from 'svelte/store';
+    import { nodesDataStore } from '../../stores';
     let linkDistance = 50;
     
     let centerForce = 0.06
 
     let repelStrength = -100;
 
-    export let nodes;
-    export let files;
+
+
 
     // Links use numeric IDs for source and target
     let links = [];
     // let currentRootId = 1;
     // let newNodes = []
-    if (nodes) {
+    if ($nodesDataStore) {
 
  
-        nodes.forEach(node => {
+        $nodesDataStore.forEach(node => {
             if (node.id != 1) {
                 
                 links.push({ source: node.parent_id, target: node.id, level: 1 });
@@ -56,7 +57,7 @@ import { writable } from 'svelte/store';
     const forceCharge = d3.forceManyBody()
       .strength(repelStrength);
     // Initial setup of forces
-    const simulation = d3.forceSimulation(nodes)
+    const simulation = d3.forceSimulation($nodesDataStore)
 
         .force("link", d3.forceLink(links).id(d => d.id)
             .distance(d => {
@@ -102,7 +103,7 @@ import { writable } from 'svelte/store';
   
       const node = g
           .selectAll("circle")
-          .data(nodes)
+          .data($nodesDataStore)
           .enter().append("circle")
             .attr("r", d => 5)
             .attr("fill", "#d00")

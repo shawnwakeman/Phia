@@ -1,3 +1,4 @@
+import { color } from "d3";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
 /** @type {import('tailwindcss').Config} */
@@ -19,6 +20,13 @@ const config = {
 				input: "hsl(var(--input) / <alpha-value>)",
 				ring: "hsl(var(--ring) / <alpha-value>)",
 				background: "hsl(var(--background) / <alpha-value>)",
+				sussy: 'hsl(var(--sussy) / <alpha-value>)',
+
+
+
+
+
+
 				foreground: "hsl(var(--foreground) / <alpha-value>)",
 				primary: {
 					DEFAULT: "hsl(var(--primary) / <alpha-value>)",
@@ -48,6 +56,10 @@ const config = {
 					DEFAULT: "hsl(var(--card) / <alpha-value>)",
 					foreground: "hsl(var(--card-foreground) / <alpha-value>)"
 				}
+
+
+
+
 			},
 			borderRadius: {
 				lg: "var(--radius)",
@@ -58,9 +70,7 @@ const config = {
 				sans: [...fontFamily.sans]
 			},
 
-			p: {
-				
-			}
+
 
 			
 		}

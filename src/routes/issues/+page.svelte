@@ -4,6 +4,7 @@
     import DataTable from '../../lib/Issues/DataTable/DataTable.svelte'
     import Treemap from '../../lib/Issues/Treemap.svelte'
     import Sidebar from '../../lib/Issues/Sidebar.svelte'
+
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
     import { addIssue, supabase, findRootNodes } from "../../lib/supabaseClient";
@@ -123,6 +124,8 @@
 	fuckin shi
 </a>
 
+ 
+
 
 
 <button>search</button>
@@ -150,7 +153,6 @@
 
 <button on:click={() => createNewNode()}>add</button>
 
-
 <style> 
     #treemap {
       display: block;
@@ -159,4 +161,6 @@
       height: auto;
       background-color: #f0f0f0; /* Light grey background */
     }
+
+
   </style>
