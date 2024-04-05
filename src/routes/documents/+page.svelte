@@ -50,6 +50,8 @@ function addFile() {
 function updateSelectedNodeId(nodeId) {
   selectedNodeId.set(nodeId);
 }
+
+
 </script>
 
 

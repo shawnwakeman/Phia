@@ -22,3 +22,14 @@ export const addedIssue = writable<boolean>(false)
 
 
 
+// stores.js
+
+export const squares = writable([
+  { id: 0, x: 1, y: 1, width: 2, height: 1 }, // x and y repsesnt top corner positions 
+  { id: 1, x: 3, y: 1, width: 5, height: 1 },
+  { id: 2, x: 5, y: 3, width: 2, height: 1 },
+  { id: 3, x: 7, y: 4, width: 2, height: 1 },
+]);
+
+
+

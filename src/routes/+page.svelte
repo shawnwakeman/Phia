@@ -46,6 +46,10 @@
 
         fuckin docs
     </a>
+    <a data-sveltekit-preload-data="hover" href="/workspace">
+
+        fuckin workspace
+    </a>
 
 
             
