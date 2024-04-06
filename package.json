@@ -60,6 +60,7 @@
     "mode-watcher": "^0.3.0",
     "node-fetch": "^3.3.2",
     "svelte-dnd-action": "^0.9.42",
+    "svelte-grid": "^5.1.2",
     "svelte-radix": "^1.1.0",
     "tailwind-merge": "^2.2.2",
     "tailwind-variants": "^0.2.1"

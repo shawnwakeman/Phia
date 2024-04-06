@@ -1,124 +1,101 @@
-<!-- Square.svelte -->
-<!-- Square.svelte -->
-<script>
-    import { get, writable } from 'svelte/store';
-    import { squares } from '../../stores';
-    import { createEventDispatcher } from 'svelte';
-  
-    export let id;
-  export let x;
-  export let y;
-  export let width;
-  export let height;
+<script lang="ts">
+    let count = 0;
+    let currentIndex = 0; 
+    let step = 1;
+    let isPaused = false
+    let autoplay = true
+    let totalCyclesCompleted = 0;
+    let totalTime = 0;
+    let timer; 
+    let phases = [
+        { name: "Work Time", duration: 5 },
+        { name: "Short Break", duration: 8 },
+        { name: "Long Break", duration: 10 }
+    ];
 
-  let dragging = false;
-  let resizing = false;
-  let offsetX, offsetY;
 
-  const dispatch = createEventDispatcher();
-
-  // Dragging Functions
-  function startDrag(event) {
-    if (event.button !== 0) return;
-
-    dragging = true;
-    offsetX = event.clientX - x * 50;
-    offsetY = event.clientY - y * 50;
-
-    window.addEventListener('mousemove', doDrag);
-    window.addEventListener('mouseup', stopDrag);
-  }
-
-  function doDrag(event) {
-    if (!dragging) return;
-
-    let newX = event.clientX - offsetX;
-    let newY = event.clientY - offsetY;
-
-    newX = Math.round(newX / 50);
-    newY = Math.round(newY / 50);
-
-    squares.update(sqs =>
-      sqs.map(sq => sq.id === id ? {...sq, x: newX, y: newY} : sq)
-    );
-
-    dispatch('move', { id, x, y, width, height });
-  }
-
-  function stopDrag() {
-    dragging = false;
-    window.removeEventListener('mousemove', doDrag);
-    window.removeEventListener('mouseup', stopDrag);
-    
-  }
-
-  // Resizing Functions
-  function startResize(event) {
-    if (event.button !== 0) return;
-
-    resizing = true;
-    const startX = event.clientX;
-    const startY = event.clientY;
-    const startWidth = width;
-    const startHeight = height;
-
-    function doResize(moveEvent) {
-      if (!resizing) return;
-
-      let currentWidth = Math.max(1, startWidth + (moveEvent.clientX - startX) / 50);
-      let currentHeight = Math.max(1, startHeight + (moveEvent.clientY - startY) / 50);
-
-      currentWidth = Math.round(currentWidth);
-      currentHeight = Math.round(currentHeight);
-
-      squares.update(sqs =>
-        sqs.map(sq => sq.id === id ? {...sq, width: currentWidth, height: currentHeight} : sq)
-      );
-      dispatch('resize', { id });
+    function startTimer(duration: number) {
+        clearInterval(timer);
+        count = duration;
+        timer = setInterval(function() {
+            count -= step;
+            totalTime += step
+            if (isPaused) return;
+            if (count === 0 && autoplay === true) {
+                clearInterval(timer);
+                
+                // Move to the next timer phase
+                moveToNextPhase();
+            } else if (count === 0 && autoplay === false) {
+                clearInterval(timer);
+                
+                // Move to the next timer phase
+                
+                moveToNextPhase();
+                toggleStep();
+            }
+        }, 1000); // Adjust the interval as needed
     }
 
-    function stopResize() {
-      resizing = false;
-      window.removeEventListener('mousemove', doResize);
-      window.removeEventListener('mouseup', stopResize);
-      
+
+
+    function moveToNextPhase() {
+        // Increment the current index, cycling back to 0 if it exceeds the length of the phases array
+        currentIndex = (currentIndex + 1) % phases.length;
+
+
+        if (currentIndex === 0) {
+            totalCyclesCompleted += 1;
+        }
+        // Start the next timer phase
+        startTimer(phases[currentIndex].duration);
+        console.log(`Starting ${phases[currentIndex].name}`);
     }
 
-    window.addEventListener('mousemove', doResize);
-    window.addEventListener('mouseup', stopResize);
-  }
+    startTimer(phases[currentIndex].duration);
+
+    function toggleStep() {
+        if (step === 1) {
+            step = 0;
+            isPaused = true
+        } else {
+            step = 1
+            isPaused = false
+        }
+    }
+
+    function toggleAutoplay() {
+        autoplay = !autoplay;
+    }
+
+    function resetTimer() {
+        clearInterval(timer); // Clear the current timer
+        count = phases[0].duration; // Reset count to the current phase's duration
+        currentIndex = 0
+        totalCyclesCompleted = 0
+        totalTime = 0
+        // Optionally reset total cycles completed if needed
+        startTimer(count); // Restart the timer with the new count
+    }
+
+
+
+
+
+
 </script>
 
-<div class="square"
-     style="left: {x * 50}px; top: {y * 50}px; width: {width * 50}px; height: {height * 50}px;">
-  <div class="drag-handle" on:mousedown={startDrag}></div>
-  <div class="resize-handle" on:mousedown={startResize}></div>
-</div>
+{count}
+<h2>Total Cycles Completed: {totalCyclesCompleted}</h2>
+<h2>Total time Completed: {totalTime}</h2>
+<button on:click={() => toggleAutoplay()}>toggle step</button>
 
-<style>
-  .square {
-    position: absolute;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-  .drag-handle {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 20px; /* Adjust the size as needed */
-    cursor: move;
-    background-color: rgba(0,0,0,0.1); /* Slightly darkened area to indicate draggable zone */
-  }
-  .resize-handle {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 20px; /* Adjust the size as needed */
-    height: 20px;
-    cursor: nwse-resize;
-    background-color: rgba(0,0,0,0.2); /* More darkened to distinguish from drag handle */
-  }
-</style>
+
+<button on:click={() => moveToNextPhase()}>skip</button>
+
+
+<button on:click={() => toggleStep()}>
+    {isPaused ? 'Start' : 'Pause'}
+  </button>
+
+  <button on:click={resetTimer}>Reset</button>

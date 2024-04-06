@@ -216,7 +216,7 @@
             new Undo({ editorInstance });
             new DragDrop(editorInstance);
            
-            MermaidTool.config({ 'theme': 'neutral' })
+      
         },
 
         onChange: () => {

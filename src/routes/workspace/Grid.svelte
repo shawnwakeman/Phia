@@ -1,119 +1,176 @@
-<!-- Grid.svelte -->
-<script>
-    import { onMount } from 'svelte';
-    import Square from './Square.svelte';
-    import { squares } from '../../stores';
-  
 
-  let gridWidth = '100%'; // Responsive width
-  let gridColumns = 10; // Define how many columns the grid has
-  let gridSize = 50; // Size of the grid unit in pixels
+<script lang="ts">
+    import Grid from "svelte-grid";
+    import gridHelp from "svelte-grid/build/helper/index.mjs";
+    import CustomComponentA from './Pomodoro.svelte';
+    import {showModal, selectedItem} from '../../stores'
 
-  // Recalculate grid layout on window resize
-  onMount(() => {
-    function resizeGrid() {
-      // Example: adjust gridSize based on the container width or similar logic
-      // This is a placeholder for responsive grid logic
-    }
 
-    window.addEventListener('resize', resizeGrid);
-    return () => {
-      window.removeEventListener('resize', resizeGrid);
+    const componentMap = {
+
+    'specificId1': CustomComponentA,
+    'specificId2': CustomComponentA,
+    // Add more mappings as needed
     };
-  });
 
-  let lastMovedSquare = { id: null, index: -1, square: null };
-
-function handleMove(event) {
-  // Extracting the details of the moved square
-  const { id, newX, newY, width, height } = event.detail;
-
-  squares.subscribe((allSquares) => {
-    // Check if the last moved square is the same as the current one
-    if (lastMovedSquare.id !== id) {
-      // If not, find the square and update the lastMovedSquare cache
-      const squareIndex = allSquares.findIndex(sq => sq.id === id);
-      if (squareIndex === -1) {
-        console.log("Moved square not found.");
-        return; // Exit if the moved square is not found
-      }
-      lastMovedSquare = {
-        id,
-        index: squareIndex,
-        square: allSquares[squareIndex - 1]
-      };
+    function isItemID(key: any): key is ItemID {
+        return key in componentMap;
     }
 
-    // Update the position for overlap checks without altering the original square
-    const movedSquare = { ...lastMovedSquare.square, x: newX, y: newY };
-
-    // Initialize an array to keep track of any squares that overlap with the moved square
-    const overlappingSquares = allSquares.reduce((acc, sq, index) => {
-      if (index !== lastMovedSquare.index && checkOverlap(movedSquare, sq)) {
-        acc.push(sq.id); // Add the ID of the overlapping square
-      }
-      return acc;
-    }, []);
-    
-    // Log the results
-    if (overlappingSquares.length > 0) {
-      console.log(`Square ${id} at new position (${newX}, ${newY}) overlaps with square(s) ${overlappingSquares.join(', ')}`);
+    function getComponentForItem(item: { id: any }) {
+        if (isItemID(item.id)) {
+        return componentMap[item.id];
+        } else {
+        return CustomComponentA;
+        }
     }
-  });
 
-  console.log(`Square ${id} at new position (${newX}, ${newY}) overlaps with square(s) ${overlappingSquares.join(', ')}`);
+
+    const COLS = 6;
+
+    const id = () => "_" + Math.random().toString(36).substr(2, 9);
+
+    const randomNumberInRange = (min, max) => Math.random() * (max - min) + min;
+
+    let items = [
+    {
+        [COLS]: gridHelp.item({
+        x: 0,
+        y: 0,
+        w: 2,
+        h: 2,
+        }),
+        id: 'specificId1',
+    },
+
+    {
+        [COLS]: gridHelp.item({
+        x: 2,
+        y: 0,
+        w: 2,
+        h: 2,
+        }),
+        id: 'specificId2',
+    },
+    ];
+
+const cols = [[600, 6]];
+
+function add() {
+  let newItem = {
+    6: gridHelp.item({
+      w: Math.round(randomNumberInRange(1, 4)),
+      h: Math.round(randomNumberInRange(1, 4)),
+      x: 0,
+      y: 0,
+    }),
+    id: id(),
+  };
+
+  let findOutPosition = gridHelp.findSpace(newItem, items, COLS);
+
+  newItem = {
+    ...newItem,
+    [COLS]: {
+      ...newItem[COLS],
+      ...findOutPosition,
+    },
+  };
+
+  items = [...items, ...[newItem]];
 }
-
-  function handleResize(event) {
-    const { id, newX, newY, width, height } = event.detail;
-  console.log(`Square ${id} resized`, newX);
+ 
 
 
-}
+const remove = (item) => {
+  items = items.filter((value) => value.id !== item.id);
 
-function checkAndResolveOverlaps(sqs, resizedSquare) {
-  let overlapOccurred = false;
+  if (adjustAfterRemove) {
+    items = gridHelp.adjust(items, COLS);
+  }
+};
 
-  sqs.forEach(sq => {
-    if (sq.id !== resizedSquare.id && checkOverlap(resizedSquare, sq)) {
-      // Move sq to avoid overlap
-      moveSquare(sqs, sq, resizedSquare);
-      overlapOccurred = true;
-    }
-  });
+let adjustAfterRemove = false;
 
-  return overlapOccurred;
-}
 
-function checkOverlap(squareA, squareB) {
-  // Check if two squares overlap
-  return squareA.x < squareB.x + squareB.width &&
-         squareA.x + squareA.width > squareB.x &&
-         squareA.y < squareB.y + squareB.height &&
-         squareA.y + squareA.height > squareB.y;
-}
 
-function moveSquare(squares, squareToMove, referenceSquare) {
-  // Implement the logic to find a new position for squareToMove
-  // This example simply moves the square to the right but consider more sophisticated logic
-  squareToMove.x = referenceSquare.x + referenceSquare.width;
-  // Ensure it stays within grid bounds, etc.
-}
+function handleItemClick(item) {
+    selectedItem.set(item);
+    showModal.set(true);
+  }
 
 
 </script>
 
+
 <style>
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-      gap: 10px;
+    .size {
+      max-width: 1100px;
       width: 100%;
     }
-  </style>
+    .demo-widget {
+      background: #f1f1f1;
+      height: 100%;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-width: 5px;
+    }
+    
+    .demo-container {
+      /* max-width: 800px;; */
+      width: 100%;
+      color: aqua;
+   
+    }
 
-<div class="grid" style="--grid-width: {gridWidth}; --grid-columns: {gridColumns};">
-  {#each $squares as square (square.id)}
-  <Square {...square} on:move={handleMove} on:resize={handleResize} />
-  {/each}
+    .remove { 
+        cursor: pointer;
+        position: absolute;
+        right: 5px; 
+        top: 3px;
+        user-select: none;
+    }
+
+    .dragger {
+        cursor: default;
+        user-select: none;
+        color: white;
+        line-height: 30px;
+        text-align: center;
+        background: black;
+        width: 100px;
+        height: 30px;
+        margin-top: 10px;
+        border-radius: 3px;
+        position: absolute;
+        top: 5px;
+        left: 5px;
+}
+    </style>
+
+
+<button on:click={add}>Add (random size)</button>
+
+<label>
+  <input type="checkbox" bind:checked={adjustAfterRemove} />
+  Adjust elements after removing an item
+</label>
+
+<div class=demo-container>
+  <Grid bind:items={items} rowHeight={100} let:item let:dataItem {cols}>
+    <div class="demo-widget" on:click={() => handleItemClick(dataItem)}>
+      <span on:pointerdown={e => e.stopPropagation()}
+        on:click={() => remove(dataItem)}
+        class=remove
+        >
+        ✕
+      </span>
+      <svelte:component this={getComponentForItem(item)} />
+
+
+    </div>
+  </Grid>
 </div>
+
