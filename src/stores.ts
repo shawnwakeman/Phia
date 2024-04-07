@@ -25,3 +25,26 @@ export const addedIssue = writable<boolean>(false)
 // stores.js
 export const showModal = writable(false);
 export const selectedItem = writable(null);
+
+
+export interface SpotifyItem {
+  id: number; // Simple integer ID
+  link: string; // Spotify link
+  type: string; // 'playlist' or 'podcast'
+}
+
+function createSpotifyStore() {
+  const { subscribe, update } = writable<Array<SpotifyItem>>([]);
+  let idCounter = 1; // Start ID counter
+
+  return {
+    subscribe,
+    add: (item: Omit<SpotifyItem, 'id'>) => update(items => {
+      const newItem = { ...item, id: idCounter++ }; // Increment ID with each new item
+      return [...items, newItem];
+    }),
+    remove: (id: number) => update(items => items.filter(item => item.id !== id)),
+  };
+}
+
+export const spotifyItems = createSpotifyStore();

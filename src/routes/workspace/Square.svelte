@@ -3,9 +3,9 @@
 <script>
     import { onMount } from 'svelte';
     import { writable } from 'svelte/store';
-
-
-    let token  = 'BQDMEMfqAGdeZlRzEwW-ijKjyEZq7VGHZhSLOh-I7nPW9NTi94AROxx8BB6Zm_FwEzX2ZdByYKqiW5-oaZcyV1JmBd_F9DTgDsRsnZHBgtHUNZrLoOKbNu87ACpfCiOMepS-5Y2LVYqNw8efkPRpy61CfQaIadoSOQa-l-Vio8YG2oEuofCqIDFtxXkw6jkfwYyPzq76_3xNlvt4xKORO7YEEFMu'; // Ensure this is securely obtained
+    // e109cac1f5b144a083eba28c6550e4e2
+    // eaa8f33e99314f4287e2adacb9a98b9c
+    let token  = 'BQAqfd5W9Gtx_nQ3ys4U-1A_MBLJxHSE7hImf2u9YoTLZDuVXNbiiFF8gqxXnp_T2UHEGxqpjW7hsdUaQscvHgQB75x0_js6FKsfUavqFF0OFsAOkCzi29gCLTBqca0q0TyXG8NQsLalFVV_gokQcnTUGrAHsXVP1L7cR_HZ5TIY6QzV9tkFl39oLpuvPF-N_cJf9hB-4Gqo_Dr14tpVEW0FuqXi'; // Ensure this is securely obtained
     let player; // Will hold our Spotify player instance
     let currentTrack = writable(null);
     onMount(() => {
@@ -17,7 +17,7 @@
     
           name: 'Web Playback SDK Quick Start Player',
           getOAuthToken: cb => { cb(token); },
-          volume: 0.9
+          volume: 0.5
         });
 
         
@@ -85,12 +85,45 @@
 
 
   }
+    let volume = 0.5; // Default volume
+
+  // This function is called whenever the slider's value changes
+    function setPlayerVolume() {
+        player.setVolume(volume).then(() => {
+        console.log('Volume updated!');
+        }).catch(error => {
+        console.error('Error setting volume:', error);
+        });
+    }
+
+    async function getProfile(accessToken) {
+        
+
+        const response = await fetch('https://api.spotify.com/v1/me', {
+            headers: {
+            Authorization: 'Bearer ' + accessToken
+            }
+        });
+        
+        const data = await response.json();
+        console.log(data);
+        }
+
+    getProfile(token)
+
+// Call the setup function when the script loads
+
 </script>
+
+<a href="https://open.spotify.com/">spotify </a>
+
+<input type="range" min="0" max="1" step="0.01" bind:value={volume} on:input={setPlayerVolume} />
+<h3>Volume: {Math.round(volume * 100)}%</h3>
 
 <h1>Spotify Web Playback SDK Quick Start</h1>
 <button on:click={player.togglePlay()}>Toggle Play</button>
 <button on:click={player.previousTrack()}>Back</button>
 
-<button on:click={player.nex()}>Forward</button>
+<button on:click={player.nextTrack()}>Forward</button>
 
 <button on:click={() => togglePlay()}>test</button>
