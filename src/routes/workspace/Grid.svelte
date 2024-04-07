@@ -2,14 +2,14 @@
 <script lang="ts">
     import Grid from "svelte-grid";
     import gridHelp from "svelte-grid/build/helper/index.mjs";
-    import CustomComponentA from './Pomodoro.svelte';
+    import Pomodoro from './widgets/Pomodoro.svelte';
     import {showModal, selectedItem} from '../../stores'
 
 
     const componentMap = {
 
-    'specificId1': CustomComponentA,
-    'specificId2': CustomComponentA,
+    'specificId1': Pomodoro,
+    'specificId2': Pomodoro,
     // Add more mappings as needed
     };
 
@@ -21,7 +21,7 @@
         if (isItemID(item.id)) {
         return componentMap[item.id];
         } else {
-        return CustomComponentA;
+        return Pomodoro;
         }
     }
 
@@ -39,6 +39,7 @@
         y: 0,
         w: 2,
         h: 2,
+        customDragger: true,
         }),
         id: 'specificId1',
     },
@@ -49,6 +50,7 @@
         y: 0,
         w: 2,
         h: 2,
+        customDragger: true,
         }),
         id: 'specificId2',
     },
@@ -63,6 +65,7 @@ function add() {
       h: Math.round(randomNumberInRange(1, 4)),
       x: 0,
       y: 0,
+      customDragger: true,
     }),
     id: id(),
   };
@@ -94,10 +97,10 @@ let adjustAfterRemove = false;
 
 
 
-function handleItemClick(item) {
-    selectedItem.set(item);
-    showModal.set(true);
-  }
+// function handleItemClick(item) {
+//     selectedItem.set(item);
+//     showModal.set(true);
+//   }
 
 
 </script>
@@ -159,16 +162,23 @@ function handleItemClick(item) {
 </label>
 
 <div class=demo-container>
-  <Grid bind:items={items} rowHeight={100} let:item let:dataItem {cols}>
+  <Grid bind:items={items} rowHeight={100} let:item let:dataItem {cols} let:movePointerDown>
     <div class="demo-widget" on:click={() => handleItemClick(dataItem)}>
-      <span on:pointerdown={e => e.stopPropagation()}
-        on:click={() => remove(dataItem)}
-        class=remove
-        >
-        ✕
-      </span>
-      <svelte:component this={getComponentForItem(item)} />
+        <div class=cummer>
+            <span on:pointerdown={e => e.stopPropagation()}
+                on:click={() => remove(dataItem)}
+                class=remove
+                >
+                ✕
+              </span>
 
+              <div class=dragger on:pointerdown={movePointerDown}>
+                ✋ Drag me!
+              </div>
+        </div>
+     
+      <svelte:component this={getComponentForItem(item)} />
+     
 
     </div>
   </Grid>

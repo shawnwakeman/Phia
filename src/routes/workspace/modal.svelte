@@ -1,6 +1,8 @@
+
+
 <script>
     import {showModal, selectedItem} from '../../stores'
-    import CustomComponentA from './Pomodoro.svelte'; // Import the component you want to display in the modal
+    import CustomComponentA from './widgets/Pomodoro.svelte'; // Import the component you want to display in the modal
   
     let show = false;
     let item = null;
