@@ -10,7 +10,7 @@
     import DirectedGraph from "$lib/Notbook/DirectedGraph.svelte";
     export let data: { files: FilePath[], nodes: Node[] };
 
-    import TextEditor from "$lib/Notbook/TextEditor.svelte"
+    import TextEditor from "$lib/Notbook/TextEditor/TextEditor.svelte"
 
 
     import { toggleMode } from "mode-watcher";

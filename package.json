@@ -48,9 +48,15 @@
     "@editorjs/simple-image": "^1.6.0",
     "@editorjs/table": "^2.3.0",
     "@editorjs/underline": "^1.1.0",
+    "@hocuspocus/provider": "^2.11.3",
     "@sotaproject/strikethrough": "^1.0.1",
     "@supabase/supabase-js": "^2.39.7",
     "@sveltejs/adapter-node": "^5.0.1",
+    "@tiptap/core": "^2.3.0",
+    "@tiptap/extension-collaboration": "^2.3.0",
+    "@tiptap/extension-collaboration-cursor": "^2.3.0",
+    "@tiptap/pm": "^2.3.0",
+    "@tiptap/starter-kit": "^2.3.0",
     "animejs": "^3.2.2",
     "bits-ui": "^0.20.1",
     "cheerio": "^1.0.0-rc.12",
@@ -69,6 +75,10 @@
     "svelte-grid": "^5.1.2",
     "svelte-radix": "^1.1.0",
     "tailwind-merge": "^2.2.2",
-    "tailwind-variants": "^0.2.1"
+    "tailwind-variants": "^0.2.1",
+    "y-prosemirror": "^1.2.3",
+    "y-webrtc": "^10.3.0",
+    "y-websocket": "^2.0.2",
+    "yjs": "^13.6.14"
   }
 }
