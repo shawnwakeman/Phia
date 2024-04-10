@@ -3,13 +3,14 @@
     import Grid from "svelte-grid";
     import gridHelp from "svelte-grid/build/helper/index.mjs";
     import Pomodoro from './widgets/Pomodoro.svelte';
+    import Spotify from './widgets/Spotify.svelte';
     import {showModal, selectedItem} from '../../stores'
 
 
     const componentMap = {
 
     'specificId1': Pomodoro,
-    'specificId2': Pomodoro,
+    'specificId2': Spotify,
     // Add more mappings as needed
     };
 
@@ -18,6 +19,7 @@
     }
 
     function getComponentForItem(item: { id: any }) {
+      
         if (isItemID(item.id)) {
         return componentMap[item.id];
         } else {
@@ -177,7 +179,7 @@ let adjustAfterRemove = false;
               </div>
         </div>
      
-      <svelte:component this={getComponentForItem(item)} />
+      <svelte:component this={getComponentForItem(dataItem)} />
      
 
     </div>
