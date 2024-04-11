@@ -1,4 +1,7 @@
 <script lang="ts">
+	import Editor from '$lib/editor/index.svelte';
+	import content from './content.json';
+	let title = 'Svelte Tiptap Notion Clone (Svnotion?)';
 
 
     import type { Issue, Node, FilePath } from "../../types/collection";
@@ -34,46 +37,11 @@
         editorType.set('text');
     }// Store to keep track of the currently selected folder
 
-// Add Folder function
-function addFolder() {
-  console.log("das");
-  
-}
-
-// Add File function that adds a file to the currently selected folder
-function addFile() {
-    console.log("das");
-  
-}
-
-// Function to update the currently selected node ID
-function updateSelectedNodeId(nodeId) {
-  selectedNodeId.set(nodeId);
-}
 
 
 </script>
 
-
-
-<div>
-<button on:click={addFolder}>Add Folder</button>
-<button on:click={addFile}>Add File</button>
-</div>
-
-{#each $nodesDataStore as node (node.id)}
-    <button on:click={() => handleNodeClick(node)}>{node.name}</button>
-    <br>
-  
-{/each}
-
-<select bind:value={$editorType}>
-    <option value="text">Text Editor</option>
-    <option value="canvas">Canvas</option>
-  </select>
-
-
-  <a data-sveltekit-preload-data="hover" href="/">
+<a data-sveltekit-preload-data="hover" href="/">
     
     fuckin issys
 </a>
@@ -86,9 +54,18 @@ function updateSelectedNodeId(nodeId) {
   </Button>
 
 
-    <TextEditor/>
-  
+<div class="max-w-3xl p-2 m-auto my-16">
+	<h1
+		contenteditable
+		bind:textContent={title}
+		class="focus:outline-none text-4xl font-semibold mb-4"
+	/>
+	<Editor {content} />
+</div>
 
-
-<!-- <DirectedGraph/> -->
-
+<style>
+	h1:empty::before {
+		content: 'Title';
+		color: #adb5bd;
+	}
+</style>
