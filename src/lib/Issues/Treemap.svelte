@@ -87,7 +87,8 @@ function searchAndRebuildHierarchy(hierarchy: HierarchyData, nodes: Node[], issu
             addChildren(path[path.length - 1]);
         } else if (path.length === 1) {
             // If the matching node has no parent, it means it's the root or a top-level node, handle accordingly
-            addChildren(path[0]);
+            console.log("1");
+            
         }
         
         return path[0]; // Return the complete hierarchy from the root to the matched node, including all ancestors

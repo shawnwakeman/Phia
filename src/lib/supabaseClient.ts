@@ -92,19 +92,18 @@ export async function addNode(name: string, value: number, parent_id: number | n
         return { success: false, error: error.message };
     }
 
-    
     if (data) {
-        console.log('Added issue:', data);
-
-        // Update the issuesDataStore with the new data
-        nodesDataStore.update(currentIssues => {
-            const newIssue = data[0]; // Assuming the inserted data is returned
-            
-            
-            
-            return [...currentIssues, newIssue];
+        console.log('Added node:', data);
+        
+        const addedNode = data[0]; // Assuming only one node is inserted
+        const nodeId = addedNode.id; // Extracting the ID of the added node
+    
+        // Update the nodesDataStore with the new data
+        nodesDataStore.update(currentNodes => {
+          return [...currentNodes, addedNode];
         });
-
+    
+        return { success: true, id: nodeId }; // Return success and the ID of the added node
     } else {
         console.error('No data returned from the database');
         // Optionally, update the store to indicate that no data was returned
@@ -136,9 +135,60 @@ export async function updateNodeByID(nodeId: number, updatedValues: {
     }
 
     // If the update is successful, `data` should contain the updated node(s)
-    console.log('Updated node:', data);
-    return data;
+    if (data) {
+        console.log('Updated node:', data);
+
+        // Update the nodesDataStore with the updated data
+        nodesDataStore.update(currentNodes => {
+            return currentNodes.map(node => {
+                if (node.id === nodeId) {
+                    return { ...node, ...updatedValues };
+                }
+                return node;
+            });
+        });
+
+        return { success: true, data: data };
+    } else {
+        console.error('No data returned from the database');
+        // Optionally, update the store to indicate that no data was returned
+        return { success: false, error: 'No data returned from the database' };
+    }
 }
+
+export async function updateNodeNameByID(nodeId: number, newName: string) {
+    const { data, error } = await supabase
+        .from('nodes')
+        .update({ name: newName })
+        .match({ id: nodeId })
+        .select('id, name');
+
+    if (error) {
+        console.error('Error updating node name:', error);
+        return { success: false, error: error.message };
+    }
+
+    if (data) {
+        console.log('Updated node name:', data);
+
+        // Update the nodesDataStore with the updated name
+        nodesDataStore.update(currentNodes => {
+            return currentNodes.map(node => {
+                if (node.id === nodeId) {
+                    return { ...node, name: newName };
+                }
+                return node;
+            });
+        });
+
+        return { success: true, data: data };
+    } else {
+        console.error('No data returned from the database');
+        // Optionally, update the store to indicate that no data was returned
+        return { success: false, error: 'No data returned from the database' };
+    }
+}
+
 
 
 export async function deleteNodeById(nodeId: number) {
@@ -147,14 +197,16 @@ export async function deleteNodeById(nodeId: number) {
         .delete()
         .match({ id: nodeId });
 
-    if (error) {
-        console.error('Error deleting node:', error);
-        return { success: false, error: error.message };
+        if (error) {
+            console.error('Error deleting node:', error);
+            return { success: false, error: error.message };
+        }
+        
+        nodesDataStore.update(currentNodes => {
+            return currentNodes.filter(node => node.id !== nodeId);
+        });
+       
     }
-
-    console.log('Deleted node:', data);
-    return { success: true, data: data };
-}
 
 
 export async function findRootNodes() {

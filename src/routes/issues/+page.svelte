@@ -64,41 +64,7 @@
 
         
         updateSelectedNodeStore()
-        
-        interface RealtimePostgresInsertPayload<T> {
-            eventType: string;
-            new?: T;
-            old?: T;
-        }
-        function handleRealtimeEvent(payload: RealtimePostgresInsertPayload<{ [key: string]: any }>) {
-            switch (payload.eventType) {
-                case 'INSERT': {
-                    // Extract and cast the necessary properties from payload.new
-                    console.log("insering", payload.new)
-                    const newNode: Issue = payload.new as Issue;
-                    
-                    break;
-                }
-                case 'UPDATE': {
-                    // Extract and cast the necessary properties from payload.new
-                
-
-                    break;
-                }
-                case 'DELETE': {
-                    // For delete, payload.old might contain the deleted node's data
-                
-                    break;
-                }
-                default:
-                    console.warn("Unhandled event type:", payload.eventType);
-            }
-
-        }
-
-        const channels = supabase.channel('custom-all-channel')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'issues' }, handleRealtimeEvent)
-        .subscribe();
+       
     });
 
 

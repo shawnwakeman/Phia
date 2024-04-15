@@ -1,0 +1,274 @@
+<script lang="ts">
+    import { writable, get } from 'svelte/store';
+    import { nodesDataStore } from '../../stores';  // Adjust path as necessary
+    import type { Node } from '../../types/collection';
+    import { selectedNodeId } from '../../stores';
+    import { addNode, updateNodeNameByID, deleteNodeById } from '$lib/supabaseClient';
+
+
+    interface Feature {
+      id: number;
+      name: string;
+      isHovered: boolean;
+      isEditing: boolean;
+    }
+
+    function nodeToFeature(node: Node): Feature {
+        return {
+            id: node.id,
+            name: node.name,
+            isHovered: false,  // Default to false
+            isEditing: false   // Default to false
+        };
+    }
+    
+  
+    const features = writable<Feature[]>([]);
+
+
+
+    selectedNodeId.subscribe($selectedNodeId => {
+        const allNodes: Node[] = get(nodesDataStore);
+        
+        // Find all nodes with parent_id equal to selected node's ID
+        const selectedFeatures = allNodes
+            .filter(node => node.parent_id === $selectedNodeId)
+            .map(nodeToFeature);
+ 
+        features.set(selectedFeatures);  // Update the features store
+        });
+
+
+    let newFeatureName = '';
+    let editingFeatureName = ''; // New variable for edit operation
+
+    let hoveredFeatureIndex: number | null = null;
+    let editingFeatureIndex: number | null = null;
+
+
+    async function addFeature() {
+        if (newFeatureName.trim() === '') return;
+
+            // Call addNode function and wait for its result
+            const result = await addNode(newFeatureName, 1, $selectedNodeId);
+            console.log(result);
+            
+            // Check if the node was successfully added
+            if (result.success && result.id !== undefined) {
+                // If successful, update the features store with the new node
+                features.update(currentFeatures => {
+                return [...currentFeatures, { id: result.id, name: newFeatureName + " ", isHovered: false, isEditing: false }];
+                });
+            }
+
+            // Reset newFeatureName after adding
+            newFeatureName = '';
+        }
+
+    function handleKeydown(event: KeyboardEvent) {
+      if (event.key === 'Enter' && editingFeatureIndex === null) {
+        addFeature();
+      } else if (event.key === 'Backspace' && newFeatureName.trim() === '' && editingFeatureIndex === null) {
+        removeLastFeature();
+      }
+    }
+  
+    function removeLastFeature() {
+      features.update(currentFeatures => {
+        if (currentFeatures.length > 0) {
+          const lastFeature = currentFeatures[currentFeatures.length - 1];
+          deleteNodeById(lastFeature.id)
+          newFeatureName = lastFeature.name;
+          return currentFeatures.slice(0, -1);
+        }
+        return currentFeatures;
+      });
+    }
+  
+    function handleMouseEnter(index: number) {
+      features.update(currentFeatures => {
+        return currentFeatures.map((feature, i) => {
+          if (i === index) {
+            return { ...feature, isHovered: true };
+          }
+          return feature;
+        });
+      });
+      hoveredFeatureIndex = index;
+    }
+  
+    function handleMouseLeave(index: number) {
+      features.update(currentFeatures => {
+        return currentFeatures.map((feature, i) => {
+          if (i === index) {
+            return { ...feature, isHovered: false };
+          }
+          return feature;
+        });
+      });
+      hoveredFeatureIndex = null;
+    }
+  
+    function deleteFeature(index: number, id: number) {
+      if (index !== editingFeatureIndex) {
+        console.log(id);
+        deleteNodeById(id)
+        features.update(currentFeatures => {
+          return currentFeatures.filter((_, i) => i !== index);
+        });
+        hoveredFeatureIndex = null;
+      }
+
+      console.log($nodesDataStore);
+    }
+  
+    function startEditingFeature(index: number) {
+      editingFeatureName = $features[index].name; // Use editingFeatureName
+      editingFeatureIndex = index;
+      features.update(currentFeatures => {
+        return currentFeatures.map((feature, i) => {
+          if (i === index) {
+            return { ...feature, isEditing: true };
+          }
+          return { ...feature, isEditing: false };
+        });
+      });
+
+      setTimeout(() => {
+        const editingInput = document.querySelector('.editing-input');
+        if (editingInput instanceof HTMLInputElement) {
+            editingInput.focus();
+        }
+    }, 0);
+    }
+  
+    function saveEditedFeature(index: number, id: number) {
+        console.log(id)
+        updateNodeNameByID(id, editingFeatureName)
+      features.update(currentFeatures => {
+        return currentFeatures.map((feature, i) => {
+          if (i === index) {
+            return { ...feature, name: editingFeatureName, isEditing: false }; // Use editingFeatureName
+          }
+          return feature;
+        });
+      });
+      editingFeatureName = ''; // Reset editingFeatureName
+      editingFeatureIndex = null;
+    }
+</script>
+  <style>
+    .feature-list {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  
+    .feature-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+  
+    .feature-item:hover {
+      background-color: #f5f5f5;
+    }
+  
+    .delete-button, .edit-button {
+      visibility: hidden;
+      padding: 4px 8px;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+    }
+  
+    .delete-button {
+      background-color: #dc3545;
+    }
+  
+    .edit-button {
+      background-color: #007BFF;
+      margin-right: 8px;
+    }
+  
+    .feature-item:hover .delete-button,
+    .feature-item:hover .edit-button {
+      visibility: visible;
+    }
+  
+    .editing-input {
+      padding: 8px;
+      margin-right: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  
+    input[type="text"] {
+      padding: 8px;
+      margin-right: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+  
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  
+  <div>
+    <input
+      type="text"
+      bind:value={newFeatureName}
+      placeholder="Enter new feature"
+      on:keydown={handleKeydown}
+    />
+    <button on:click={addFeature}>Add Feature</button>
+  </div>
+  
+  {#if $features.length > 0}
+    <ul class="feature-list">
+        {#each $features as feature, index (feature.id)}
+            <li
+            class="feature-item"
+            on:mouseenter={() => handleMouseEnter(index)}
+            on:mouseleave={() => handleMouseLeave(index)}
+            >
+            {#if feature.isEditing}
+                <input
+                type="text"
+                class="editing-input"
+                bind:value={editingFeatureName}
+                on:keydown={(event) => {
+                    if (event.key === 'Enter') {
+                    saveEditedFeature(index, feature.id);
+                    }
+                }}
+                />
+                <button on:click={() => saveEditedFeature(index, feature.id)}>Save</button>
+            {:else}
+                {feature.name}
+                {#if feature.isHovered}
+                <button class="edit-button" on:click={() => startEditingFeature(index)}>
+                    Edit
+                </button>
+                <button class="delete-button" on:click={() => deleteFeature(index, feature.id)}>
+                    Delete
+                </button>
+                {/if}
+            {/if}
+            </li>
+        {/each}
+    </ul>
+  {/if}
