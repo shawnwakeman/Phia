@@ -275,7 +275,7 @@ nodes = pack(root);
         return classes;
     })
     .on("click", (event, d) => {
-      event.stopPropagation();
+    //   event.stopPropagation();
 
       if (d.children != null || d.depth == 1) {
         handleCircleClick(d);
@@ -458,18 +458,10 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
           const scale = 1 / (d.depth); // Scale down text size as depth increases
           return `translate(${d.x},${d.y}) scale(${scale})`;
         })
-        .attr("opacity", 0) // Start fully transparent
         .text(d => d.data.name)
         .attr("class", "text")
-        .call(enter => enter.transition()
-        .duration(750)
-        .attr("opacity", 1)), // Animate to fully opaque
-      update => update.call(update => update.transition()
-        .duration(750)), // Optional: animate updates
-      exit => exit.call(exit => exit.transition()
-        .duration(750)
-        .attr("opacity", 0) // Animate to fully transparent
-        .remove())
+
+      
     );
 }
 
