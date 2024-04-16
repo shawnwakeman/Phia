@@ -196,7 +196,7 @@ function buildHierarchy(nodes: Node[], issues: Issue[]) {
 
   
   function drawTreeMap(data) {
-        const width = 600; // Adjusted from 800
+        const width = 800; // Adjusted from 800
         const height = 600; // Adjusted from 600
 
         const format = d3.format(",d");
@@ -285,7 +285,7 @@ nodes.append("title")
     #treemap {
       display: block;
       margin: 50px;
-      max-width: 50%;
+      max-width: 100%;
       height: auto;
       background-color: #f0f0f0; /* Light grey background */
     }

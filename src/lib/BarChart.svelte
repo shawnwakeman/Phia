@@ -146,9 +146,7 @@
         currentZoomLevel = event.transform.k;
         console.log('Current zoom scale:', event.transform.k);
         if (okay) {
-            updateText(nodes)
-            updateCircles(nodes)
-            console.log("render");
+            updateVisuals()
             
         } else {
             okay = true
@@ -260,26 +258,35 @@ nodes = pack(root);
     .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
     .join("circle")
     .attr("transform", d => `translate(${d.x},${d.y})`)
-    .attr("r", d => {
-  // Check if a node is selected and ensure it's defined
-    if (selectedNode && d) {
-        // Display the circle if the depth difference is less than 3
-        // This condition assumes selectedNode and d are defined and have a depth property
-        return Math.abs(selectedNode.depth - d.depth) < 5  ? d.r : 0;
-    } else {
-        // If no node is selected, or if there's an issue with the selectedNode or d, set a default
-        // This could be 0 (to hide) or d.r (or another logic) to show circles
-        return d.r; // or another default logic based on your requirements
-    }
-    })
+    .attr("r", d => d.r)
 
 // Radius is calculated by D3, taking into account the dynamic padding
     .attr("fill", d => d.data.fillColor)
-    .attr("stroke", d => d.data.id === currentSelectedNodeId ? "red" : "blue")
-    .attr("class", d => d.data.id === currentSelectedNodeId ? "circle-selected" : "circle")
+    .attr("stroke-width", d => 1/ d.depth)  // Decrease stroke-width with depth
+    .attr("class", d => {
+    // Add 'circle' class to all, 'circle-selected' if it is the selected node
+        let classes = d.data.id === currentSelectedNodeId ? "circle circle-selected" : "circle";
+        // Add 'hoverable' class only if the node has children
+        if (d.children || d.depth == 1) {
+        classes += " hoverable";
+        } else if (d.parent?.data.id == $selectedNodeStore?.id) {
+            classes += " hoverable";
+        }
+        return classes;
+    })
     .on("click", (event, d) => {
       event.stopPropagation();
-      handleCircleClick(d);
+
+      if (d.children != null || d.depth == 1) {
+        handleCircleClick(d);
+      } else if (d.parent?.data.id == $selectedNodeStore?.id) {
+        handleCircleClickInternal(d)
+      
+        
+      } else {
+            handleCircleClickFarNode(d)
+      }
+ 
 
       
     });
@@ -301,53 +308,145 @@ function convertToNodeType(d3Node: d3.HierarchyCircularNode<WritableNode> | null
 }
 
 
-function handleCircleClick(d) {
-    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0;
-    console.log("Selected node depth:", selectedNode?.depth);
+function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
+    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
+        console.log(selectedNode?.depth);
 
-    let allowClick = (d.depth - currentDepth < 2) || d.depth === 0;
 
-    if (d.children && d.children.length === 0) {
-        if (selectedNode && d.data.id === selectedNode.data.id) {
-            // Reset selection and zoom out to the root
-            selectedNode = nodes.find(node => node.depth === 0 && node.parent === null);
-            currentDepth = 0;
-            selectedNodeId.set(data?.id || 1);
-            svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity); // Zoom reset
-        } else {
-            selectedNode = d;
-            selectedNodeId.set(d.data.id);
-            applyZoom(d); // Apply zoom to this node
-        }
+    // Check if the clicked node is the currently selected node
+    if (selectedNode && d.data.id === selectedNode.data.id) {
+        // Reset selection and zoom out
+        const parent = nodes.find(node => node.depth === 0 && node.parent === null) || null;
+        selectedNode = parent
+        currentDepth = 0;
+        selectedNodeId.set(data?.id || 1)
+        
+        // Apply a zoom reset
+        svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
     } else {
+        // Update the selected node and current depth for a new selection
         selectedNode = d;
+        currentDepth = d.depth;
         selectedNodeId.set(d.data.id);
-        applyZoom(d); // Apply zoom to this node
+        // Calculate and apply zoom transformation for the new selection
+        applyZoom(d);
+        
     }
 
-    selectedNodeStore.set(convertToNodeType(selectedNode));
-    updateVisuals(); // Update the visual representation
+    // selectedNodeId.set(d.data.id)
+    console.log("123" , selectedNode);
+    
+    selectedNodeStore.set(convertToNodeType(selectedNode))
+    // Refresh visuals with the updated selection or reset
+    updateVisuals();
 }
 
-
-function applyZoom(d) {
-
-    const focus0 = focus;
-    
-    selectedNode = d
+function handleCircleClickInternal(d: d3.HierarchyCircularNode<WritableNode>) {
+    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
+        console.log(selectedNode?.depth);
 
 
-    
+    // Check if the clicked node is the currently selected node
+        if (!d.children || d.children.length === 0) {
 
+            if (selectedNode && d.data.id === selectedNode.data.id) {
+                // Reset selection and zoom out
+                currentDepth = 0;
+                selectedNodeId.set(1)
+                // Apply a zoom reset
+                
+        } else {
+
+            selectedNode = d
+            selectedNodeId.set(d.data.id);
+         
+
+         
+
+
+        }
+        
+        selectedNodeStore.set(convertToNodeType(selectedNode))
+
+        
+        updateVisuals();
+        return; // Exit the function early
+    }
+}
+
+function handleCircleClickFarNode(d: d3.HierarchyCircularNode<WritableNode>) {
+    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
+        console.log(selectedNode?.depth);
+
+
+    // Check if the clicked node is the currently selected node
+ 
+
+        if (selectedNode && d.data.id === selectedNode.data.id) {
+                // Reset selection and zoom out
+                
+                
+                currentDepth = 0;
+                selectedNodeId.set(1)
+                // Apply a zoom reset
+                svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+        } else {
+           
+            selectedNode = d.parent
+            selectedNodeId.set(d.parent?.data.id);
+
+            applyZoomToParent(d)
+
+
+        }
+        
+        
+        
+        selectedNodeStore.set(convertToNodeType(selectedNode))
+
+        
+        updateVisuals();
+        return; // Exit the function early
+  
+}
+
+function applyZoomToParent(d: d3.HierarchyCircularNode<WritableNode>) {
+    d = d.parent
+    if (!selectedNode) {
+        // Reset zoom if no node is selected
+        svg.transition().duration(750).call(zoom.transform as any, d3.zoomIdentity);
+        return;
+    }
+
+    // Compute the zoom transformation based on the selected node 'd'
     const targetDiameter = Math.min(width, height) * 0.9;
     const scale = targetDiameter / (d.r * 2);
     const translate = [width / 2 - scale * d.x, height / 2 - scale * d.y];
+    // Here, 'transform' is declared and assigned before its use
     const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale);
 
-    svg.transition().duration(750).call(zoom.transform, transform); // Apply zoom transformation
+    // Now 'transform' is already assigned and can be safely used
+    svg.transition().duration(750).call(zoom.transform as any, transform);
 }
 
 
+function applyZoom(d: d3.HierarchyCircularNode<WritableNode>) {
+    if (!selectedNode) {
+        // Reset zoom if no node is selected
+        svg.transition().duration(750).call(zoom.transform as any, d3.zoomIdentity);
+        return;
+    }
+
+    // Compute the zoom transformation based on the selected node 'd'
+    const targetDiameter = Math.min(width, height) * 0.9;
+    const scale = targetDiameter / (d.r * 2);
+    const translate = [width / 2 - scale * d.x, height / 2 - scale * d.y];
+    // Here, 'transform' is declared and assigned before its use
+    const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale);
+
+    // Now 'transform' is already assigned and can be safely used
+    svg.transition().duration(750).call(zoom.transform as any, transform);
+}
 
 function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
     g.selectAll("text").remove();
@@ -355,7 +454,10 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
     .data(nodes.descendants().filter(d => d.depth === currentDepth + 1), d => (d as d3.HierarchyCircularNode<WritableNode>).data.name)
     .join(
       enter => enter.append("text")
-        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .attr("transform", d => {
+          const scale = 1 / (d.depth); // Scale down text size as depth increases
+          return `translate(${d.x},${d.y}) scale(${scale})`;
+        })
         .attr("opacity", 0) // Start fully transparent
         .text(d => d.data.name)
         .attr("class", "text")
@@ -371,10 +473,40 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
     );
 }
 
+
 updateVisuals();
 
+svg.on("wheel.zoom", event => event.preventDefault())
+    .on("dblclick.zoom", null) ;
 
+    svg.on("dblclick.zoom", null);
+
+            svg.on("mousedown.zoom", null)
+           .on("mousemove.zoom", null)
+           .on("mouseup.zoom", null)
+           .on("touchstart.zoom", null)
+           .on("touchmove.zoom", null)
+           .on("touchend.zoom", null);
  });
+
+
+ export let backgroundColor = '#fff'; // You can make this reactive too
+    export let fontSize = 12; // Font size for labels
+
+    let activeFocus = null;
+    let rootData; // This should be your packed nodes data structure
+    let zoomK = 1, zoomA = 0, zoomB = 0; // Controls for zoom level and translation
+
+    // Function to handle zooming on a node
+    function zoom(node, event) {
+        event.stopPropagation();
+        activeFocus = node;
+        const k = height / (node.r * 2);
+        zoomK = k;
+        zoomA = node.x;
+        zoomB = node.y;
+    }
+
 
  
 
@@ -383,7 +515,6 @@ updateVisuals();
 
 
     <div id="circle-packing"></div>
-
 
 
 
@@ -396,19 +527,18 @@ updateVisuals();
     :global(.circle-selected) {
 
         stroke: #000;
-        stroke-width: 2px;
+
     }
 
-    :global(.circle:hover, .circle-selected:hover) {
-
-        stroke-width: 4px; /* thicker stroke on hover */
+    :global(.hoverable:hover, .circle-selected:hover) {
+  
         stroke: green; /* change color on hover */
     }
 
 
     svg {
-        shape-rendering: geometricPrecision;
-        image-rendering: optimizeQuality;
+        shape-rendering: optimizeSpeed;
+        image-rendering: optimizeSpeed;
     }
 
     
