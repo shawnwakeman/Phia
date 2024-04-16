@@ -141,20 +141,26 @@
     const zoom = d3.zoom<SVGSVGElement, unknown>()
   
     .on("zoom", (event) => {
-        g.attr("transform", event.transform)
-
+        g.attr("transform", event.transform);
         currentZoomLevel = event.transform.k;
         console.log('Current zoom scale:', event.transform.k);
-        if (okay) {
-            updateVisuals()
-            
-        } else {
-            okay = true
-        }
-            
+
+        // Use debounced function to handle updates
+        debouncedUpdateVisuals();
     });
 
 
+    function debounce(func, timeout = 300) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
+
+    const debouncedUpdateVisuals = debounce(() => {
+        updateVisuals();
+    });
     
     const svg = d3.select("#circle-packing")
         .append("svg")
@@ -448,23 +454,29 @@ function applyZoom(d: d3.HierarchyCircularNode<WritableNode>) {
     svg.transition().duration(750).call(zoom.transform as any, transform);
 }
 
-function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
-    g.selectAll("text").remove();
-    g.selectAll("text")
-    .data(nodes.descendants().filter(d => d.depth === currentDepth + 1), d => (d as d3.HierarchyCircularNode<WritableNode>).data.name)
-    .join(
-      enter => enter.append("text")
-        .attr("transform", d => {
-          const scale = 1 / (d.depth); // Scale down text size as depth increases
-          return `translate(${d.x},${d.y}) scale(${scale})`;
-        })
-        .text(d => d.data.name)
-        .attr("class", "text")
-
-      
-    );
+function shouldDisplayText(node: d3.HierarchyCircularNode<WritableNode>): boolean {
+  // Only display text for nodes with radius larger than 10
+  return node.r > 100;
 }
 
+
+function updateText(nodes: d3.HierarchyCircularNode<WritableNode>, selectedNode: d3.HierarchyCircularNode<WritableNode>) {
+    g.selectAll("text").remove();  // Remove all existing text elements
+    g.selectAll("text")
+      .data(
+        nodes.descendants().filter(d => d.parent?.data.id == $selectedNodeStore?.id),  // Filter to only immediate children of the selected node
+        d => (d as d3.HierarchyCircularNode<WritableNode>).data.name
+      )
+      .join(
+        enter => enter.append("text")
+          .attr("transform", d => {
+            const scale = 1 / (d.depth);  // Scale down text size as depth increases
+            return `translate(${d.x},${d.y}) scale(${scale})`;
+          })
+          .text(d => d.data.name)
+          .attr("class", "text")
+      );
+}
 
 updateVisuals();
 
