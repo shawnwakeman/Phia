@@ -15,6 +15,8 @@
     
 
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
+    import Sidebar from "$lib/Issues/Sidebar.svelte";
+    import { active } from "d3";
 
     
 

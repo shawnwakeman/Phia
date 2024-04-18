@@ -115,7 +115,7 @@
 <button on:click={() => { show = !show; sidebarWidth = '50%'; }}>Expand Half Width</button>
 <button on:click={() => { show = !show; sidebarWidth = '100%'; }}>Expand Full Width</button>
 
-<Sidebar {show} width = {sidebarWidth} />
+
 
 <button on:click={() => createNewNode()}>add</button>
 

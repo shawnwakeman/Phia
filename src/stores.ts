@@ -6,6 +6,7 @@ import type { Node, Issue, FilePath } from './types/collection'
 
   // Initialize the selectedNode store with a default value or null if no default is desired
 export const selectedNodeStore = writable<Node | null>(null);
+export const navigateNodeStore = writable<Node | null>(null);
 
 export const nodesDataStore = writable<Node[]>([]);
 

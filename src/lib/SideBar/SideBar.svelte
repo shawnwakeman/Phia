@@ -5,7 +5,7 @@
     import Treemap from "$lib/Issues/Treemap.svelte";
     import { updateNodeByID } from "../supabaseClient";
 
-    import IssueSection from "./IssueSection.svelte";
+    import IssueSection from "../nodeManager/IssueSection.svelte";
 
     import { goto } from '$app/navigation';
 

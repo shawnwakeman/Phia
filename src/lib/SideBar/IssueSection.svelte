@@ -3,9 +3,9 @@
 import { selectedNodeStore } from "../../stores";
 import { fetchNestedIssues } from "../supabaseClient";
 
-import CollapsibleSection from './CollapsibleSection.svelte'
+import CollapsibleSection from '../SideBar/CollapsibleSection.svelte'
 import type { Issue, Node } from "../../types/collection";
-import IssueList from "./IssueList.svelte"
+import IssueList from "../SideBar/IssueList.svelte"
 
     let issues: Issue[] = [];
     let currentSelectedNode: Node | null = null;

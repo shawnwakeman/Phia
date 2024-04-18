@@ -6,8 +6,8 @@
     import type { Node } from "../types/collection"
     import * as d3 from 'd3';
     import { selectedNodeStore } from "../stores";
-    import { selectedNodeId, nodesDataStore } from "../stores";
-
+    import { selectedNodeId, nodesDataStore, navigateNodeStore } from "../stores";
+  
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
     const primcolor = "red"
     type WritableNode = {
@@ -25,6 +25,7 @@
     let currentSelectedNodeId: number;
         selectedNodeId.subscribe(value => {
             currentSelectedNodeId = value;
+            
         });
 
 
@@ -72,29 +73,42 @@
       
            
            const childValue = element.value / element.children.length / 2 ;
-           const totalChildValue = element.children.reduce((acc, child) => acc + child.value, 0);
+       
+           const totalChildValue = element.children.reduce((acc, child) => acc + child.value, 0) ;
 
            
            element.children.forEach((child) => {
+            
             if (totalChildValue > 1) {
-                child.value = ((child.value / totalChildValue) * element.value / 2) * 1.2;
+                if (totalChildValue > 2) {
+                    console.log(totalChildValue, child.name);
+                    if  (element.children?.length == 2 || element.children?.length == 4) {
+                        child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
+                    } else {
+                        child.value = ((child.value / totalChildValue) / 1.9) * 1.1 * element.value;
+                    }
+                   
+                } else {
+           
+                    
+                    if (element.children?.length == 2 || element.children?.length == 4) {
+                        child.value = ((child.value / totalChildValue) / 1.9) * 0.83 * element.value;
+                    } else {
+                        child.value = ((child.value / totalChildValue) / 1.9) * 1.18 * element.value;
+                    }
+                    
+                }
+                
             } else {
                 // If totalChildValue is zero, distribute parent's value equally
-                child.value = element.value ;
+                child.value = element.value * 1 ;
             }
                
            });
-       } else {
-            element.value
-        
        }
    });
 
 
-    console.log("Node ID and Values after calculations:");
-    Object.values(elements).forEach((element) => {
-        console.log(`Node ID: ${element.id}, Value: ${element.value}`);
-    });
 
     return rootCandidates[0]; // Return the root node
 }
@@ -116,23 +130,36 @@
 
 
    
-        const unsubscribe = nodesDataStore.subscribe((value) => {
+        nodesDataStore.subscribe((value) => {
         console.log(value);
         
             data = createHierarchy(value)
             if (!isFirstLoad) {
-                console.log(selectedNode, "asd");
+          
                 updateVisuals();
                 if (selectedNode) {
                     centerOnNode(selectedNode);
                 }
             
-                console.log(selectedNode, "asd");
+               
                 
             }
             isFirstLoad = false; // Update flag after first run
         }); // logs 'got a subscriber', then '1'
- 
+
+        navigateNodeStore.subscribe(value => {
+            if (value) {
+                console.log('Selected node changed:', value);
+                if (nodes && !isFirstLoad) {
+                    console.log(nodes);
+                    
+                    let currentNode = nodes.find(d => d.data.id === value.id);
+                    console.log(currentNode);
+                    handleCircleClick(currentNode)
+                }
+            }
+        });
+
             ////////////////////////////////////////////////////////////// 
 			////////////////// Create Set-up variables  ////////////////// 
 			////////////////////////////////////////////////////////////// 
@@ -246,7 +273,7 @@
     const rootPadding = 20; // Extra padding for the root node
     const childNodePadding = 5; // Extra padding for nodes with children
 
-    console.log("Root with value sum and sort:", data);
+
 const root = d3.hierarchy<WritableNode>(data)
     .sum(d => d.value ?? 0) // Only use the node's own value
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)); // Keep sorting if needed
@@ -261,7 +288,7 @@ const pack = d3.pack<WritableNode>()
         } else if (d.depth === 1) {
             return 3; // Consistent padding for root's direct children
         } else {
-            console.log(d.r);
+      
             
             return d.r * 10 
         }
@@ -303,10 +330,8 @@ selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
     // Add 'circle' class to all, 'circle-selected' if it is the selected node
         let classes = d.data.id === currentSelectedNodeId ? "circle circle-selected" : "circle";
         // Add 'hoverable' class only if the node has children
-        if (d.children || d.depth == 1) {
+        if (d.parent?.data.id == $selectedNodeStore?.id) {
         classes += " hoverable";
-        } else if (d.parent?.data.id == $selectedNodeStore?.id) {
-            classes += " hoverable";
         }
         return classes;
     })
@@ -370,7 +395,7 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
     }
 
     // selectedNodeId.set(d.data.id)
-    console.log("123" , selectedNode);
+  
     
     selectedNodeStore.set(convertToNodeType(selectedNode))
     // Refresh visuals with the updated selection or reset
@@ -379,7 +404,7 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
 
 function handleCircleClickInternal(d: d3.HierarchyCircularNode<WritableNode>) {
     const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
-        console.log(selectedNode?.depth);
+   
 
 
     // Check if the clicked node is the currently selected node
@@ -414,7 +439,7 @@ function handleCircleClickInternal(d: d3.HierarchyCircularNode<WritableNode>) {
 
 function handleCircleClickFarNode(d: d3.HierarchyCircularNode<WritableNode>) {
     const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
-        console.log(selectedNode?.depth);
+
 
 
     // Check if the clicked node is the currently selected node
@@ -499,7 +524,7 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>, selectedNode:
       
         
     }
-    console.log(selectedNode, "csuahakjshdlkja");
+
     g.selectAll("text").remove();  // Remove all existing text elements
     g.selectAll("text")
     .data(
@@ -537,8 +562,7 @@ svg.on("wheel.zoom", event => event.preventDefault())
  });
 
 
- export let backgroundColor = '#fff'; // You can make this reactive too
-    export let fontSize = 12; // Font size for labels
+  
 
     let activeFocus = null;
     let rootData; // This should be your packed nodes data structure
@@ -577,9 +601,9 @@ svg.on("wheel.zoom", event => event.preventDefault())
 
     }
 
-    :global(.hoverable:hover, .circle-selected:hover) {
+    :global(.hoverable:hover) {
   
-        stroke: green; /* change color on hover */
+        stroke: rebeccapurple; /* change color on hover */
     }
 
 
