@@ -3,15 +3,22 @@
     import NodeCreator from "../lib/NodeCreator.svelte";
     import SideBar from "../lib/SideBar/SideBar.svelte";
     import { onMount } from 'svelte';
-    import type { Node } from "../types/collection";
-    import { selectedNodeId, selectedNodeStore, nodesDataStore} from "../stores";
+    import type { Node, Issue } from "../types/collection";
+    import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore} from "../stores";
     import { get } from "svelte/store";
     import { writable } from 'svelte/store';
     import { toggleMode } from "mode-watcher";
     import { Button } from "$lib/components/ui/button/index.js";
     import DirectedGraph from '../lib/Notbook/DirectedGraph.svelte'
     import NodeManager from '$lib/nodeManager/index.svelte'
-    export let data: { nodes: Node[] };
+
+
+
+
+    import Kaban from '$lib/Issues/Kaban/Kaban.svelte'
+
+    import Treemap from '$lib/Issues/Treemap.svelte'
+    export let data: { nodes: Node[], issues: Issue[] };
     
 
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
@@ -27,7 +34,10 @@
             selectedNodeStore.set(selectedNode || null);
     }
 
-    nodesDataStore.set(data.nodes);
+
+    nodesDataStore.set(data.nodes)
+    issuesDataStore.set(data.issues);
+    
     
     onMount(() => {
         updateSelectedNodeStore();
@@ -43,6 +53,18 @@
 
     function setSidebarWidth(width) {
         sidebarWidth[0] = width;
+    }
+
+
+    let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
+
+    let currentViewID = "table"
+
+    let show = false;
+
+
+    function setCurrentView(viewid: string) {
+        currentViewID = viewid;
     }
 
 
@@ -67,15 +89,9 @@
 
             
 
- 
+
 </ul>
 
-
-<ul>
-    {#each $nodesDataStore as node}
-      <li>{node.name}</li>
-    {/each}
-  </ul>
 
 
 
@@ -90,6 +106,7 @@
 
 <!-- Buttons for setting the sidebar width -->
 
+
 <div class="container">
     
     <button on:click={() => setSidebarWidth(0)}>0/100</button>
@@ -100,21 +117,34 @@
 
 
   <Splitpanes >
-      <Pane bind:size={sidebarWidth[0]}>
-          <BarChart/>
+      <Pane bind:size={sidebarWidth[0]} class="centered-content">
+        <div>
+            <BarChart/>
+        </div>
+    
       </Pane>
-      <Pane>
+      <Pane class="centered-content">
           <NodeManager/>
       </Pane>
   </Splitpanes>
+
+
 
   <style>
     .container {
       display: flex; /* Continue using flexbox for horizontal alignment */
       justify-content: center; /* Center all items horizontally in the container */
       align-items: center; /* Keep items vertically centered */
+
       padding: 10px;
     }
+
+    :global(.centered-content) {
+
+        height: 100%; /* Full height to align with sibling panes */
+    }
+
+
   
     button {
       padding: 10px 20px;
@@ -123,3 +153,4 @@
       margin: 0 5px; /* Adjust or remove this if you don't want any space between buttons */
     }
   </style>
+

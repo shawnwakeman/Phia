@@ -3,12 +3,13 @@
 
 
     import { onMount } from 'svelte';
-    import type { Node } from "../types/collection"
+    import type { Node, Issue } from "../types/collection"
     import * as d3 from 'd3';
     import { selectedNodeStore } from "../stores";
-    import { selectedNodeId, nodesDataStore, navigateNodeStore } from "../stores";
+    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore } from "../stores";
   
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
+    import { canJoin } from '@tiptap/pm/transform';
     const primcolor = "red"
     type WritableNode = {
     id: number
@@ -16,6 +17,10 @@
     value?: number | null;
     children?: WritableNode[];
     fillColor: string;
+    state: string;
+    totalPriority: number
+    innerGradientStop: string;
+    outerGradientStop: string;
     
 };
 
@@ -31,6 +36,37 @@
 
         
     let nodes;    
+
+    function getNestedIssuesTotalPriority(nodeId: number, nodes: Node[], issues: Issue[]): number {
+    console.time('getNestedIssuesTotalPriority');
+
+    function findChildNodeIds(nodeId: number, nodes: Node[]): number[] {
+        const childNodes = nodes.filter(node => node.parent_id === nodeId);
+        let childNodeIds = childNodes.map(node => node.id);
+        for (let childNode of childNodes) {
+            childNodeIds = childNodeIds.concat(findChildNodeIds(childNode.id, nodes));
+        }
+        return childNodeIds;
+    }
+
+    const nestedNodeIds = [nodeId, ...findChildNodeIds(nodeId, nodes)];
+    const totalPriority = issues.reduce((acc, issue) => {
+        if (issue.node_id !== null && nestedNodeIds.includes(issue.node_id)) {
+            const priorityValue = {
+                'Low': 1,
+                'Medium': 2,
+                'High': 3,
+                'Critical': 5
+            };
+            return acc + (priorityValue[issue.priority] || 0);
+        }
+        return acc;
+    }, 0);
+
+  
+    return totalPriority;
+}
+
     
     function createHierarchy(data: Node[]): WritableNode | null {
     // Mapping object to store nodes by id for quick reference, and to track the parent-child relationships
@@ -42,7 +78,7 @@
     let rootCandidates: WritableNode[] = [];
     
     data.forEach((d) => {
-        const element: WritableNode = { id : d.id, name: d.name, value: d.value, children: [], fillColor: primcolor };
+        const element: WritableNode = { id : d.id, name: d.name, value: d.value, children: [], fillColor: "red", state: d.state };
         elements[d.id] = element;
       
         
@@ -81,12 +117,13 @@
             
             if (totalChildValue > 1) {
                 if (totalChildValue > 2) {
-                    console.log(totalChildValue, child.name);
+            
                     if  (element.children?.length == 2 || element.children?.length == 4) {
                         child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
                     } else {
                         child.value = ((child.value / totalChildValue) / 1.9) * 1.1 * element.value;
                     }
+                    
                    
                 } else {
            
@@ -103,6 +140,7 @@
                 // If totalChildValue is zero, distribute parent's value equally
                 child.value = element.value * 1 ;
             }
+             
                
            });
        }
@@ -128,14 +166,17 @@
     
     onMount(async () => {
 
-
+     
    
         nodesDataStore.subscribe((value) => {
         console.log(value);
-        
+      
+            
             data = createHierarchy(value)
             if (!isFirstLoad) {
-          
+                console.log("sjawn");
+                
+                
                 updateVisuals();
                 if (selectedNode) {
                     centerOnNode(selectedNode);
@@ -226,7 +267,7 @@
         .style("font-size", "12px")
         .style("font-family", "sans-serif");
 
-
+    svg.append("defs")
     // Initialize zoom behavior
 
     svg.call(zoom as any);
@@ -311,12 +352,149 @@ selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
     updateText(nodes);
 }
 
+function getColorByStatus(status) {
+    switch (status) {
+        case "Open":
+            return "#6FB1FC";
+        case "Planned":
+            return "#b92b27";
+        case "In Progress":
+            return "#185A9D";
+        case "Completed":
+            return "#43CEA2";
+        default:
+            return "#cccccc";
+    }
+}
+
+function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return [r, g, b];
+}
+
+function rgbToHex(r, g, b) {
+    const hex = (x) => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    };
+    return "#" + hex(r) + hex(g) + hex(b);
+}
+
+// Helper functions for color conversions
 
 
+// Calculate the average color of an array of children nodes
+function getAverageColor(children) {
+    let totalR = 0, totalG = 0, totalB = 0;
+    children.forEach(child => {
+        let [r, g, b] = hexToRgb(child.data.fillColor); // Assuming each child has a color property
+        totalR += r;
+        totalG += g;
+        totalB += b;
+    });
+    const numChildren = children.length;
+    const avgR = Math.round(totalR / numChildren);
+    const avgG = Math.round(totalG / numChildren);
+    const avgB = Math.round(totalB / numChildren);
+
+    
+    return rgbToHex(avgR, avgG, avgB);
+}
+
+function updateNodeColors(node) {
+    if (!node.children || node.children.length === 0) {
+        // Leaf node, set color based on its status
+        node.data.fillColor = getColorByStatus(node.data.state);
+    } else {
+        // Recursively update child nodes first
+        node.children.forEach(child => updateNodeColors(child));
+
+        // After all children are updated, calculate and set this node's average color
+        node.data.fillColor = getAverageColor(node.children);
+    }
+    
+    // Update the parent node's color, if it exists
+    if (node.parent) {
+        updateParentColor(node.parent);
+    }
+}
+
+function updateTreeColors(node) {
+    updateNodeColors(node); // Update the current node and all children first
+
+    // After updating this node and its children, if there's a parent, update it
+    if (node.parent) {
+        updateParentColor(node.parent); // Recursively update parent node
+    }
+}
+
+function updateParentColor(node) {
+    // Calculate average color from child nodes
+    node.data.fillColor = getAverageColor(node.children);
+
+    // If this node has a parent, update the parent's color
+    if (node.parent) {
+        updateParentColor(node.parent);
+    }
+}
 
     function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
-
         
+        
+        let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
+
+        nodes.descendants().forEach(node => {
+
+            
+            node.data.totalPriority = getNestedIssuesTotalPriority(node.data.id, $nodesDataStore, $issuesDataStore);
+
+            // Normalize totalPriority to fit within the gradient range
+            let normalizedPriority = (node.data.totalPriority / maxPriority) * 100; // Normalize to percentage
+
+           
+            
+            if (node.data.totalPriority === 0) {
+                node.data.innerGradientStop = `${123 + normalizedPriority * 0.2}%`; // Center color extends further based on priority
+                node.data.outerGradientStop = `${123 + normalizedPriority * 0.1}%`; // Quick transition to edge color
+            } else {
+                let scale = (maxPriority - node.data.totalPriority) / maxPriority * 10; // This scales the remaining to between 0 and 10
+                let basePercentage = 90; // Base percentage for max priority
+                node.data.innerGradientStop = `${90}%`; // 60% of the scale added to 90%
+                node.data.outerGradientStop = `${100}%`; 
+            }
+            // Use normalizedPriority to adjust gradient transition
+           
+        });
+
+        updateTreeColors(nodes);
+        
+
+        const defs = svg.select("defs") ;
+        const gradients = defs.selectAll("radialGradient")
+        .data(nodes.descendants(), (d) => d.data.id)
+        .join(
+            enter => enter.append("radialGradient").attr("id", d => `gradient-${d.data.id}`),
+            update => update,
+            exit => exit.remove()
+        );
+
+    // Add stops to each gradient
+    gradients.selectAll("stop").data(d => [
+        { offset: "0%", color: d.data.fillColor },
+        { offset: d.data.innerGradientStop, color: d.data.fillColor },
+        { offset: d.data.outerGradientStop, color: "red" }
+    ])
+    .join(
+        enter => enter.append("stop"),
+        update => update,
+        exit => exit.remove()
+    )
+    .attr("offset", d => d.offset)
+    .attr("stop-color", d => d.color);
+
+
   g.selectAll("circle")
     .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
     .join("circle")
@@ -324,9 +502,10 @@ selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
     .attr("r", d => d.r)
 
 // Radius is calculated by D3, taking into account the dynamic padding
-    .attr("fill", d => d.data.fillColor)
+    .attr("fill", d => `url(#gradient-${d.data.id})`)
     .attr("stroke-width", d => d.r * 0.03)  // Decrease stroke-width with depth
     .attr("class", d => {
+       
     // Add 'circle' class to all, 'circle-selected' if it is the selected node
         let classes = d.data.id === currentSelectedNodeId ? "circle circle-selected" : "circle";
         // Add 'hoverable' class only if the node has children
@@ -351,6 +530,9 @@ selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
 
       
     });
+
+
+  
 }
 
 
@@ -517,7 +699,7 @@ function shouldDisplayText(node: d3.HierarchyCircularNode<WritableNode>): boolea
 }
 
 
-function updateText(nodes: d3.HierarchyCircularNode<WritableNode>, selectedNode: d3.HierarchyCircularNode<WritableNode>) {
+function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
     let selectedLeafParentId = null;
     if (selectedNode && (!selectedNode.children || selectedNode.children.length === 0)) {
         selectedLeafParentId = selectedNode.parent?.data.id;
@@ -593,17 +775,22 @@ svg.on("wheel.zoom", event => event.preventDefault())
 
     :global(.circle) {
         stroke: #000000;
+   
 
     }
     :global(.circle-selected) {
 
-        stroke: pink;
+        stroke: grey;
 
     }
 
     :global(.hoverable:hover) {
   
         stroke: rebeccapurple; /* change color on hover */
+    }
+
+    :global(#circle-packing) {
+
     }
 
 

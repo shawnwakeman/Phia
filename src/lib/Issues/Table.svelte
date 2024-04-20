@@ -40,7 +40,7 @@
     async function fetchIssues() {
       if (!$selectedNodeStore) return;
       try {
-        const fetchedIssues = await getNestedIssues($selectedNodeStore.id, $nodesDataStore, $issuesDataStore);
+        const fetchedIssues = await getNestedIssues(2614, $nodesDataStore, $issuesDataStore);
         rows = fetchedIssues;
   
         // Dynamically set columnNames only once assuming the issue structure does not change.

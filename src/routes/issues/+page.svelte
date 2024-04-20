@@ -75,11 +75,7 @@
 
 
 </script>
-<ul>
-    {#each $nodesDataStore as node}
-      <li>{node.name}</li>
-    {/each}
-  </ul>
+
 <h1>Issue Tracker</h1>
 
 <h1>{$currentSelectedIssue?.id}</h1>

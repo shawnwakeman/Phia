@@ -119,6 +119,7 @@ export async function updateNodeByID(nodeId: number, updatedValues: {
     name?: string;
     value?: number;
     parent_id?: number;
+    state?: string;
 }) {
     // Assuming `nodeId` is the ID of the node you want to update,
     // and `updatedValues` contains the new values for `name`, `value`, and `parent_id` columns.
@@ -127,7 +128,7 @@ export async function updateNodeByID(nodeId: number, updatedValues: {
         .update(updatedValues)
         .match({ id: nodeId }) // Use .match() to filter by ID or other criteria
         // Specify the columns you want to return after the update
-        .select('id, name, value, parent_id');
+        .select('id, name, value, parent_id, state');
 
     if (error) {
         console.error('Error updating node:', error);
@@ -245,8 +246,8 @@ export async function addIssue(parent_id: number | null,) {
             .insert([
                 {
                     description: '', // Empty string as default
-                    node_id: parent_id, // Assuming 0 as a placeholder, adjust accordingly
-                    priority: null, // Assuming null as an appropriate default
+                    node_id: 1, // Assuming 0 as a placeholder, adjust accordingly
+                    priority: "High", // Assuming null as an appropriate default
                     state: null, // Assuming null as an appropriate default
                     name: '', // Empty string as default
                 }

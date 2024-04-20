@@ -3,6 +3,10 @@
     import { selectedNodeId, selectedNodeStore, nodesDataStore} from "../../stores";
     import { Editor } from "@wakemanshawn/novel-svelte-shawnwakeman";
     import Breadcrums from './breadcrums.svelte';
+    import Issues from '$lib/nodeManager/Issues.svelte';
+    import State from './State.svelte';
+    import DataTable from '$lib/Issues/DataTable/DataTable.svelte';
+
   </script>
   
   <main>
@@ -14,7 +18,10 @@
       
     </h1>
     <Breadcrums/>
-    <Editor />
+    <State/>
+    <Editor/>
     <BulletList />
+    <Issues />
+    
   </main>
   

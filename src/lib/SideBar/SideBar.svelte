@@ -5,7 +5,6 @@
     import Treemap from "$lib/Issues/Treemap.svelte";
     import { updateNodeByID } from "../supabaseClient";
 
-    import IssueSection from "../nodeManager/IssueSection.svelte";
 
     import { goto } from '$app/navigation';
 
@@ -55,7 +54,7 @@
     <button on:click={navigateToAbout}>issues</button>
     <input type="text" bind:value={text} on:input={sendUpdateForText} />
     <h1>Nested Issues</h1>
-    <IssueSection/>
+
 </aside>
 
 <style>
