@@ -1,7 +1,7 @@
 <script lang>
     import { selectedNodeStore, nodesDataStore } from '../../stores';
   
-    import { updateNodeByID } from '$lib/supabaseClient';
+    import { updateNodeAndChildrenState, updateNodeByID } from '$lib/supabaseClient';
 
     let value, state, olddata;
 
@@ -13,11 +13,6 @@
 
     function handleChange() {
     
-        specialFunction();
-    }
-
-    function specialFunction() {
-
         const numericValue = Number(value);
         updateNodeByID(olddata.id, {
             name: olddata.name,
@@ -25,6 +20,13 @@
             parent_id: olddata.parent_id,
             state: state
         })
+    }
+
+    function specialFunction() {
+
+     
+        updateNodeAndChildrenState(olddata.id, state);
+      
     }
 
  
@@ -36,15 +38,15 @@
     <select id="valueDropdown" bind:value={value} on:change={handleChange}>
         <option value=1>low</option>
         <option value=3>Medium</option>
-        <option value=5>High</option>
-        <option value=10>Critical</option>
+        <option value=7>High</option>
+        <option value=13>Crucial</option>
 
 
     </select>
 
     <!-- Second Dropdown for 'state' -->
     <label for="stateDropdown">Select State:</label>
-    <select id="stateDropdown" bind:value={state} on:change={handleChange}>
+    <select id="stateDropdown" bind:value={state} on:change={specialFunction}>
         <option value="Open">Open</option>
         <option value="Planned">Planned</option>
         <option value="In Progress">In Progress</option>

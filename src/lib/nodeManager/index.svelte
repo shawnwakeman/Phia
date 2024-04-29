@@ -24,4 +24,11 @@
     <Issues />
     
   </main>
-  
+  <style>
+    main {
+        max-height: 90vh; /* Limits the height and enables scrolling */
+        overflow-y: auto; /* Enables vertical scrolling */
+        padding: 20px; /* Optional: Adds some spacing inside the main container */
+        background: #f4f4f4; /* Optional: Sets a background color for the main area */
+    }
+</style>

@@ -157,6 +157,56 @@ export async function updateNodeByID(nodeId: number, updatedValues: {
     }
 }
 
+
+export async function updateNodeAndChildrenState(nodeId: number, newState: string) {
+    console.time('Get Nodes');
+    let nodes;
+    nodesDataStore.subscribe($nodes => { nodes = $nodes })();
+    const allNodes = nodes;
+    if (!allNodes) {
+        console.error('Node not found');
+        console.timeEnd('Get Nodes');
+        return;
+    }
+    console.timeEnd('Get Nodes');
+
+    console.time('Gather Nodes to Update');
+    let nodesToUpdate = new Set([nodeId]); // Start with the initial node
+    let queue = [nodeId];
+    while (queue.length > 0) {
+        const currentId = queue.shift();
+        const childNodes = allNodes.filter(node => node.parent_id === currentId);
+        childNodes.forEach(child => {
+            nodesToUpdate.add(child.id);
+            queue.push(child.id);
+        });
+    }
+    console.timeEnd('Gather Nodes to Update');
+
+    console.time('Database Updates');
+    // Convert the set of node IDs to an array for the update
+    const nodeIdsToUpdate = Array.from(nodesToUpdate);
+
+
+
+    
+    console.timeEnd('Database Updates');
+
+    console.time('Update Local Store');
+    nodesDataStore.update(currentNodes => {
+        return currentNodes.map(node => {
+            if (nodesToUpdate.has(node.id)) {
+                return { ...node, state: newState };
+            }
+            return node;
+        });
+    });
+    console.timeEnd('Update Local Store');
+
+    console.log('Nodes updated successfully');
+}
+
+
 export async function updateNodeNameByID(nodeId: number, newName: string) {
     const { data, error } = await supabase
         .from('nodes')

@@ -71,86 +71,108 @@
 </script>
 
 
-<ul>
-    <a data-sveltekit-preload-data="hover" href="/issues">
+<body>
+    <ul>
+        <a data-sveltekit-preload-data="hover" href="/issues">
+        
+            fuckin issys
+        </a>
     
-        fuckin issys
-    </a>
-
-    <a data-sveltekit-preload-data="hover" href="/documents">
-
-        fuckin docs
-    </a>
-    <a data-sveltekit-preload-data="hover" href="/workspace">
-
-        fuckin workspace
-    </a>
-
-
+        <a data-sveltekit-preload-data="hover" href="/documents">
+    
+            fuckin docs
+        </a>
+        <a data-sveltekit-preload-data="hover" href="/workspace">
+    
+            fuckin workspace
+        </a>
+    
+    
+                
+    
+    
+    </ul>
+    
+    
+    
+    
+    
+        
+        <Button on:click={toggleMode} variant="outline" size="icon">
+        <h1>one</h1>
+        
+        <span class="sr-only">Toggle theme</span>
+        </Button>
+    
+    
+    <!-- Buttons for setting the sidebar width -->
+    
+    
+    <div class="container">
+        
+        <button on:click={() => setSidebarWidth(0)}>0/100</button>
+        <button on:click={() => setSidebarWidth(50)}>50/50</button>
+        <button on:click={() => setSidebarWidth(100)}>100/0</button>
+        
+    </div>
+    
+    
+        <Splitpanes >
+        <Pane bind:size={sidebarWidth[0]} class="centered-content">
+            <div class="viz-wrapper2">
+                <div class="viz-wrapper">
+                    <BarChart/>
+                </div>
+            </div>
             
-
-
-</ul>
-
-
-
-
-
-   
-  <Button on:click={toggleMode} variant="outline" size="icon">
-    <h1>one</h1>
-   
-    <span class="sr-only">Toggle theme</span>
-  </Button>
-
-
-<!-- Buttons for setting the sidebar width -->
-
-
-<div class="container">
+        </Pane>
+            <Pane class="centered-content">
+                <NodeManager/>
+            </Pane>
+        </Splitpanes>
+        
     
-    <button on:click={() => setSidebarWidth(0)}>0/100</button>
-    <button on:click={() => setSidebarWidth(50)}>50/50</button>
-    <button on:click={() => setSidebarWidth(100)}>100/0</button>
-   
-</div>
-
-
-  <Splitpanes >
-      <Pane bind:size={sidebarWidth[0]} class="centered-content">
-        <div>
-            <BarChart/>
-        </div>
     
-      </Pane>
-      <Pane class="centered-content">
-          <NodeManager/>
-      </Pane>
-  </Splitpanes>
+    
+</body>
+
+
 
 
 
   <style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
     .container {
       display: flex; /* Continue using flexbox for horizontal alignment */
       justify-content: center; /* Center all items horizontally in the container */
       align-items: center; /* Keep items vertically centered */
 
-      padding: 10px;
+
+    }
+
+    .viz-wrapper {
+
+
+    }
+
+    .viz-wrapper2 {
+
+
     }
 
     :global(.centered-content) {
-
-        height: 100%; /* Full height to align with sibling panes */
+        display: flex;
+        flex-direction: column; /* Aligns children vertically */
+        height: 100%; /* Ensures the Pane fills the Splitpane height */
+        
     }
 
 
   
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 0 5px; /* Adjust or remove this if you don't want any space between buttons */
-    }
+
   </style>
 

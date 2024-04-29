@@ -38,7 +38,7 @@
     let nodes;    
 
     function getNestedIssuesTotalPriority(nodeId: number, nodes: Node[], issues: Issue[]): number {
-    console.time('getNestedIssuesTotalPriority');
+
 
     function findChildNodeIds(nodeId: number, nodes: Node[]): number[] {
         const childNodes = nodes.filter(node => node.parent_id === nodeId);
@@ -54,9 +54,9 @@
         if (issue.node_id !== null && nestedNodeIds.includes(issue.node_id)) {
             const priorityValue = {
                 'Low': 1,
-                'Medium': 2,
-                'High': 3,
-                'Critical': 5
+                'Medium': 4,
+                'High': 9,
+                'Critical': 16
             };
             return acc + (priorityValue[issue.priority] || 0);
         }
@@ -102,49 +102,44 @@
 
     // Recalculate child values after hierarchy is built
     Object.values(elements).forEach((element) => {
-       
-       if (element.children && element.children.length > 0) {
-           
+    if (element.children && element.children.length > 0) {
+        const totalChildValue = element.children.reduce((acc, child) => acc + child.value, 0);
 
-      
-           
-           const childValue = element.value / element.children.length / 2 ;
-       
-           const totalChildValue = element.children.reduce((acc, child) => acc + child.value, 0) ;
-
-           
-           element.children.forEach((child) => {
-            
+        // Determine if all children have the same value
+        const firstChildValue = element.children[0].value;
+        let allChildrenSame = element.children.every(child => child.value === firstChildValue);
+        const moreThanTenChildren = element.children.length > 10;
+        element.children.forEach((child) => {
             if (totalChildValue > 1) {
-                if (totalChildValue > 2) {
-            
-                    if  (element.children?.length == 2 || element.children?.length == 4) {
-                        child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
-                    } else {
-                        child.value = ((child.value / totalChildValue) / 1.9) * 1.1 * element.value;
-                    }
-                    
-                   
+                // Apply existing conditions
+                if (element.children.length === 3) {
+                    child.value = ((child.value / totalChildValue) / 1.9) * 1.2 * element.value;
+                } else if (element.children.length === 2) {
+                    child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
                 } else {
-           
-                    
-                    if (element.children?.length == 2 || element.children?.length == 4) {
-                        child.value = ((child.value / totalChildValue) / 1.9) * 0.83 * element.value;
-                    } else {
-                        child.value = ((child.value / totalChildValue) / 1.9) * 1.18 * element.value;
-                    }
-                    
+                    child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
                 }
-                
+
+                // New conditions based on children's values uniformity
+                if (allChildrenSame) {
+                    child.value *= .95; // Slight scale down if all children have the same value
+                } else {
+                    child.value *= 1.15; // Scale up more significantly if values are different
+                }
+
+                if (moreThanTenChildren) {
+                    child.value *= 0.95; // Additional 10% scale down
+                }
             } else {
                 // If totalChildValue is zero, distribute parent's value equally
-                child.value = element.value * 1 ;
+                child.value = element.value;
             }
-             
-               
-           });
-       }
-   });
+
+            child.value *= 0.9; // Apply final scaling factor
+   
+        });
+    }
+});
 
 
 
@@ -169,12 +164,12 @@
      
    
         nodesDataStore.subscribe((value) => {
-        console.log(value);
+
       
             
             data = createHierarchy(value)
             if (!isFirstLoad) {
-                console.log("sjawn");
+  
                 
                 
                 updateVisuals();
@@ -190,12 +185,12 @@
 
         navigateNodeStore.subscribe(value => {
             if (value) {
-                console.log('Selected node changed:', value);
+
                 if (nodes && !isFirstLoad) {
-                    console.log(nodes);
+
                     
                     let currentNode = nodes.find(d => d.data.id === value.id);
-                    console.log(currentNode);
+            
                     handleCircleClick(currentNode)
                 }
             }
@@ -206,8 +201,8 @@
 			////////////////////////////////////////////////////////////// 
 
 
-            const width: number = 600;
-            const height: number = 600;
+            const width: number = 10000;
+            const height: number = 10000;
 
 
 
@@ -387,19 +382,28 @@ function rgbToHex(r, g, b) {
 
 // Calculate the average color of an array of children nodes
 function getAverageColor(children) {
-    let totalR = 0, totalG = 0, totalB = 0;
-    children.forEach(child => {
-        let [r, g, b] = hexToRgb(child.data.fillColor); // Assuming each child has a color property
-        totalR += r;
-        totalG += g;
-        totalB += b;
-    });
-    const numChildren = children.length;
-    const avgR = Math.round(totalR / numChildren);
-    const avgG = Math.round(totalG / numChildren);
-    const avgB = Math.round(totalB / numChildren);
-
     
+    let totalR = 0, totalG = 0, totalB = 0, totalPriority = 0;
+    children.forEach(child => {
+        let priority = child.data.value;
+
+        
+        let [r, g, b] = hexToRgb(child.data.fillColor); // Assuming each child has a fillColor and totalPriority
+        totalR += r * priority;
+        totalG += g * priority;
+        totalB += b * priority;
+        totalPriority += priority;
+    });
+
+    if (totalPriority === 0) {
+        // Prevent division by zero if totalPriority is unexpectedly zero
+        return "#cccccc"; // Return a default neutral color
+    }
+
+    const avgR = Math.round(totalR / totalPriority);
+    const avgG = Math.round(totalG / totalPriority);
+    const avgB = Math.round(totalB / totalPriority);
+
     return rgbToHex(avgR, avgG, avgB);
 }
 
@@ -553,7 +557,7 @@ function convertToNodeType(d3Node: d3.HierarchyCircularNode<WritableNode> | null
 
 function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
     const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
-        console.log(selectedNode?.depth);
+
 
 
     // Check if the clicked node is the currently selected node
@@ -783,15 +787,20 @@ svg.on("wheel.zoom", event => event.preventDefault())
         stroke: grey;
 
     }
+    #circle-packing {
+        width: 100%;
+        margin: 0 auto;
+        min-width: 150px;
+
+    }
+
 
     :global(.hoverable:hover) {
   
         stroke: rebeccapurple; /* change color on hover */
     }
 
-    :global(#circle-packing) {
 
-    }
 
 
     svg {
