@@ -68,7 +68,7 @@
 }
 
     
-    function createHierarchy(data: Node[]): WritableNode | null {
+function createHierarchy(data: Node[]): WritableNode | null {
     // Mapping object to store nodes by id for quick reference, and to track the parent-child relationships
     const elements: { [key: number]: WritableNode } = {};
         
@@ -78,25 +78,51 @@
     let rootCandidates: WritableNode[] = [];
     
     data.forEach((d) => {
-        const element: WritableNode = { id : d.id, name: d.name, value: d.value, children: [], fillColor: "red", state: d.state };
-        elements[d.id] = element;
-      
-        
-        if(d.parent_id === null) {
-            rootCandidates.push(element); // Potential root node based on missing parent_id
-        }
+        elements[d.id] = {
+            id: d.id,
+            name: d.name,
+            value: d.value,
+            children: [],
+            fillColor: "red",
+            state: d.state
+        };
     });
-  
-    if (rootCandidates.length === 0) {
-        console.error("No root node found in the data.");
-        return null; // Return null if no root node is found
-    } else if (rootCandidates.length > 1) {
-        console.warn("Multiple root nodes found. Using the first one found as the root.");
+
+    let selectedNode: Node | null = null;
+    for (const d of data) {
+        if (d.id === $selectedNodeId) {
+            selectedNode = d;
+            break;
+        }
     }
+
+    if (!selectedNode) {
+        console.error("Selected node not found in the data.");
+        return null;
+    }
+
   
+
+    let rootNode: WritableNode = elements[selectedNode.id];
+    let currentNode: Node | null = selectedNode;
+    for (let i = 0; i < 3; i++) {
+        if (currentNode?.parent_id !== null && elements[currentNode.parent_id]) {
+            currentNode = data.find(d => d.id === currentNode!.parent_id) || null;
+            if (currentNode) {
+                rootNode = elements[currentNode.id];
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+
+    // Build the tree hierarchy
     data.forEach((d) => {
-        if (d.parent_id !== null && elements[d.parent_id]) {
-            elements[d.parent_id].children!.push(elements[d.id]);
+        const parentId = d.parent_id;
+        if (parentId !== null && elements[parentId]) {
+            elements[parentId].children!.push(elements[d.id]);
         }
     });
 
@@ -142,8 +168,9 @@
 });
 
 
+console.log(rootNode);
 
-    return rootCandidates[0]; // Return the root node
+return rootNode;
 }
     
 
@@ -220,6 +247,18 @@
     }
 
 
+    function centerOnNodeALL(node) {
+    const k = width / (node.r * 2); // Calculate the zoom scale based on the node's radius
+    const x = width / 2 - k * node.x; // Calculate the new x position to center the node
+    const y = height / 2 - k * node.y; // Calculate the new y position to center the node
+
+    const transform = d3.zoomIdentity.translate(x, y).scale(k);
+
+    svg.transition() // Start a transition
+       .duration(750) // Set the duration of the transition
+       .ease(d3.easeCubicInOut) // Apply easing for smooth transition
+       .call(zoom.transform, transform);
+}
 
 
   
@@ -234,7 +273,7 @@
 
 
         // Use debounced function to handle updates
-        debouncedUpdateVisuals();
+
     });
 
     function getTextTransform(d, currentZoomScale) {
@@ -301,6 +340,8 @@
 
 
     function updateVisuals() {
+        console.log("update");
+        
     if (!data) {
         console.error("Failed to create hierarchical data.");
         return;
@@ -309,7 +350,7 @@
     const rootPadding = 20; // Extra padding for the root node
     const childNodePadding = 5; // Extra padding for nodes with children
 
-
+data = createHierarchy($nodesDataStore)
 const root = d3.hierarchy<WritableNode>(data)
     .sum(d => d.value ?? 0) // Only use the node's own value
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)); // Keep sorting if needed
@@ -345,6 +386,7 @@ selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
 
     updateCircles(nodes);
     updateText(nodes);
+    centerOnNodeALL(selectedNode)
 }
 
 function getColorByStatus(status) {

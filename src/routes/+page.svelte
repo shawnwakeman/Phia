@@ -119,11 +119,11 @@
     
         <Splitpanes >
         <Pane bind:size={sidebarWidth[0]} class="centered-content">
-            <div class="viz-wrapper2">
-                <div class="viz-wrapper">
-                    <BarChart/>
-                </div>
+            
+            <div class="viz-wrapper">
+                <BarChart/>
             </div>
+        
             
         </Pane>
             <Pane class="centered-content">
@@ -147,16 +147,19 @@
         overflow: hidden;
     }
     .container {
-      display: flex; /* Continue using flexbox for horizontal alignment */
-      justify-content: center; /* Center all items horizontally in the container */
-      align-items: center; /* Keep items vertically centered */
+        display: flex;
+        flex-direction: column; /* Aligns children vertically */
+        height: 100%; /* Ensures the Pane fills the Splitpane height */
 
 
     }
 
     .viz-wrapper {
-
-
+        flex-grow: 1; /* Allows the wrapper to take up all remaining space */
+        display: flex;
+        justify-content: center; /* Center all items horizontally in the wrapper */
+        align-items: center; /* Center all items vertically in the wrapper */
+        
     }
 
     .viz-wrapper2 {
