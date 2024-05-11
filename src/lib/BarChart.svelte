@@ -78,54 +78,27 @@ function createHierarchy(data: Node[]): WritableNode | null {
     let rootCandidates: WritableNode[] = [];
     
     data.forEach((d) => {
-        elements[d.id] = {
-            id: d.id,
-            name: d.name,
-            value: d.value,
-            children: [],
-            fillColor: "red",
-            state: d.state
-        };
-    });
-
-    let selectedNode: Node | null = null;
-    for (const d of data) {
-        if (d.id === $selectedNodeId) {
-            selectedNode = d;
-            break;
+        const element: WritableNode = { id : d.id, name: d.name, value: d.value, children: [], fillColor: "red", state: d.state };
+        elements[d.id] = element;
+      
+        
+        if(d.parent_id === null) {
+            rootCandidates.push(element); // Potential root node based on missing parent_id
         }
-    }
-
-    if (!selectedNode) {
-        console.error("Selected node not found in the data.");
-        return null;
-    }
-
+    });
   
-
-    let rootNode: WritableNode = elements[selectedNode.id];
-    let currentNode: Node | null = selectedNode;
-    for (let i = 0; i < 3; i++) {
-        if (currentNode?.parent_id !== null && elements[currentNode.parent_id]) {
-            currentNode = data.find(d => d.id === currentNode!.parent_id) || null;
-            if (currentNode) {
-                rootNode = elements[currentNode.id];
-            } else {
-                break;
-            }
-        } else {
-            break;
-        }
+    if (rootCandidates.length === 0) {
+        console.error("No root node found in the data.");
+        return null; // Return null if no root node is found
+    } else if (rootCandidates.length > 1) {
+        console.warn("Multiple root nodes found. Using the first one found as the root.");
     }
-
-    // Build the tree hierarchy
+  
     data.forEach((d) => {
-        const parentId = d.parent_id;
-        if (parentId !== null && elements[parentId]) {
-            elements[parentId].children!.push(elements[d.id]);
+        if (d.parent_id !== null && elements[d.parent_id]) {
+            elements[d.parent_id].children!.push(elements[d.id]);
         }
     });
-
     // Recalculate child values after hierarchy is built
     Object.values(elements).forEach((element) => {
     if (element.children && element.children.length > 0) {
@@ -168,9 +141,9 @@ function createHierarchy(data: Node[]): WritableNode | null {
 });
 
 
-console.log(rootNode);
 
-return rootNode;
+
+return rootCandidates[0];
 }
     
 
@@ -228,8 +201,8 @@ return rootNode;
 			////////////////////////////////////////////////////////////// 
 
 
-            const width: number = 10000;
-            const height: number = 10000;
+            const width: number = 100;
+            const height: number = 100;
 
 
 
@@ -266,11 +239,12 @@ return rootNode;
 
     // Create SVG element
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-  
+
     .on("zoom", (event) => {
         g.attr("transform", event.transform);
         currentZoomLevel = event.transform.k;
-
+        console.log(currentZoomLevel);
+        
 
         // Use debounced function to handle updates
 
@@ -309,12 +283,9 @@ return rootNode;
 
     const g = svg.append("g");
 
-    const centerX = (width - width * 0.8) / 2;
-    const centerY = (height - height * 0.8) / 2;
+
 
     // Set the default zoom level to 80% and center it
-    const initialTransform = d3.zoomIdentity.translate(centerX, centerY).scale(0.8);
-    svg.call(zoom.transform, initialTransform); 
 
     
     if (data === null) {
@@ -350,29 +321,30 @@ return rootNode;
     const rootPadding = 20; // Extra padding for the root node
     const childNodePadding = 5; // Extra padding for nodes with children
 
-data = createHierarchy($nodesDataStore)
+
 const root = d3.hierarchy<WritableNode>(data)
     .sum(d => d.value ?? 0) // Only use the node's own value
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)); // Keep sorting if needed
 
-
+const scaleFactor = 1;
 const pack = d3.pack<WritableNode>()
-    .size([width, height])
+    .size([width * scaleFactor, height * scaleFactor])
     .padding(d => {
         // Keep your dynamic padding logic
         if (d.depth === 0) {
-            return 7; // Adjust padding for non-root nodes with children
+            return .7; // Adjust padding for non-root nodes with children
         } else if (d.depth === 1) {
-            return 3; // Consistent padding for root's direct children
+            return .3; // Consistent padding for root's direct children
         } else {
       
             
-            return d.r * 10 
+            return d.r * 1 
         }
         
     });
 
 nodes = pack(root);
+console.log(nodes);
 
 selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
 // Apply the pack layout to your hierarchy
@@ -776,38 +748,20 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
 
 updateVisuals();
 
-svg.on("wheel.zoom", event => event.preventDefault())
-    .on("dblclick.zoom", null) ;
+// svg.on("wheel.zoom", event => event.preventDefault())
+//     .on("dblclick.zoom", null) ;
 
-    svg.on("dblclick.zoom", null);
+//     svg.on("dblclick.zoom", null);
 
-            svg.on("mousedown.zoom", null)
-           .on("mousemove.zoom", null)
-           .on("mouseup.zoom", null)
-           .on("touchstart.zoom", null)
-           .on("touchmove.zoom", null)
-           .on("touchend.zoom", null);
+//             svg.on("mousedown.zoom", null)
+//            .on("mousemove.zoom", null)
+//            .on("mouseup.zoom", null)
+//            .on("touchstart.zoom", null)
+//            .on("touchmove.zoom", null)
+//            .on("touchend.zoom", null);
  });
 
 
-  
-
-    let activeFocus = null;
-    let rootData; // This should be your packed nodes data structure
-    let zoomK = 1, zoomA = 0, zoomB = 0; // Controls for zoom level and translation
-
-    // Function to handle zooming on a node
-    function zoom(node, event) {
-        event.stopPropagation();
-        activeFocus = node;
-        const k = height / (node.r * 2);
-        zoomK = k;
-        zoomA = node.x;
-        zoomB = node.y;
-    }
-
-
- 
 
 </script>
 
