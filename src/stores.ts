@@ -14,14 +14,14 @@ export const filePathDataStore = writable<FilePath[]>([]);
 
 export const issuesDataStore = writable<Issue[]>([]);
 // not perfect seeting 
-export const selectedNodeId = writable<number>(1);
+export const selectedNodeId = writable<number>(0);
 
 
 export const currentSelectedIssue = writable<Issue | null>()
 
 export const addedIssue = writable<boolean>(false)
 
-
+export const sidebarWidthStore = writable<number[]>([50]);
 
 // stores.js
 export const showModal = writable(false);

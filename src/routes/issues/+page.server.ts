@@ -6,33 +6,44 @@ import type { Issue } from "../../types/collection";
 
 
 export async function load() {
+	let projectID = 1;
+  let nodes
+  let issues
 
-    let nodes
+  
 
-    console.log("dassadasddas", nodes);
-    
- 
-        // Fetch nodes data if nodesDataStore is empty
-        const { data: nodesData, error: nodesError } = await supabase
-          .from('nodes')
-          .select();
-    
-        if (nodesData) {
-          nodes = nodesData; // Update local nodes variable with the fetched data
-        }
-        
-        
-   
+      // Fetch nodes data if nodesDataStore is empty
+    const { data: nodesData, error: nodesError } = await supabase
+    .from('nodes')
+    .select()
+    .eq('project_id', projectID); // Filter nodes by project_id
+  
+    if (nodesError) {
+        console.error('Error fetching nodes:', nodesError);
+        return { nodes }; // Return early if there's an error fetching nodes
+    }
+
+    if (nodesData) {
+        nodes = nodesData;
+    }
+      
     const { data: issuesData, error: issuesError } = await supabase
-        .from('issues')
-        .select();
+    .from('issues')
+    .select()
+    .eq('project_id', projectID); // Filter issues by project_id
 
-        
-    return {
-        nodes: nodes, // Use the local nodes variable which may have been updated
-        issues: issuesData ?? [],
-    };
+    if (issuesError) {
+      console.error('Error fetching issues:', issuesError);
+    }
+
+    if (issuesData) {
+        issues = issuesData;
+    }
+      
+  return {
+      nodes: nodes, // Use the local nodes variable which may have been updated
+      issues: issues ?? [],
+  };
 
 
 }
-

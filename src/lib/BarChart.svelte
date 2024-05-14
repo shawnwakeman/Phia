@@ -6,8 +6,8 @@
     import type { Node, Issue } from "../types/collection"
     import * as d3 from 'd3';
     import { selectedNodeStore } from "../stores";
-    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore } from "../stores";
-  
+    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore } from "../stores";
+    import { get } from 'svelte/store';
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
     import { canJoin } from '@tiptap/pm/transform';
     const primcolor = "red"
@@ -122,7 +122,10 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 // New conditions based on children's values uniformity
                 if (allChildrenSame) {
                     child.value *= .95; // Slight scale down if all children have the same value
-                } else {
+                } else if (!allChildrenSame && element.children.length === 3) {
+                    child.value *= .95;
+                }
+                else {
                     child.value *= 1.15; // Scale up more significantly if values are different
                 }
 
@@ -157,9 +160,70 @@ return rootCandidates[0];
     let isFirstLoad = true; 
     let isFirstLoad2 = true; 
 
-
+    let width: number = 100;
+    let height: number = 100;
+    let lastWidth = [0];
     
     onMount(async () => {
+        let browserWidth, browserHeight;
+        function updateDimensions(value) {
+            if (value[0] > 10) {
+            
+
+// Get current browser dimensions
+            browserWidth = window.innerWidth;
+            browserHeight = window.innerHeight;
+
+            let parentWidth = (value[0] / 100) * browserWidth;
+
+            let parentHeight = browserHeight * 0.9;
+
+            let aspectRatio = parentWidth / parentHeight;
+
+            let innerWidth = aspectRatio * parentHeight;
+            let innerHeight = parentHeight;
+            
+            innerWidth = Math.max(100, Math.min(500, innerWidth));
+            innerHeight = innerWidth / aspectRatio;
+
+            // Ensure inner dimensions also adhere to the minimum and maximum limits
+            innerHeight = Math.max(100, Math.min(500, innerHeight));
+            if (innerHeight === 500 || innerHeight === 100) {
+                innerWidth = innerHeight * aspectRatio;
+            }
+            
+
+  
+             
+
+                if (!isFirstLoad) {
+                    console.log("ads");
+                    
+                        width = innerWidth;
+                        height = innerHeight
+                        updateViewBox(innerWidth, innerHeight);
+                        updateVisuals();
+                 
+                    
+                    
+                    
+                    
+
+                }
+
+            }
+        }
+        sidebarWidthStore.subscribe((value) => {
+            updateDimensions(value)
+        
+        });
+        window.addEventListener('resize', () => {
+            sidebarWidthStore.update(value => {
+                updateDimensions(value);
+                return value;
+            });
+        });
+
 
      
    
@@ -201,37 +265,44 @@ return rootCandidates[0];
 			////////////////////////////////////////////////////////////// 
 
 
-            const width: number = 100;
-            const height: number = 100;
 
 
 
 // Assuming the payload structure is known and matches the Node interface
 // Adjust the types as necessary to match your actual data structure
     
-    function centerOnNode(node) {
-        const k = width / (node.r * 2); // Calculate the zoom scale based on the node's radius
-        const x = width / 2 - k * node.x; // Calculate the new x position to center the node
-        const y = height / 2 - k * node.y; // Calculate the new y position to center the node
-
-        const transform = d3.zoomIdentity.translate(x, y).scale(k);
-
-        svg.call(zoom.transform, transform); // Apply the transformation without transition
-    }
-
-
-    function centerOnNodeALL(node) {
-    const k = width / (node.r * 2); // Calculate the zoom scale based on the node's radius
-    const x = width / 2 - k * node.x; // Calculate the new x position to center the node
-    const y = height / 2 - k * node.y; // Calculate the new y position to center the node
+function centerOnNode(node) {
+    const k = width / (node.r * 2.5); // Adjust the denominator to scale to 80% of the width
+    const x = width / 2 - k * node.x;
+    const y = height / 2 - k * node.y;
 
     const transform = d3.zoomIdentity.translate(x, y).scale(k);
+    svg.call(zoom.transform, transform); // Apply the transformation without transition
+}
 
-    svg.transition() // Start a transition
-       .duration(750) // Set the duration of the transition
-       .ease(d3.easeCubicInOut) // Apply easing for smooth transition
+function centerOnNodeALL(node) {
+    // Constants to control the maximum visible size of the circle
+    const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
+    const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
+
+    // Calculate potential scales for both width and height to keep the circle within view
+    const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
+    const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
+
+    // Use the smaller scale to ensure the circle fits in both dimensions without clipping
+    const k = Math.min(scaleWidth, scaleHeight);
+
+    const x = width / 2 - k * node.x;
+    const y = height / 2 - k * node.y;
+
+    const transform = d3.zoomIdentity.translate(x, y).scale(k);
+    svg.transition()
+       .duration(750)
+       .ease(d3.easeCubicInOut)
        .call(zoom.transform, transform);
 }
+
+
 
 
   
@@ -243,7 +314,7 @@ return rootCandidates[0];
     .on("zoom", (event) => {
         g.attr("transform", event.transform);
         currentZoomLevel = event.transform.k;
-        console.log(currentZoomLevel);
+  
         
 
         // Use debounced function to handle updates
@@ -267,6 +338,15 @@ return rootCandidates[0];
     const debouncedUpdateVisuals = debounce(() => {
         updateVisuals();
     });
+
+
+
+
+
+    function updateViewBox(newWidth: number, newHeight: number) {
+    d3.select("#circle-packing svg")
+        .attr("viewBox", `0 0 ${newWidth} ${newHeight}`);
+    }
     
     const svg = d3.select("#circle-packing")
         .append("svg")
@@ -274,7 +354,7 @@ return rootCandidates[0];
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
         .style("font-family", "sans-serif");
-
+ 
     svg.append("defs")
     // Initialize zoom behavior
 
@@ -537,12 +617,19 @@ function updateParentColor(node) {
 
       if (d.children != null || d.depth == 1) {
         handleCircleClick(d);
-      } else if (d.parent?.data.id == $selectedNodeStore?.id) {
-        handleCircleClickInternal(d)
-      
         
-      } else {
+      } else if (!d.children && d.depth === selectedNode?.depth && d.parent?.data.id === selectedNode.parent?.data.id ) {
+        handleCircleClickInternal(d)
+        
+        
+        
+      } else if (d.parent?.data.id == $selectedNodeStore?.id) {
+        handleCircleClick(d); // Assuming you want to handle this case the same as if the node had children
+        
+        }
+      else {
             handleCircleClickFarNode(d)
+            
       }
  
 
@@ -630,7 +717,7 @@ function handleCircleClickInternal(d: d3.HierarchyCircularNode<WritableNode>) {
         }
         
         applyZoom(d)
-
+        selectedNodeStore.set(convertToNodeType(selectedNode))
         
         updateVisuals();
         return; // Exit the function early
@@ -651,6 +738,7 @@ function handleCircleClickFarNode(d: d3.HierarchyCircularNode<WritableNode>) {
                 
                 currentDepth = 0;
                 selectedNodeId.set(1)
+                selectedNode = nodes
                 // Apply a zoom reset
                 svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
         } else {
@@ -724,15 +812,17 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
       
         
     }
-
+    const selectedNodeId = $selectedNodeStore.id;
+    const selectedNodeDepth = selectedNode.depth;
+    const selectedNodeParentId = selectedNode.parent?.data.id; 
     g.selectAll("text").remove();  // Remove all existing text elements
     g.selectAll("text")
     .data(
-    nodes.descendants().filter(d => 
-        d.parent?.data.id == $selectedNodeStore?.id || // Include children of the selected node
-        (d.data.id == $selectedNodeStore?.id && (!d.children || d.children.length === 0)) || // Include the selected node if it is a leaf
-        (selectedLeafParentId && d.parent?.data.id == selectedLeafParentId) // Include all siblings if the selected node is a leaf
-    ), 
+        nodes.descendants().filter(d =>
+                (d.depth === selectedNodeDepth && d.parent?.data.id === selectedNodeParentId && d.data.id !== selectedNodeId) ||  // Same level and parent as the selected node, exclude the selected node
+                (d.parent?.data.id === selectedNodeId) ||  // Children of the selected node
+                (d.data.id === selectedNodeId && (!d.children || d.children.length === 0))  // Include the selected node only if it is a leaf
+            ),
     d => (d as d3.HierarchyCircularNode<WritableNode>).data.name // Mapping node names for rendering
     )
       .join(
@@ -745,20 +835,20 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
           .attr("class", "text")
       );
 }
-
+updateDimensions([50])
 updateVisuals();
 
-// svg.on("wheel.zoom", event => event.preventDefault())
-//     .on("dblclick.zoom", null) ;
+svg.on("wheel.zoom", event => event.preventDefault())
+    .on("dblclick.zoom", null) ;
 
-//     svg.on("dblclick.zoom", null);
+    svg.on("dblclick.zoom", null);
 
-//             svg.on("mousedown.zoom", null)
-//            .on("mousemove.zoom", null)
-//            .on("mouseup.zoom", null)
-//            .on("touchstart.zoom", null)
-//            .on("touchmove.zoom", null)
-//            .on("touchend.zoom", null);
+            svg.on("mousedown.zoom", null)
+           .on("mousemove.zoom", null)
+           .on("mouseup.zoom", null)
+           .on("touchstart.zoom", null)
+           .on("touchmove.zoom", null)
+           .on("touchend.zoom", null);
  });
 
 
@@ -787,6 +877,7 @@ updateVisuals();
         width: 100%;
         margin: 0 auto;
         min-width: 150px;
+
 
     }
 

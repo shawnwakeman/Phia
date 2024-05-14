@@ -2,9 +2,9 @@
     import BarChart from "../lib/BarChart.svelte";
     import NodeCreator from "../lib/NodeCreator.svelte";
     import SideBar from "../lib/SideBar/SideBar.svelte";
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import type { Node, Issue } from "../types/collection";
-    import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore} from "../stores";
+    import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore, sidebarWidthStore} from "../stores";
     import { get } from "svelte/store";
     import { writable } from 'svelte/store';
     import { toggleMode } from "mode-watcher";
@@ -18,14 +18,14 @@
     import Kaban from '$lib/Issues/Kaban/Kaban.svelte'
 
     import Treemap from '$lib/Issues/Treemap.svelte'
-    export let data: { nodes: Node[], issues: Issue[] };
+    export let data: { nodes: Node[], issues: Issue[], rootNode: Node };
     
 
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
     import Sidebar from "$lib/Issues/Sidebar.svelte";
     import { active } from "d3";
 
-    
+     
 
     $: $selectedNodeId, updateSelectedNodeStore();
 
@@ -37,7 +37,8 @@
 
     nodesDataStore.set(data.nodes)
     issuesDataStore.set(data.issues);
-    
+    selectedNodeId.set(data.rootNode.id)
+    selectedNodeStore.set(data.rootNode)
     
     onMount(() => {
         updateSelectedNodeStore();
@@ -47,12 +48,17 @@
         
     });
 
+    
+
 
   // Sidebar width state: 0 (closed), 50% (half), 100% (full)
     let sidebarWidth = [50];
-
+    
+    $: sidebarWidthStore.set(sidebarWidth);
     function setSidebarWidth(width) {
         sidebarWidth[0] = width;
+
+        
     }
 
 
@@ -86,7 +92,11 @@
     
             fuckin workspace
         </a>
+        <a data-sveltekit-preload-data="hover" href="/blocks">
     
+            fuckin blocks
+        </a>
+
     
                 
     
@@ -147,6 +157,7 @@
         overflow: hidden;
     }
     .container {
+        transition: width 12s ease;
         display: flex;
         flex-direction: column; /* Aligns children vertically */
         height: 100%; /* Ensures the Pane fills the Splitpane height */
@@ -159,7 +170,7 @@
         display: flex;
         justify-content: center; /* Center all items horizontally in the wrapper */
         align-items: center; /* Center all items vertically in the wrapper */
-        
+     
     }
 
     .viz-wrapper2 {

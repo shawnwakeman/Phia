@@ -7,7 +7,7 @@ import { get } from 'svelte/store';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
+const project_id = 1
 export const supabase = createClient<Database>(
     supabaseUrl,
     supabaseAnonKey
@@ -83,7 +83,7 @@ export async function addNode(name: string, value: number, parent_id: number | n
     const { data, error } = await supabase
         .from('nodes')
         .insert([
-            { name: name, value: value, parent_id: parent_id }
+            { name: name, value: value, parent_id: parent_id, project_id: project_id, state: "Open" }
         ])
         .select();
 
@@ -188,11 +188,6 @@ export async function updateNodeAndChildrenState(nodeId: number, newState: strin
     const nodeIdsToUpdate = Array.from(nodesToUpdate);
 
 
-
-    
-    console.timeEnd('Database Updates');
-
-    console.time('Update Local Store');
     nodesDataStore.update(currentNodes => {
         return currentNodes.map(node => {
             if (nodesToUpdate.has(node.id)) {
@@ -201,9 +196,22 @@ export async function updateNodeAndChildrenState(nodeId: number, newState: strin
             return node;
         });
     });
-    console.timeEnd('Update Local Store');
 
-    console.log('Nodes updated successfully');
+    const { data, error } = await supabase
+    .from('nodes')
+    .update({ state: newState })
+    .in('id', nodeIdsToUpdate);
+
+    if (error) {
+        console.error('Error updating nodes in database:', error);
+        console.timeEnd('Database Updates');
+        return { success: false, error: error.message };
+    }
+
+    
+
+
+
 }
 
 
@@ -369,8 +377,8 @@ export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes a
             node_id: issue.node_id,
             priority: issue.priority,
             state: issue.state,
-            name: issue.name,
-            columnIndex: issue.columnIndex
+            name: issue.name
+
         })
         .eq('id', issue.id); // Match the issue 'id' for updating
 
