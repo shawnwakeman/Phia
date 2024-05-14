@@ -1,7 +1,9 @@
 <script lang="ts">
-    import type { PageData } from './$types';
-    
-    export let data: PageData;
+
+    import type { Issue, Node } from "../../types/collection";
+    import BarChart from "$lib/BarChart.svelte";
+
+
+    export let data: { nodes: Node[], issues: Issue[], rootNode: Node };
 </script>
 
-cuner

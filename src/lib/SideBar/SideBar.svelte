@@ -1,74 +1,90 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { selectedNodeStore } from "../../stores";
-    import type { Node } from "../../types/collection";
-    import Treemap from "$lib/Issues/Treemap.svelte";
-    import { updateNodeByID } from "../supabaseClient";
+    let items = [
+      { href: "/home", icon: "🏠", text: "Home" },
+      { href: "/state", icon: "📊", text: "State" },
+      { href: "/issues", icon: "❗", text: "Issues" },
+      { href: "/blocks", icon: "🔲", text: "Blocks" },
+      { href: "/documents", icon: "📄", text: "Documents" }
+    ];
 
 
-    import { goto } from '$app/navigation';
-
-        function navigateToAbout() {
-        goto('/issues');
+    let bottomItems = [
+        { href: "/profile", icon: "👤", text: "Profile" },
+        { href: "/settings", icon: "⚙️", text: "Project Settings" },
+        { href: "/docs", icon: "📖", text: "Docs" }
+    ];
+  </script>
+  
+  <style>
+    .sidebar {
+      width: 3.5rem;
+      height: 100vh;
+      background-color: #1f2937;
+      transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 0.5rem;
+      overflow-y: auto;
     }
-
-    export let active: boolean;
-
-    let currentSelectedNode: Node | null = null
-    $: currentSelectedNode = $selectedNodeStore;
-    
-    let text = ''; // A reactive variable to hold the input text value
-
-    // Subscribe to the selectedNodeStore
-
-    
-
-
-    // Subscribe to the selectedNodeStore
-
-
-
-
-    // Function to send an update for the current node
-    function sendUpdateForText() {
-        if (currentSelectedNode) {
-            updateNodeByID(currentSelectedNode.id, {
-                name: text, // Update the name with the value from the text input
-                value: currentSelectedNode.value ?? undefined, // Keep the existing value
-                parent_id: currentSelectedNode.parent_id ?? undefined// Keep the existing parent ID
-            }).then(() => {
-                console.log('Update successful');
-                // Optionally: Refresh data or notify the user of the update success
-            }).catch((error) => {
-                console.error('Update failed', error);
-                // Handle the error, perhaps by notifying the user
-            });
-        }
+  
+    .sidebar:hover {
+      width: 13rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-
-    // Optionally: Use a Svelte action for the input field to call sendUpdate on every input
-</script>
-
-<aside class:active>
-    <h1>{currentSelectedNode?.id}, {currentSelectedNode?.name}, {currentSelectedNode?.parent_id}, {currentSelectedNode?.value}</h1>
-    <button on:click={navigateToAbout}>issues</button>
-    <input type="text" bind:value={text} on:input={sendUpdateForText} />
-    <h1>Nested Issues</h1>
-
-</aside>
-
-<style>
-    aside {
-        position: absolute;
-        left: -500px;
-        transition: all .5s;
-        height: 500px;
-        width: 300px;
-        padding: 20px;
-        border: 1px solid #ddd;
-        background-color: #efefef;
+  
+    .sidebar-item {
+      color: #9ca3af;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
     }
-    .active {
-        left: 0px;
+  
+    .sidebar-item:hover {
+      background-color: #374151;
+      color: #ffffff;
     }
-</style>
+  
+    .sidebar-item-icon {
+      font-size: 1.25rem;
+      margin-right: 0.75rem;
+    }
+  
+    .sidebar-item-text {
+      opacity: 0;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+  
+    .sidebar:hover .sidebar-item-text {
+      opacity: 1;
+    }
+  </style>
+  
+  <div class="sidebar">
+    <ul>
+      {#each items as item}
+        <li>
+          <a class="sidebar-item" href={item.href}>
+            <span class="sidebar-item-icon">{item.icon}</span>
+            <span class="sidebar-item-text">{item.text}</span>
+          </a>
+        </li>
+      {/each}
+    </ul>
+
+    <ul>
+        {#each bottomItems as item}
+          <li>
+            <a class="sidebar-item" href={item.href}>
+              <span class="sidebar-item-icon">{item.icon}</span>
+              <span class="sidebar-item-text">{item.text}</span>
+            </a>
+          </li>
+        {/each}
+      </ul>
+  </div>
+  
