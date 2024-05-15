@@ -3,7 +3,7 @@
     import Table from '../../lib/Issues/Table.svelte'
     import DataTable from '../../lib/Issues/DataTable/DataTable.svelte'
     import Treemap from '../../lib/Issues/Treemap.svelte'
-    import Sidebar from '../../lib/Issues/Sidebar.svelte'
+    import Sidebar from '../../lib/Sidebar.svelte'
 
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
@@ -76,45 +76,47 @@
 
 </script>
 
-<h1>Issue Tracker</h1>
 
-<h1>{$currentSelectedIssue?.id}</h1>
-<h1>{currentSelectedNode?.id}</h1>
+<main class="main">
+    <Sidebar/>
+    <div class="content">
+        <h1>Issue Tracker</h1>
 
-<a data-sveltekit-preload-data="hover" href="/">
+        <h1>{$currentSelectedIssue?.id}</h1>
+        <h1>{currentSelectedNode?.id}</h1>
+        
+        <a data-sveltekit-preload-data="hover" href="/">
+        
+            fuckin shi
+        </a>
+        
+         
+        
+        
+        
+        <button>search</button>
+        <h1>root . bread . etc</h1>
+        
+        <div>
+            {#each tabs as tab}
+                <button on:click={() => setCurrentView(tab.id)}>{tab.name}</button>
+            {/each}
+        </div>
+        {#if currentViewID === 'table'}
+        
+        
+            <DataTable/>
+        
+        {:else if currentViewID === 'kaban'}
+          <Kaban/>
+        {:else if currentViewID === 'treemap'}
+            <Treemap/>
+        {/if}
 
-	fuckin shi
-</a>
-
- 
-
-
-
-<button>search</button>
-<h1>root . bread . etc</h1>
-
-<div>
-    {#each tabs as tab}
-        <button on:click={() => setCurrentView(tab.id)}>{tab.name}</button>
-    {/each}
-</div>
-{#if currentViewID === 'table'}
-
-
-    <DataTable/>
-
-{:else if currentViewID === 'kaban'}
-  <Kaban/>
-{:else if currentViewID === 'treemap'}
-    <Treemap/>
-{/if}
-<button on:click={() => { show = !show; sidebarWidth = '50%'; }}>Expand Half Width</button>
-<button on:click={() => { show = !show; sidebarWidth = '100%'; }}>Expand Full Width</button>
-
-
-
-<button on:click={() => createNewNode()}>add</button>
-
+        
+        <button on:click={() => createNewNode()}>add is broken</button> 
+    </div>
+</main>
 <style> 
     #treemap {
       display: block;
@@ -123,6 +125,18 @@
       height: auto;
       background-color: #f0f0f0; /* Light grey background */
     }
+    .main {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  
 
   </style>

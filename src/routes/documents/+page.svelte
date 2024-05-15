@@ -1,7 +1,7 @@
 <script>
 	import { Editor } from "@wakemanshawn/novel-svelte-shawnwakeman";
 	import { writable } from 'svelte/store';
-
+    import Sidebar from "$lib/Sidebar.svelte";
 	let showEditor = true;  // Toggle to control the display of the editor
 
 	function saveContent() {
@@ -24,10 +24,25 @@
 	}
 </script>
 
-<!-- Conditional rendering based on the toggle -->
-{#if showEditor}
-	<Editor />
-{/if}
 
-<button on:click={saveContent}>Save Content</button>
-<button on:click={loadContent}>Load Content</button>
+
+<style>
+
+  
+    .main {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+  
+   
+  </style>
+
+<main class="main">
+    <Sidebar/>
+    <div class="content"></div>
+        <button on:click={saveContent}>Save Content</button>
+        <button on:click={loadContent}>Load Content</button>
+
+        <Editor />
+</main>

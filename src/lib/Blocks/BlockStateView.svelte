@@ -3,10 +3,10 @@
 
 
     import { onMount } from 'svelte';
-    import type { Node, Issue } from "../types/collection"
+    import type { Node, Issue } from "../../types/collection"
     import * as d3 from 'd3';
-    import { selectedNodeStore } from "../stores";
-    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore } from "../stores";
+    import { selectedNodeStore } from "../../stores";
+    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore } from "../../stores";
     import { get } from 'svelte/store';
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
     import { canJoin } from '@tiptap/pm/transform';
@@ -176,7 +176,7 @@ return rootCandidates[0];
 
             let parentWidth = (value[0] / 100) * browserWidth;
 
-            let parentHeight = browserHeight * 0.9;
+            let parentHeight = browserHeight * 0.6;
 
             let aspectRatio = parentWidth / parentHeight;
 
@@ -197,7 +197,7 @@ return rootCandidates[0];
              
 
                 if (!isFirstLoad) {
-                    console.log("ads");
+                    
                     
                         width = innerWidth;
                         height = innerHeight
@@ -237,9 +237,7 @@ return rootCandidates[0];
                 
                 
                 updateVisuals();
-                if (selectedNode) {
-                    centerOnNode(selectedNode);
-                }
+
             
                
                 
@@ -272,16 +270,7 @@ return rootCandidates[0];
 // Adjust the types as necessary to match your actual data structure
     
 function centerOnNode(node) {
-    const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
-    const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
-
-    // Calculate potential scales for both width and height to keep the circle within view
-    const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
-    const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
-
-    // Use the smaller scale to ensure the circle fits in both dimensions without clipping
-    const k = Math.min(scaleWidth, scaleHeight);
-
+    const k = width / (node.r * 2.5); // Adjust the denominator to scale to 80% of the width
     const x = width / 2 - k * node.x;
     const y = height / 2 - k * node.y;
 
@@ -400,7 +389,7 @@ function centerOnNodeALL(node) {
 
 
     function updateVisuals() {
-        console.log("update");
+        
         
     if (!data) {
         console.error("Failed to create hierarchical data.");
@@ -645,7 +634,8 @@ function updateParentColor(node) {
       
     });
 
-
+    console.log("done");
+    
   
 }
 
@@ -673,8 +663,6 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
     // Check if the clicked node is the currently selected node
     if (selectedNode && d.data.id === selectedNode.data.id) {
         // Reset selection and zoom out
-
-        
         const parent = nodes.find(node => node.depth === 0 && node.parent === null) || null;
         selectedNode = parent
         currentDepth = 0;

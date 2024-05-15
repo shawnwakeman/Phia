@@ -1,5 +1,6 @@
 <script lang="ts">
     let items = [
+        { href: "/", icon: "🏠", text: "asd" },
       { href: "/home", icon: "🏠", text: "Home" },
       { href: "/state", icon: "📊", text: "State" },
       { href: "/issues", icon: "❗", text: "Issues" },
@@ -26,6 +27,7 @@
       justify-content: space-between;
       padding: 0.5rem;
       overflow-y: auto;
+      overflow-x: hidden; /* Hide horizontal scrollbar */
     }
   
     .sidebar:hover {

@@ -7,7 +7,7 @@ import { get } from 'svelte/store';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-const project_id = 1
+const projectID = 1
 export const supabase = createClient<Database>(
     supabaseUrl,
     supabaseAnonKey
@@ -83,7 +83,7 @@ export async function addNode(name: string, value: number, parent_id: number | n
     const { data, error } = await supabase
         .from('nodes')
         .insert([
-            { name: name, value: value, parent_id: parent_id, project_id: project_id, state: "Open" }
+            { name: name, value: value, parent_id: parent_id, project_id: projectID, state: "Open" }
         ])
         .select();
 
@@ -158,19 +158,19 @@ export async function updateNodeByID(nodeId: number, updatedValues: {
 }
 
 
+
 export async function updateNodeAndChildrenState(nodeId: number, newState: string) {
-    console.time('Get Nodes');
+    console.log("Called updateNodeAndChildrenState");
+    
     let nodes;
-    nodesDataStore.subscribe($nodes => { nodes = $nodes })();
+    const unsubscribe = nodesDataStore.subscribe($nodes => { nodes = $nodes });
+    unsubscribe(); // Unsubscribe immediately to prevent memory leaks
     const allNodes = nodes;
     if (!allNodes) {
-        console.error('Node not found');
-        console.timeEnd('Get Nodes');
+        console.error('Nodes not found');
         return;
     }
-    console.timeEnd('Get Nodes');
 
-    console.time('Gather Nodes to Update');
     let nodesToUpdate = new Set([nodeId]); // Start with the initial node
     let queue = [nodeId];
     while (queue.length > 0) {
@@ -181,13 +181,11 @@ export async function updateNodeAndChildrenState(nodeId: number, newState: strin
             queue.push(child.id);
         });
     }
-    console.timeEnd('Gather Nodes to Update');
 
-    console.time('Database Updates');
     // Convert the set of node IDs to an array for the update
     const nodeIdsToUpdate = Array.from(nodesToUpdate);
 
-
+    // Update the nodes in the datastore
     nodesDataStore.update(currentNodes => {
         return currentNodes.map(node => {
             if (nodesToUpdate.has(node.id)) {
@@ -198,20 +196,17 @@ export async function updateNodeAndChildrenState(nodeId: number, newState: strin
     });
 
     const { data, error } = await supabase
-    .from('nodes')
-    .update({ state: newState })
-    .in('id', nodeIdsToUpdate);
+        .from('nodes')
+        .update({ state: newState })
+        .in('id', nodeIdsToUpdate);
 
     if (error) {
         console.error('Error updating nodes in database:', error);
-        console.timeEnd('Database Updates');
         return { success: false, error: error.message };
     }
 
-    
-
-
-
+    console.log("Nodes successfully updated in database");
+    return { success: true, data };
 }
 
 

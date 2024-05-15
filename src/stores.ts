@@ -28,6 +28,12 @@ export const showModal = writable(false);
 export const selectedItem = writable(null);
 
 
+export const initNodesDataStore = writable<Node[]>([]);
+
+
+
+
+
 export interface SpotifyItem {
   id: number; // Simple integer ID
   link: string; // Spotify link

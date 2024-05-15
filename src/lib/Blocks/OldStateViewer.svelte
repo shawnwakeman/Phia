@@ -3,10 +3,10 @@
 
 
     import { onMount } from 'svelte';
-    import type { Node, Issue } from "../types/collection"
+    import type { Node, Issue } from "../../types/collection"
     import * as d3 from 'd3';
-    import { selectedNodeStore } from "../stores";
-    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore } from "../stores";
+    import { selectedNodeStore } from "../../stores";
+    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore } from "../../stores";
     import { get } from 'svelte/store';
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
     import { canJoin } from '@tiptap/pm/transform';
@@ -176,7 +176,7 @@ return rootCandidates[0];
 
             let parentWidth = (value[0] / 100) * browserWidth;
 
-            let parentHeight = browserHeight * 0.9;
+            let parentHeight = browserHeight * 0.4;
 
             let aspectRatio = parentWidth / parentHeight;
 
@@ -193,7 +193,7 @@ return rootCandidates[0];
             }
             
 
-  
+
              
 
                 if (!isFirstLoad) {
@@ -230,31 +230,25 @@ return rootCandidates[0];
         nodesDataStore.subscribe((value) => {
 
       
-            
-            data = createHierarchy(value)
-            if (!isFirstLoad) {
-  
-                
-                
+            if (isFirstLoad) {
+                data = createHierarchy(value)
+            } else {
                 updateVisuals();
-                if (selectedNode) {
-                    centerOnNode(selectedNode);
-                }
-            
-               
-                
             }
+
+    
+
             isFirstLoad = false; // Update flag after first run
         }); // logs 'got a subscriber', then '1'
 
-        navigateNodeStore.subscribe(value => {
+        selectedNodeStore.subscribe(value => {
             if (value) {
 
                 if (nodes && !isFirstLoad) {
 
                     
                     let currentNode = nodes.find(d => d.data.id === value.id);
-            
+                   
                     handleCircleClick(currentNode)
                 }
             }
@@ -272,16 +266,7 @@ return rootCandidates[0];
 // Adjust the types as necessary to match your actual data structure
     
 function centerOnNode(node) {
-    const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
-    const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
-
-    // Calculate potential scales for both width and height to keep the circle within view
-    const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
-    const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
-
-    // Use the smaller scale to ensure the circle fits in both dimensions without clipping
-    const k = Math.min(scaleWidth, scaleHeight);
-
+    const k = width / (node.r * 2.5); // Adjust the denominator to scale to 80% of the width
     const x = width / 2 - k * node.x;
     const y = height / 2 - k * node.y;
 
@@ -353,11 +338,11 @@ function centerOnNodeALL(node) {
 
 
     function updateViewBox(newWidth: number, newHeight: number) {
-    d3.select("#circle-packing svg")
+    d3.select("#circle-packingOld svg")
         .attr("viewBox", `0 0 ${newWidth} ${newHeight}`);
     }
     
-    const svg = d3.select("#circle-packing")
+    const svg = d3.select("#circle-packingOld")
         .append("svg")
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("text-anchor", "middle")
@@ -400,7 +385,7 @@ function centerOnNodeALL(node) {
 
 
     function updateVisuals() {
-        console.log("update");
+        console.log("updates");
         
     if (!data) {
         console.error("Failed to create hierarchical data.");
@@ -433,7 +418,7 @@ const pack = d3.pack<WritableNode>()
     });
 
 nodes = pack(root);
-console.log(nodes);
+
 
 selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
 // Apply the pack layout to your hierarchy
@@ -445,7 +430,7 @@ selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
 
 
 
-    updateCircles(nodes);
+    updateCirclesOLD(nodes);
     updateText(nodes);
     centerOnNodeALL(selectedNode)
 }
@@ -547,47 +532,39 @@ function updateParentColor(node) {
     }
 }
 
-    function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
-        
-        
-        let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
+    function updateCirclesOLD(nodes: d3.HierarchyCircularNode<WritableNode>) {
+    // Ensure unique gradient IDs by appending a unique component-specific identifier
+    const componentId = 'uniqueComponentId';  // Replace with actual unique identifier
 
-        nodes.descendants().forEach(node => {
+    let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1;
 
-            
-            node.data.totalPriority = getNestedIssuesTotalPriority(node.data.id, $nodesDataStore, $issuesDataStore);
+    nodes.descendants().forEach(node => {
+        node.data.totalPriority = getNestedIssuesTotalPriority(node.data.id, $nodesDataStore, $issuesDataStore);
 
-            // Normalize totalPriority to fit within the gradient range
-            let normalizedPriority = (node.data.totalPriority / maxPriority) * 100; // Normalize to percentage
+        let normalizedPriority = (node.data.totalPriority / maxPriority) * 100;
 
-           
-            
-            if (node.data.totalPriority === 0) {
-                node.data.innerGradientStop = `${123 + normalizedPriority * 0.2}%`; // Center color extends further based on priority
-                node.data.outerGradientStop = `${123 + normalizedPriority * 0.1}%`; // Quick transition to edge color
-            } else {
-                let scale = (maxPriority - node.data.totalPriority) / maxPriority * 10; // This scales the remaining to between 0 and 10
-                let basePercentage = 90; // Base percentage for max priority
-                node.data.innerGradientStop = `${90}%`; // 60% of the scale added to 90%
-                node.data.outerGradientStop = `${100}%`; 
-            }
-            // Use normalizedPriority to adjust gradient transition
-           
-        });
+        if (node.data.totalPriority === 0) {
+            node.data.innerGradientStop = `${123 + normalizedPriority * 0.2}%`;
+            node.data.outerGradientStop = `${123 + normalizedPriority * 0.1}%`;
+        } else {
+            let scale = (maxPriority - node.data.totalPriority) / maxPriority * 10;
+            let basePercentage = 90;
+            node.data.innerGradientStop = `${basePercentage}%`;
+            node.data.outerGradientStop = `${100}%`;
+        }
+    });
 
-        updateTreeColors(nodes);
-        
+    updateTreeColors(nodes);
 
-        const defs = svg.select("defs") ;
-        const gradients = defs.selectAll("radialGradient")
+    const defs = svg.select("defs");
+    const gradients = defs.selectAll("radialGradient")
         .data(nodes.descendants(), (d) => d.data.id)
         .join(
-            enter => enter.append("radialGradient").attr("id", d => `gradient-${d.data.id}`),
+            enter => enter.append("radialGradient").attr("id", d => `gradient-${componentId}-${d.data.id}`),
             update => update,
             exit => exit.remove()
         );
 
-    // Add stops to each gradient
     gradients.selectAll("stop").data(d => [
         { offset: "0%", color: d.data.fillColor },
         { offset: d.data.innerGradientStop, color: d.data.fillColor },
@@ -601,68 +578,21 @@ function updateParentColor(node) {
     .attr("offset", d => d.offset)
     .attr("stop-color", d => d.color);
 
-
-  g.selectAll("circle")
-    .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
-    .join("circle")
-    .attr("transform", d => `translate(${d.x},${d.y})`)
-    .attr("r", d => d.r)
-
-// Radius is calculated by D3, taking into account the dynamic padding
-    .attr("fill", d => `url(#gradient-${d.data.id})`)
-    .attr("stroke-width", d => d.r * 0.03)  // Decrease stroke-width with depth
-    .attr("class", d => {
-       
-    // Add 'circle' class to all, 'circle-selected' if it is the selected node
-        let classes = d.data.id === currentSelectedNodeId ? "circle circle-selected" : "circle";
-        // Add 'hoverable' class only if the node has children
-        if (d.parent?.data.id == $selectedNodeStore?.id) {
-        classes += " hoverable";
-        }
-        return classes;
-    })
-    .on("click", (event, d) => {
-    //   event.stopPropagation();
-
-      if (d.children != null || d.depth == 1) {
-        handleCircleClick(d);
-        
-      } else if (!d.children && d.depth === selectedNode?.depth && d.parent?.data.id === selectedNode.parent?.data.id ) {
-        handleCircleClickInternal(d)
-        
-        
-        
-      } else if (d.parent?.data.id == $selectedNodeStore?.id) {
-        handleCircleClick(d); // Assuming you want to handle this case the same as if the node had children
-        
-        }
-      else {
-            handleCircleClickFarNode(d)
-            
-      }
- 
-
-      
-    });
-
-
-  
+    g.selectAll("circle")
+        .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
+        .join("circle")
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .attr("r", d => d.r)
+        .attr("fill", d => `url(#gradient-${componentId}-${d.data.id})`)
+        .attr("stroke-width", d => d.r * 0.03)
+        .attr("class", d => {
+            let classes = d.data.id === currentSelectedNodeId ? "circle circle-selected" : "circle";
+            return classes;
+        });
 }
 
 
-function convertToNodeType(d3Node: d3.HierarchyCircularNode<WritableNode> | null): Node | null {
-  if (d3Node === null) {
-    return null; // or return a default NodeType object if preferred
-  }
 
-  // If d3Node is not null, proceed with conversion
-  return {
-    id: d3Node.data.id,
-    name: d3Node.data.name,
-    parent_id: d3Node.parent ? d3Node.parent.data.id : null,
-    value: d3Node.value ?? null,
-  };
-}
 
 
 function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
@@ -673,12 +603,11 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
     // Check if the clicked node is the currently selected node
     if (selectedNode && d.data.id === selectedNode.data.id) {
         // Reset selection and zoom out
-
-        
         const parent = nodes.find(node => node.depth === 0 && node.parent === null) || null;
         selectedNode = parent
         currentDepth = 0;
-        selectedNodeId.set(parent.data.id)
+               
+
         
         // Apply a zoom reset
         svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
@@ -686,7 +615,7 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
         // Update the selected node and current depth for a new selection
         selectedNode = d;
         currentDepth = d.depth;
-        selectedNodeId.set(d.data.id);
+  
         // Calculate and apply zoom transformation for the new selection
         applyZoom(d);
         
@@ -695,106 +624,17 @@ function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
     // selectedNodeId.set(d.data.id)
   
     
-    selectedNodeStore.set(convertToNodeType(selectedNode))
+
     // Refresh visuals with the updated selection or reset
     updateVisuals();
 }
 
-function handleCircleClickInternal(d: d3.HierarchyCircularNode<WritableNode>) {
-    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
-   
 
 
-    // Check if the clicked node is the currently selected node
-        if (!d.children || d.children.length === 0) {
-
-            if (selectedNode && d.data.id === selectedNode.data.id) {
-                // Reset selection and zoom out
-                const parent = nodes.find(node => node.depth === 0 && node.parent === null) || null;
-                selectedNode = parent
-                currentDepth = 0;
-                selectedNodeId.set(parent.data.id)
-                // Apply a zoom reset
-                
-        } else {
-
-            selectedNode = d
-            currentDepth = d.depth;
-            selectedNodeId.set(d.data.id);
-            svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
-
-         
-
-
-        }
-        
-        applyZoom(d)
-        selectedNodeStore.set(convertToNodeType(selectedNode))
-        
-        updateVisuals();
-        return; // Exit the function early
-    }
-}
-
-function handleCircleClickFarNode(d: d3.HierarchyCircularNode<WritableNode>) {
-    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
-
-
-
-    // Check if the clicked node is the currently selected node
- 
-
-        if (selectedNode && d.data.id === selectedNode.data.id) {
-                // Reset selection and zoom out
-                
-                
-                const parent = nodes.find(node => node.depth === 0 && node.parent === null) || null;
-                selectedNode = parent
-                currentDepth = 0;
-                selectedNodeId.set(parent.data.id)
-                // Apply a zoom reset
-                svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
-        } else {
-           
-            selectedNode = d.parent
-            selectedNodeId.set(d.parent?.data.id);
-            currentDepth = d.depth;
-            applyZoomToParent(d)
-
-
-        }
-        
-        
-        
-        selectedNodeStore.set(convertToNodeType(selectedNode))
-
-        
-        updateVisuals();
-        return; // Exit the function early
-  
-}
-
-function applyZoomToParent(d: d3.HierarchyCircularNode<WritableNode>) {
-    d = d.parent
-    if (!selectedNode) {
-        // Reset zoom if no node is selected
-        svg.transition().duration(750).call(zoom.transform as any, d3.zoomIdentity);
-        return;
-    }
-
-    // Compute the zoom transformation based on the selected node 'd'
-    const targetDiameter = Math.min(width, height) * 0.9;
-    const scale = targetDiameter / (d.r * 2);
-    const translate = [width / 2 - scale * d.x, height / 2 - scale * d.y];
-    // Here, 'transform' is declared and assigned before its use
-    const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale);
-
-    // Now 'transform' is already assigned and can be safely used
-    svg.transition().duration(750).call(zoom.transform as any, transform);
-}
 
 
 function applyZoom(d: d3.HierarchyCircularNode<WritableNode>) {
+
     if (!selectedNode) {
         // Reset zoom if no node is selected
         svg.transition().duration(750).call(zoom.transform as any, d3.zoomIdentity);
@@ -802,7 +642,7 @@ function applyZoom(d: d3.HierarchyCircularNode<WritableNode>) {
     }
 
     // Compute the zoom transformation based on the selected node 'd'
-    const targetDiameter = Math.min(width, height) * 0.9;
+    const targetDiameter = Math.min(width, height) * 0.8;
     const scale = targetDiameter / (d.r * 2);
     const translate = [width / 2 - scale * d.x, height / 2 - scale * d.y];
     // Here, 'transform' is declared and assigned before its use
@@ -812,10 +652,6 @@ function applyZoom(d: d3.HierarchyCircularNode<WritableNode>) {
     svg.transition().duration(750).call(zoom.transform as any, transform);
 }
 
-function shouldDisplayText(node: d3.HierarchyCircularNode<WritableNode>): boolean {
-  // Only display text for nodes with radius larger than 10
-  return node.r > 100;
-}
 
 
 function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
@@ -870,7 +706,7 @@ svg.on("wheel.zoom", event => event.preventDefault())
 
 
 
-    <div id="circle-packing"></div>
+    <div id="circle-packingOld"></div>
 
 
 
@@ -886,11 +722,11 @@ svg.on("wheel.zoom", event => event.preventDefault())
         stroke: grey;
 
     }
-    #circle-packing {
-        width: 100%;
-        margin: 0 auto;
-        min-width: 150px;
+    #circle-packingOld {
+        width: 60%;
+        max-width: 50%;
 
+    
 
     }
 
