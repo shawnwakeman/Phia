@@ -9,8 +9,9 @@
     import Kaban from '$lib/Blocks/BlocksKanban.svelte'
     import StateManager from '$lib/Blocks/StateManager.svelte'
     import { Pane, Splitpanes } from 'svelte-splitpanes';
-    import SideBar from "$lib/SideBar.svelte";
-    import Sidebar from "$lib/SideBar.svelte";
+
+    import Sidebar from "$lib/Sidebar.svelte";
+    import Ghantt from "$lib/Blocks/Viewer/Ghantt.svelte";
 
     export let data: { nodes: Node[], issues: Issue[], rootNode: Node };
 
@@ -149,14 +150,7 @@
         <Splitpanes>
             <Pane bind:size={sidebarWidth[0]} class="centered-content">
               <div class="viz-wrapper">
-                <div class="viz-wrapper horizontal-container">
-                    <OldStateViewer/>
-                    
-                    <p>things that are going to change for the statesasdasdasdasdasdasdasdasdasdasdsadasdasdasd</p>
-                </div>
-                <div class="horizontal-divider"></div>
-                <BlockStateView />
-                <StateManager/>
+                <Ghantt/>
               </div>
             </Pane>
             <Pane class="centered-content">
