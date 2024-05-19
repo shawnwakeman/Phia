@@ -3,8 +3,8 @@
     import NodeCreator from "$lib/NodeCreator.svelte";
 
     import { onMount, onDestroy } from 'svelte';
-    import type { Node, Issue } from "../../types/collection";
-    import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore, sidebarWidthStore} from "../../stores";
+    import type { Node, Issue, TargetStates } from "../../types/collection";
+    import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore, sidebarWidthStore, targetStatesStore} from "../../stores";
     import { get } from "svelte/store";
     import { writable } from 'svelte/store';
     import { toggleMode } from "mode-watcher";
@@ -18,7 +18,7 @@
     import Kaban from '$lib/Issues/Kaban/Kaban.svelte'
 
     import Treemap from '$lib/Issues/Treemap.svelte'
-    export let data: { nodes: Node[], issues: Issue[], rootNode: Node };
+    export let data: { nodes: Node[], issues: Issue[], rootNode: Node, targetStates: TargetStates[] };
     
 
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
@@ -39,7 +39,8 @@
     issuesDataStore.set(data.issues);
     selectedNodeId.set(data.rootNode.id)
     selectedNodeStore.set(data.rootNode)
-    
+    targetStatesStore.set(data.targetStates)
+    console.log("asdasasdaad", data.targetStates);
     onMount(() => {
         updateSelectedNodeStore();
        
@@ -80,17 +81,8 @@
 <main class="main">
     <Sidebar />
     <div class="content">
-      <ul>
-        <a data-sveltekit-preload-data="hover" href="/home">home</a>
-        <a data-sveltekit-preload-data="hover" href="/state">state</a>
-        <a data-sveltekit-preload-data="hover" href="/issues">issues</a>
-        <a data-sveltekit-preload-data="hover" href="/blocks">blocks</a>
-        <a data-sveltekit-preload-data="hover" href="/documents">documents</a>
 
-
-
-      </ul>
-  
+   
       <Button on:click={toggleMode} variant="outline" size="icon">
         <h1>one</h1>
         <span class="sr-only">Toggle theme</span>
@@ -103,6 +95,7 @@
       </div>
   
       <Splitpanes>
+        
         <Pane bind:size={sidebarWidth[0]} class="centered-content">
           <div class="viz-wrapper">
             <BarChart />
@@ -136,10 +129,9 @@
     }
   
     .container {
-      transition: width 12s ease;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
+        display: flex;
+        justify-content: space-around;
+        max-width: 200px;
     }
   
     .viz-wrapper {

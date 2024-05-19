@@ -45,12 +45,26 @@ export async function load() {
 
       if (issuesData) {
           issues = issuesData;
-      }
-        
+  }
+  
+    const { data: targetStates, error: targetStatesError } = await supabase
+    .from('node_target_states')
+    .select('*')
+    .eq('project_id', projectID)
+
+
+
+    if (targetStatesError) {
+      console.error('Error fetching target states:', targetStatesError);
+      return;
+    }
+
+          
     return {
         nodes: nodes, // Use the local nodes variable which may have been updated
-		issues: issues ?? [],
-		rootNode: selectedNode
+		  issues: issues ?? [],
+      rootNode: selectedNode,
+    	targetStates: targetStates
     };
 
 

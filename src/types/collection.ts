@@ -11,3 +11,7 @@ export type User = Database["public"]["Tables"]["users"]["Row"];
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 export type ProjectUser = Database["public"]["Tables"]["project_users"]["Row"];
+
+export type Blocks = Database["public"]["Tables"]["snapshots"]["Row"];
+
+export type TargetStates = Database["public"]["Tables"]["node_target_states"]["Row"];

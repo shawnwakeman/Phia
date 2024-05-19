@@ -1,21 +1,24 @@
 <script lang>
     import { selectedNodeStore, nodesDataStore } from '../../stores';
   
-    import { updateNodeAndChildrenState, updateNodeByID } from '$lib/supabaseClient';
+    import { updateNodeByID } from '$lib/supabaseClient';
 
-    let value, state, olddata;
+    let state, olddata;
 
     selectedNodeStore.subscribe(data => {
         olddata = data
-        value = data.value;
-        state = data.state;
+   
+        state = data?.state;
     });
+
+
+
 
 
     function specialFunction() {
 
         
-        updateNodeAndChildrenState(olddata.id, state);
+        // updateNodeAndChildrenTargetState(olddata.id, state);
       
     }
 
@@ -35,6 +38,6 @@
         <option value="Completed">Completed</option>
     </select>
 
-    <p>Selected Value: {value}</p>
+
     <p>Selected State: {state}</p>
 </div>

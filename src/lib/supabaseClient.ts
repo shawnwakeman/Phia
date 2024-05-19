@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
 import type { Issue, Config } from '../types/collection'
-import { issuesDataStore, nodesDataStore, addedIssue } from "../stores";
+import { issuesDataStore, nodesDataStore, addedIssue, targetStatesStore } from "../stores";
 import { get } from 'svelte/store';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -18,6 +18,7 @@ export const supabase = createClient<Database>(
 interface RpcParams {
     node_id: number;
 }
+
 
 
 
@@ -79,11 +80,18 @@ export async function fetchNestedIssues(nodeId: number) {
   
 export async function addNode(name: string, value: number, parent_id: number | null) {
     console.log(name, parent_id);
+
+    
+    let parentTargetStates;
+    
+
+
+
     
     const { data, error } = await supabase
         .from('nodes')
         .insert([
-            { name: name, value: value, parent_id: parent_id, project_id: projectID, state: "Open" }
+            {  name: name, value: value, parent_id: parent_id, project_id: projectID, state: "Open", initial_state: "Open" }
         ])
         .select();
 
@@ -102,6 +110,52 @@ export async function addNode(name: string, value: number, parent_id: number | n
         nodesDataStore.update(currentNodes => {
           return [...currentNodes, addedNode];
         });
+
+
+        if (parent_id) {
+            console.log(targetStatesStore);
+            
+            targetStatesStore.subscribe((states) => {
+                parentTargetStates = states.filter(state => state.node_id === parent_id);
+            })();
+            
+    
+    
+            
+            if (!parentTargetStates || parentTargetStates.length === 0) {
+                console.warn('No target states found for the parent node.');
+                
+            } else {
+                console.log(parentTargetStates);
+                
+                const newTargetStates = parentTargetStates.map((state) => ({
+                    node_id: addedNode.id,
+                    snapshot_id: state.snapshot_id,
+                    project_id: state.project_id,
+                    target_state: state.target_state
+                  }));
+                  
+                const { data: insertedData, error: insertError } = await supabase
+                    .from('node_target_states')
+                    .insert(newTargetStates)
+                    .select();
+                
+                if (insertError) {
+                    console.error('Error inserting new target states:', insertError);
+                    return;
+                }
+        
+                // Update the store with the new target states
+                targetStatesStore.update((currentStates) => [
+                    ...currentStates,
+                    ...insertedData
+                ]);
+            }
+    
+            
+            
+        }
+    
     
         return { success: true, id: nodeId }; // Return success and the ID of the added node
     } else {
@@ -208,6 +262,57 @@ export async function updateNodeAndChildrenState(nodeId: number, newState: strin
     console.log("Nodes successfully updated in database");
     return { success: true, data };
 }
+
+export async function updateNodeAndChildrenTargetState(nodeId: number, newState: string) {
+    console.log("Called updateNodeAndChildrenState");
+    
+    let nodes;
+    const unsubscribe = nodesDataStore.subscribe($nodes => { nodes = $nodes });
+    unsubscribe(); // Unsubscribe immediately to prevent memory leaks
+    const allNodes = nodes;
+    if (!allNodes) {
+        console.error('Nodes not found');
+        return;
+    }
+
+    let nodesToUpdate = new Set([nodeId]); // Start with the initial node
+    let queue = [nodeId];
+    while (queue.length > 0) {
+        const currentId = queue.shift();
+        const childNodes = allNodes.filter(node => node.parent_id === currentId);
+        childNodes.forEach(child => {
+            nodesToUpdate.add(child.id);
+            queue.push(child.id);
+        });
+    }
+
+    // Convert the set of node IDs to an array for the update
+    const nodeIdsToUpdate = Array.from(nodesToUpdate);
+
+    // Update the nodes in the datastore
+    nodesDataStore.update(currentNodes => {
+        return currentNodes.map(node => {
+            if (nodesToUpdate.has(node.id)) {
+                return { ...node, target_state: newState };
+            }
+            return node;
+        });
+    });
+
+    const { data, error } = await supabase
+        .from('nodes')
+        .update({ target_state: newState })
+        .in('id', nodeIdsToUpdate);
+
+    if (error) {
+        console.error('Error updating nodes in database:', error);
+        return { success: false, error: error.message };
+    }
+
+    console.log("Nodes successfully updated in database");
+    return { success: true, data };
+}
+
 
 
 export async function updateNodeNameByID(nodeId: number, newName: string) {
@@ -459,3 +564,74 @@ async function uploadFileToNodeFolder(nodeId: number, file) {
     // This is a placeholder function. You'll need to implement this based on your actual database schema and logic.
     return 'exampleNodeName'; // Placeholder return
   }
+
+
+            ////////////////////////////////////////////////////////////// 
+			//                           Blocks                         //  
+			////////////////////////////////////////////////////////////// 
+            
+            
+            // export async function fetchNestedIssues(nodeId: number) {
+            //     const params: RpcParams = { node_id: nodeId };
+            //     const { data, error } = await supabase
+            //         .rpc('get_nested_issues', params as any);
+            
+            
+                
+            //     if (error) {
+            //         console.error('Error fetching nested issues:', error);
+            //         return [];
+            //     }
+            
+            
+            //     return data;
+            // }
+            
+            
+export async function createSnapshot(projectID: number) {
+    // Call the RPC to create a snapshot and copy nodes
+    const { data: snapshotData, error: snapshotError } = await supabase
+        .rpc('copy_nodes_to_snapshot', { project_id_param: projectID });
+
+    if (snapshotError) {
+        console.error('Error creating snapshot:', snapshotError);
+        return { success: false, error: snapshotError.message };
+    }
+
+    console.log('Created snapshot and copied nodes:', snapshotData);
+    return { success: true, data: snapshotData };
+}
+
+            
+
+
+export async function deleteSnapshot(snapshotID: number) {
+    const { data, error } = await supabase
+        .from('snapshots')
+        .delete()
+        .match({ snapshot_id: snapshotID });
+
+    if (error) {
+        console.error('Error deleting snapshot:', error);
+        return { success: false, error: error.message };
+    }
+
+    console.log('Deleted snapshot:', data);
+    return { success: true, data: data };
+}
+
+export async function loadSnapshots(projectID: number) {
+    const { data, error } = await supabase
+        .from('snapshots')
+        .select('snapshot_id, created_at')
+        .eq('project_id', projectID)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error loading snapshots:', error);
+        return { success: false, error: error.message };
+    }
+
+    console.log('Loaded snapshots:', data);
+    return { success: true, data: data };
+}

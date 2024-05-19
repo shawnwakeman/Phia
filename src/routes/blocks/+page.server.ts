@@ -9,7 +9,7 @@ export async function load() {
     let nodes
     let issues
     let selectedNode
-
+    let snapshots;
     
  
         // Fetch nodes data if nodesDataStore is empty
@@ -45,16 +45,50 @@ export async function load() {
 
       if (issuesData) {
           issues = issuesData;
-      }
+  }
+
+
+  // Fetch snapshots
+  const { data: snapshotsData, error: snapshotsError } = await supabase
+	  .from('snapshots')
+	  .select('snapshot_id, created_at')
+	  .eq('project_id', projectID)
+	  .order('created_at', { ascending: true });
+
+  if (snapshotsError) {
+	  console.error('Error loading snapshots:', snapshotsError);
+	  console.timeEnd('FetchSnapshotsAndTargetStates');
+	  return { success: false, error: snapshotsError.message };
+  }
+	snapshots = snapshotsData || [];
+	
+
+
+  // Fetch target states
+  const { data: targetStates, error: targetStatesError } = await supabase
+	.from('node_target_states')
+	.select('*')
+	.eq('project_id', projectID)
+
+
+
+	if (targetStatesError) {
+		console.error('Error fetching target states:', targetStatesError);
+		return;
+	}
+	
+
+	
+
+
         
     return {
         nodes: nodes, // Use the local nodes variable which may have been updated
 		issues: issues ?? [],
-		rootNode: selectedNode
+		rootNode: selectedNode,
+		snapshotsList: snapshots,
+		targetStates: targetStates
     };
 
 
 }
-
-// Override the type for a specific column in a view:
-

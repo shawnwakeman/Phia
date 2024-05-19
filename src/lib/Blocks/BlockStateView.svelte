@@ -6,7 +6,7 @@
     import type { Node, Issue } from "../../types/collection"
     import * as d3 from 'd3';
     import { selectedNodeStore } from "../../stores";
-    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore } from "../../stores";
+    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore, targetStatesStore, currentBlock } from "../../stores";
     import { get } from 'svelte/store';
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
     import { canJoin } from '@tiptap/pm/transform';
@@ -76,11 +76,26 @@ function createHierarchy(data: Node[]): WritableNode | null {
     
     // Temporary variable to hold identified root node(s)
     let rootCandidates: WritableNode[] = [];
+    const targetStates = get(targetStatesStore);
+  
+    console.log(targetStates);
     
     data.forEach((d) => {
-        const element: WritableNode = { id : d.id, name: d.name, value: d.value, children: [], fillColor: "red", state: d.state };
+        console.log($currentBlock);
+        
+        const targetStateForCurrentSnapshot = targetStates.find(state => state.node_id === d.id && state.snapshot_id === $currentBlock.snapshot_id);
+        console.log(targetStateForCurrentSnapshot);
+        
+        const element: WritableNode = {
+            id: d.id,
+            name: d.name,
+            value: d.value,
+            children: [],
+            fillColor: "red",
+            state: targetStateForCurrentSnapshot ? targetStateForCurrentSnapshot.target_state : d.state
+        };
+
         elements[d.id] = element;
-      
         
         if(d.parent_id === null) {
             rootCandidates.push(element); // Potential root node based on missing parent_id
@@ -223,6 +238,24 @@ return rootCandidates[0];
                 return value;
             });
         });
+
+        currentBlock.subscribe((value) => {
+
+      
+            
+           
+            if (!isFirstLoad) {
+ 
+                
+                data = createHierarchy($nodesDataStore)
+                updateVisuals();
+
+
+            
+                
+            }
+            
+        }); // logs 'got a subscriber', then '1'
 
 
      

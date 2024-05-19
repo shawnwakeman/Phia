@@ -167,7 +167,7 @@ return rootCandidates[0];
     onMount(async () => {
         let browserWidth, browserHeight;
         function updateDimensions(value) {
-            if (value[0] > 10) {
+            if (value[0] > 15) {
             
 
 // Get current browser dimensions
@@ -176,7 +176,7 @@ return rootCandidates[0];
 
             let parentWidth = (value[0] / 100) * browserWidth;
 
-            let parentHeight = browserHeight * 0.9;
+            let parentHeight = browserHeight * 1.1;
 
             let aspectRatio = parentWidth / parentHeight;
 
@@ -272,8 +272,8 @@ return rootCandidates[0];
 // Adjust the types as necessary to match your actual data structure
     
 function centerOnNode(node) {
-    const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
-    const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
+    const maxWidthRatio = 0.7; // Circle should cover up to 80% of the width
+    const maxHeightRatio = 0.7; // Circle should cover up to 80% of the height
 
     // Calculate potential scales for both width and height to keep the circle within view
     const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
@@ -291,8 +291,8 @@ function centerOnNode(node) {
 
 function centerOnNodeALL(node) {
     // Constants to control the maximum visible size of the circle
-    const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
-    const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
+    const maxWidthRatio = 0.7; // Circle should cover up to 80% of the width
+    const maxHeightRatio = 0.7; // Circle should cover up to 80% of the height
 
     // Calculate potential scales for both width and height to keep the circle within view
     const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
@@ -302,7 +302,7 @@ function centerOnNodeALL(node) {
     const k = Math.min(scaleWidth, scaleHeight);
 
     const x = width / 2 - k * node.x;
-    const y = height / 2 - k * node.y;
+    const y = height / 2 - k * node.y - 15;
 
     const transform = d3.zoomIdentity.translate(x, y).scale(k);
     svg.transition()
