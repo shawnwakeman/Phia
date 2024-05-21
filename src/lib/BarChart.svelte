@@ -453,9 +453,9 @@ selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
 function getColorByStatus(status) {
     switch (status) {
         case "Open":
-            return "#6FB1FC";
+            return "#aecdeb";
         case "Planned":
-            return "#b92b27";
+            return "#6FB1FC";
         case "In Progress":
             return "#185A9D";
         case "Completed":

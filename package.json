@@ -72,7 +72,7 @@
     "@tiptap/pm": "^2.3.0",
     "@tiptap/starter-kit": "^2.3.0",
     "@tiptap/suggestion": "^2.3.0",
-    "@wakemanshawn/novel-svelte-shawnwakeman": "^0.1.8",
+    "@wakemanshawn/novel-svelte-shawnwakeman": "^0.1.12",
     "animejs": "^3.2.2",
     "bits-ui": "^0.20.1",
     "cheerio": "^1.0.0-rc.12",

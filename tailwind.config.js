@@ -1,4 +1,4 @@
-import { color } from "d3";
+
 import { fontFamily } from "tailwindcss/defaultTheme";
 
 /** @type {import('tailwindcss').Config} */
@@ -20,9 +20,20 @@ const config = {
 				input: "hsl(var(--input) / <alpha-value>)",
 				ring: "hsl(var(--ring) / <alpha-value>)",
 				background: "hsl(var(--background) / <alpha-value>)",
-				sussy: 'hsl(var(--sussy) / <alpha-value>)',
-
-
+				white: 'var(--novel-white)',
+				
+				stone: {
+					50: 'var(--novel-stone-50)',
+					100: 'var(--novel-stone-100)',
+					200: 'var(--novel-stone-200)',
+					300: 'var(--novel-stone-300)',
+					400: 'var(--novel-stone-400)',
+					500: 'var(--novel-stone-500)',
+					600: 'var(--novel-stone-600)',
+					700: 'var(--novel-stone-700)',
+					800: 'var(--novel-stone-800)',
+					900: 'var(--novel-stone-900)'
+				},
 
 
 
@@ -67,7 +78,8 @@ const config = {
 				sm: "calc(var(--radius) - 4px)"
 			},
 			fontFamily: {
-				sans: [...fontFamily.sans]
+				title: ['var(--font-title)', 'system-ui', 'sans-serif'],
+				default: ['var(--font-default)', 'system-ui', 'sans-serif']
 			},
 
 

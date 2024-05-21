@@ -40,8 +40,13 @@
     function createNewNode() {
         console.log("no call");
         
-
-        addIssue(currentSelectedNode?.id ?? null);
+        const rootNode = data.nodes.find(node => node.parent_id === null);
+        if (rootNode) {
+            console.log(rootNode);
+            
+            addIssue(rootNode.id);
+        }
+        
 
     }
 

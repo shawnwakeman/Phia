@@ -4,7 +4,7 @@ import type { Database } from '../types/database.types'
 import type { Issue, Config } from '../types/collection'
 import { issuesDataStore, nodesDataStore, addedIssue, targetStatesStore } from "../stores";
 import { get } from 'svelte/store';
-
+import { type JSONContent } from '@tiptap/core';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const projectID = 1
@@ -350,6 +350,57 @@ export async function updateNodeNameByID(nodeId: number, newName: string) {
 
 
 
+export async function saveSummary(nodeId: number, summaryContent: JSONContent = {
+    type: "doc",
+    content: [
+        {
+            type: "heading",
+            attrs: { level: 1 },
+            content: [{ type: "text", text: "Summary" }]
+        }
+    ]
+}) {
+    const { data, error } = await supabase
+        .from('summaries')
+        .upsert({ node_id: nodeId, summary: summaryContent }, { onConflict: 'node_id' });
+
+    if (error) {
+        console.error('Error saving summary:', error);
+    } else {
+        console.log('Summary saved:', data);
+    }
+}
+
+
+export async function fetchSummary(nodeId: number) {
+
+    const defaultSummary = {
+        type: "doc",
+        content: [
+            {
+                type: "heading",
+                attrs: { level: 1 },
+                content: [{ type: "text", text: "Summary" }]
+            }
+        ]
+    };
+    const { data, error } = await supabase
+        .from('summaries')
+        .select('summary')
+        .eq('node_id', nodeId)
+        .single();
+
+    if (error) {
+        console.error('Error fetching summary:', error);
+        return defaultSummary;
+    }
+
+    return data.summary;
+}
+
+
+
+
 export async function deleteNodeById(nodeId: number) {
     const { data, error } = await supabase
         .from('nodes')
@@ -403,11 +454,13 @@ export async function addIssue(parent_id: number | null,) {
             .from('issues')
             .insert([
                 {
-                    description: '', // Empty string as default
-                    node_id: 1, // Assuming 0 as a placeholder, adjust accordingly
-                    priority: "High", // Assuming null as an appropriate default
-                    state: null, // Assuming null as an appropriate default
-                    name: '', // Empty string as default
+                    description: '', 
+                    node_id: parent_id, // Placeholder, adjust as needed
+                    project_id: projectID, 
+                    priority: 'High', // Default value
+                    state: null, 
+                    name: '', 
+
                 }
             ])
             .select()
@@ -475,9 +528,10 @@ export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes a
         // Specify the fields to update
             description: issue.description,
             node_id: issue.node_id,
+            project_id: issue.project_id,
             priority: issue.priority,
             state: issue.state,
-            name: issue.name
+            name: issue.name,
 
         })
         .eq('id', issue.id); // Match the issue 'id' for updating

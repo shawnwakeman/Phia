@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { selectedNodeStore, issuesDataStore, nodesDataStore } from "../../stores";
-    import { fetchNestedIssues } from "../supabaseClient";
+    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId } from "../../stores";
+    import { addIssue, updateIssue, deleteIssue } from "../supabaseClient";
     import type { Issue, Node } from "../../types/collection";
     import DataTable from "$lib/Issues/DataTable/DataTable.svelte";
     let issues: Issue[] = [];
@@ -64,6 +64,24 @@
         groupBy = newGroupBy;
         groupedIssues = groupIssues(issues, groupBy); // Re-group based on new attribute
     }
+
+    async function handleInputChange(issue: Issue, field: keyof Issue, value: string) {
+        const updatedIssue = { ...issue, [field]: value };
+        const result = await updateIssue(updatedIssue);
+        if (result.success) {
+            issuesDataStore.update(currentIssues => {
+                const index = currentIssues.findIndex(i => i.id === updatedIssue.id);
+                if (index !== -1) {
+                    const updatedIssues = [...currentIssues];
+                    updatedIssues[index] = { ...updatedIssues[index], ...updatedIssue };
+                    return updatedIssues;
+                }
+                return currentIssues;
+            });
+        }
+    }
+
+
 </script>
 
 <!-- UI for selecting grouping attribute -->
@@ -71,8 +89,8 @@
     <option value="state">Group by State</option>
     <option value="priority">Group by Priority</option>
 </select>
+<button on:click={() => addIssue($selectedNodeId)}>Add Issue</button>
 
-<!-- Display grouped issues in collapsible sections -->
 {#each Object.keys(groupedIssues) as groupKey}
     <div>
         <button on:click={() => toggleGroup(groupKey)}>
@@ -81,10 +99,21 @@
         {#if activeGroup === groupKey}
             <div>
                 {#each groupedIssues[groupKey] as issue}
-                    <p>{issue.id} - Priority: {issue.priority}, State: {issue.state}</p>
+                    <div>
+                        <p>ID: {issue.id}</p>
+                        <button on:click={() => deleteIssue(issue)}>DeleteIssue</button>
+                        <label>
+                            Name:
+                            <input type="text" bind:value={issue.name} on:change={(e) => handleInputChange(issue, 'name', e.target.value)} />
+                        </label>
+                        <label>
+                            Description:
+                            <textarea bind:value={issue.description} on:change={(e) => handleInputChange(issue, 'description', e.target.value)}></textarea>
+                        </label>
+                    </div>
+                    <p>-----------------------------------------------------------------------------</p>
                 {/each}
             </div>
         {/if}
     </div>
 {/each}
-
