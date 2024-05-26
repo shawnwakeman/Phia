@@ -1,106 +1,127 @@
 <script lang="ts">
     import Board from './Board.svelte';
-
     import { onMount } from 'svelte';
-    import { selectedNodeStore, issuesDataStore, addedIssue } from "../../../stores";
-    import { fetchNestedIssues, fetchConfig } from "../../supabaseClient";
+    import { issuesDataStore, addedIssue } from "../../../stores";
     import { get } from 'svelte/store';
-    import type { Config, Issue } from "../../../types/collection";
-
-
+    import type { Issue } from "../../../types/collection";
+  
     interface BoardColumn {
-        id: number;
-        name: string;
-        items: Issue[]; // Assuming 'Issue' is a type that fits items within a column
+      id: number;
+      name: string;
+      items: Issue[];
     }
 
-    interface Config {
-        config_key: string;
-        config_value: any; // Use any or a more specific type if you know the structure
-        id: number;
-    }
+    
+  
+    const columnConfigs = {
+      state: [
+        { id: 0, name: 'Open' },
 
+        { id: 1, name: 'DOING' },
+        { id: 2, name: 'DONE' },
+        { id: 4, name: 'unassigned' },
+      ],
+      priority: [
+        { id: 0, name: 'High' },
+        { id: 1, name: 'Medium' },
+        { id: 2, name: 'Low' },
+        { id: 3, name: 'unassigned' },
+      ],
+      // Add more configurations as needed
+    };
+  
     let columns: BoardColumn[] = [];
     let board: BoardColumn[] = [];
-
-
-    onMount(async () => {
-        const configs: Config[] | null = await fetchConfig('kanban_columns');
-        if (configs) {
-            const kanbanColumnsConfig = configs.find(config => config.config_key === 'kanban_columns');
-            if (kanbanColumnsConfig && kanbanColumnsConfig.config_value) {
-                // Assuming config_value directly contains the array of columns
-                // and needs parsing if it's a JSON string
-                let parsedColumns = Array.isArray(kanbanColumnsConfig.config_value) 
-                    ? kanbanColumnsConfig.config_value 
-                    : JSON.parse(kanbanColumnsConfig.config_value);
-
-                // Sort columns by their id
-                parsedColumns.sort((a, b) => a.id - b.id);
-
-                columns = parsedColumns as BoardColumn[];
-                board = columns.map(column => ({ ...column, items: [] }));
-                updateBoard()
-            }
-        }
-    });
-
-    function updateBoard() {
-        const issues: Issue[] = get(issuesDataStore); // Ensure 'issuesDataStore' stores 'Issue[]'
+  
+    let columnByField = 'state'; // Default field for columns
+  
+    // Function to get unique values for a given field from issues
+    function getUniqueFieldValues(field: string, issues: Issue[]): string[] {
+      const values = new Set(issues.map(issue => issue[field]).filter(value => value !== null));
+      return Array.from(values) as string[];
+    }
+  
+    // Function to update the board based on the selected field
+    function updateBoardByField(field: string) {
+      const issues: Issue[] = get(issuesDataStore);
+      const configColumns = columnConfigs[field];
+  
+      if (configColumns) {
+        // Initialize columns from the configuration
+        columns = configColumns.map((config, index) => ({
+          id: index,
+          name: config.name,
+          items: []
+        }));
+  
+        // Populate the columns with issues
         board = transformIssuesToBoard(issues);
-        console.log(board);
-        addedIssue.set(false);
-  }
-
-
-
-  $: if ($addedIssue) {
-    const issues: Issue[] = get(issuesDataStore); // Ensure 'issuesDataStore' stores 'Issue[]'
-    board = transformIssuesToBoard(issues);
-    console.log(board);
-    addedIssue.set(false);
-  }
-
-
-
-  function transformIssuesToBoard(issues: Issue[]): BoardColumn[] {
-  // Initialize the board with empty columns based on the predefined columns array
-  let board: BoardColumn[] = columns.map(column => ({
-      id: column.id,
-      name: column.name,
-      items: []
-  }));
-
-  // Map issues to their respective columns based on their state
-  issues.forEach(issue => {
-      let issueState = issue.state || "UNFILTERED";
-      const column = board.find(col => col.name === issueState);
-
-      if (column) {
-          column.items.push(issue);
       } else {
-          console.warn(`No column found for state: ${issueState}`, issue);
+        console.warn(`No configuration found for field: ${field}`);
       }
-  });
-
-  // Now, sort the items within each column by their columnIndex property
-  board.forEach(column => {
-      column.items.sort((a, b) => a.columnIndex - b.columnIndex);
-  });
-
-  return board;
-}
-
-    console.log(board);
-    
-</script>
-
-<style>
-	:global(*) {
-		box-sizing: border-box;
-		margin: 0;
-	}
-</style>
-
-
-<Board columnItems={board}/>
+    }
+  
+    // Function to transform issues into the board format
+    function transformIssuesToBoard(issues: Issue[]): BoardColumn[] {
+      let board: BoardColumn[] = columns.map(column => ({
+        id: column.id,
+        name: column.name,
+        items: []
+      }));
+  
+      issues.forEach(issue => {
+        const column = board.find(col => col.name === issue[columnByField]);
+        if (column) {
+          column.items.push(issue);
+        } else {
+          console.warn(`No column found for ${columnByField}: ${issue[columnByField]}`, issue);
+          // Optionally handle issues with no matching column
+          const unassignedColumn = board.find(col => col.name === 'unassigned');
+          if (unassignedColumn) {
+            unassignedColumn.items.push(issue);
+          }
+        }
+      });
+  
+      // Sort items within each column if necessary
+      board.forEach(column => {
+        column.items.sort((a, b) => (a.id || 0) - (b.id || 0));
+      });
+  
+      return board;
+    }
+  
+    onMount(() => {
+      updateBoardByField(columnByField);
+    });
+  
+    $: if ($addedIssue) {
+      updateBoardByField(columnByField);
+      addedIssue.set(false);
+    }
+  
+    function handleColumnByChange(event) {
+      columnByField = event.target.value;
+      updateBoardByField(columnByField);
+    }
+  </script>
+  
+  <style>
+    :global(*) {
+      box-sizing: border-box;
+      margin: 0;
+    }
+  
+    /* Add your styles here */
+  </style>
+  
+  <div>
+    <label for="column-by">Column By:</label>
+    <select id="column-by" on:change={handleColumnByChange}>
+      <option value="state">State</option>
+      <option value="priority">Priority</option>
+      <!-- Add more options as needed -->
+    </select>
+  </div>
+  
+  <Board columnItems={board}/>
