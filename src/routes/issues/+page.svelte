@@ -94,7 +94,8 @@
         
             fuckin shi
         </a>
-        
+        <button on:click={() => createNewNode()}>add is broken</button> 
+ 
          
         
         
@@ -119,8 +120,7 @@
         {/if}
 
         
-        <button on:click={() => createNewNode()}>add is broken</button> 
-    </div>
+          </div>
 </main>
 <style> 
     #treemap {
@@ -133,14 +133,14 @@
     .main {
       display: flex;
       height: 100vh;
-      /* overflow: hidden; */
+      overflow: auto;
     }
 
     .content {
       flex: 1;
       display: flex;
       flex-direction: column;
-      /* overflow: hidden; */
+      overflow: hidden;
     }
   
 

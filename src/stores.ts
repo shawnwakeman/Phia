@@ -35,3 +35,5 @@ export const targetStatesStore = writable<TargetStates[]>();
 
 
 export const currentBlock = writable<Blocks>();
+
+export const isDragging = writable(false);

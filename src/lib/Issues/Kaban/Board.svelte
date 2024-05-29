@@ -1,119 +1,54 @@
 <script lang="ts">
-	// This is done in a single file for clarity. A more factored version here: https://svelte.dev/repl/288f827275db4054b23c437a572234f6?version=3.38.2
     import { flip } from 'svelte/animate';
     import { dndzone } from 'svelte-dnd-action';
-    import { updateIssue, addOrUpdateConfig } from "$lib/supabaseClient";
-    import { currentSelectedIssue} from "../../../stores";
-
+    import {isDragging} from '../../../stores'
+    import { updateIssue } from "$lib/supabaseClient";
+    import { currentSelectedIssue } from "../../../stores";
+  
     export let columnItems;
+    export let rowName;
+    export let rowByField;
+    export let columnByField;
+    export let orderBy;
 
-    let exportingColumns = columnItems
+    let exportingColumns = columnItems;
 
+    const flipDurationMs = 130;
 
-    console.log(columnItems);
-    let searchTerm = '';
-    
-
-    $: filteredColumnItems = columnItems.map(column => ({
-        ...column,
-        items: column.items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    }));
-
-
-    const flipDurationMs = 100;
-    function handleDndConsiderColumns(e) {
-        columnItems = e.detail.items;
-        
-        
-        
-    }
-    async function handleDndFinalizeColumns(e) {
-        columnItems = e.detail.items;
-   
-
-        // Prepare the data for updating the database
-        // Assuming your backend expects an array of objects with id and newIndex fields
-        const updates = columnItems.map((column, newIndex) => ({
-            id: column.id, // The column's ID
-            newIndex: newIndex // The new position of the column
-        }));
-
-        // Update each column's position in the database
- 
-            try {
-
-
-// Apply the new IDs to the original data, maintaining the order in the original data array
-                const a = updateColumnPositions(columnItems, updates)
-           
-             
-      
-                await addOrUpdateConfig("kanban_columns", a)
-            } catch (error) {
-                console.error('Error updating column position', error);
-            }
-     
-
-        
-    }
-
-    function updateColumnPositions(columns, updates) {
-    // Deep clone the columns array to avoid direct mutations
-    // This ensures the original columns and any nested objects are not modified
-    let updatedColumns = columns.map(column => ({ ...column, items: [...(column.items || [])] }));
-
-    // Temporary storage for new ID assignments to avoid conflicts during updates
-    let tempIds = {};
-
-    updates.forEach(update => {
-        const columnIndex = updatedColumns.findIndex(column => column.id === update.id);
-        if (columnIndex !== -1) {
-            // Assign a new temporary ID to avoid conflicts
-            tempIds[columnIndex] = update.newIndex;
-        }
-    });
-
-    // Apply the new IDs from the temporary storage, ensuring no direct conflicts
-    // This operation updates the id property of each column and sets the items array to empty.
-    Object.keys(tempIds).forEach(index => {
-        const idx = parseInt(index);
-        updatedColumns[idx].id = tempIds[index];
-        updatedColumns[idx].items = []; // Explicitly setting items to an empty array
-    });
-
-    return updatedColumns;
-}
-
-
-
-    // Dummy function - replace with your actual database update logic
 
 
     function handleDndConsiderCards(cid, e) {
+        // set isdragging store to true
+        isDragging.set(true); 
         const colIdx = columnItems.findIndex(c => c.id === cid);
         columnItems[colIdx].items = e.detail.items;
         columnItems = [...columnItems];
     }
-    function handleDndFinalizeCards(cid, e) {
-        console.log("ads");
-        
+
+    async function handleDndFinalizeCards(cid, e) {
+       
+        isDragging.set(false); // set isDragging to false
         const colIdx = columnItems.findIndex(c => c.id === cid);
         const newColumn = columnItems[colIdx];
         const updatedItems = e.detail.items.map((item, index) => ({
             ...item,
-            state: newColumn.name, // Assuming the column name matches the issue state
-            columnIndex: index // Set columnIndex based on the new order within the column
+            [rowByField]: rowName,
+            [columnByField]: newColumn.name
         }));
 
-        // Update local state
+        // Sort updated items in the new column based on the orderBy field
+        updatedItems.sort((a, b) => {
+            if (a[orderBy] < b[orderBy]) return -1;
+            if (a[orderBy] > b[orderBy]) return 1;
+            return 0;
+        });
+
         columnItems[colIdx].items = updatedItems;
         columnItems = [...columnItems];
 
-        // Update state of each card in the database
         updatedItems.forEach(async (item, index) => {
             try {
-                // Ensure updateIssue is modified to handle and persist columnIndex updates
-                const result = await updateIssue({...item, columnIndex: index});
+                const result = await updateIssue({ ...item, columnIndex: index });
                 if (!result.success) {
                     console.error('Failed to update issue in database', result.error);
                 } else {
@@ -124,62 +59,102 @@
             }
         });
     }
+
     function handleClick(event) {
-    // Directly retrieve the 'data-id' attribute from the event target
-    const issueId = event.target.dataset.id;
+        const issueId = event.target.dataset.id;
 
-    if (issueId) {
-        // Attempt to find the clicked issue from 'columnItems'
-        const clickedIssue = columnItems
-            .flatMap(column => column.items)
-            .find(issue => issue.id === parseInt(issueId, 10)); // Convert string ID back to number
+        if (issueId) {
+            const clickedIssue = columnItems
+                .flatMap(column => column.items)
+                .find(issue => issue.id === parseInt(issueId, 10));
 
-        if (clickedIssue) {
-            currentSelectedIssue.set(clickedIssue);
-            console.log('Selected issue:', clickedIssue);
+            if (clickedIssue) {
+                currentSelectedIssue.set(clickedIssue);
+                console.log('Selected issue:', clickedIssue);
+            } else {
+                console.log("Issue not found with ID:", issueId);
+            }
         } else {
-            console.log("Issue not found with ID:", issueId);
+            console.log("No issue ID found on the clicked element.");
         }
-    } else {
-        console.log("No issue ID found on the clicked element.");
     }
 
-    // Optional: Prevent event from bubbling if necessary
-    // event.stopPropagation();
-}
+
+    // let boardContainer;
+    
+    // let isDragging = false;
+    // let startX = 0;
+    // let startY = 0;
+    // let scrollLeft = 0;
+    // let scrollTop = 0;
 
 
+    // function handleMouseDown(event) {
+    //     isPanning = true;
+    //     startX = event.pageX - boardContainer.offsetLeft;
+    //     startY = event.pageY - boardContainer.offsetTop;
+    //     scrollLeft = boardContainer.scrollLeft;
+    //     scrollTop = boardContainer.scrollTop;
+    //     boardContainer.style.cursor = 'grabbing';
+    //     // Add grabbing style to column titles as well
+    //     columnTitlesContainer.style.cursor = 'grabbing';
+    // }
 
+    // function handleMouseUp() {
+    //     isPanning = false;
+    //     boardContainer.style.cursor = 'grab';
+    //     columnTitlesContainer.style.cursor = 'grab'; // Reset cursor style
+    // }
 
-
-
+    // function handleMouseMove(event) {
+    //     if (!isPanning) return;
+    //     event.preventDefault();
+    //     requestAnimationFrame(() => {
+    //         console.log("as");
+            
+    //         const x = event.pageX - boardContainer.offsetLeft;
+    //         const y = event.pageY - boardContainer.offsetTop;
+    //         const walkX = (x - startX);
+    //         const walkY = (y - startY);
+    //         boardContainer.scrollLeft = scrollLeft - walkX;
+    //         columnTitlesContainer.scrollLeft = boardContainer.scrollLeft; // Sync scroll position
+    //         boardContainer.scrollTop = scrollTop - walkY;
+    //     });
+    // }
 
 </script>
+
 <style>
+
     .board {
-        display: flex; /* Change to flex to lay out children inline */
-        flex-wrap: nowrap; /* Prevent columns from wrapping */
-        overflow-x: auto; /* Enable horizontal scrolling */
-        overflow-y: hidden; /* Prevent vertical scrolling */
-        height: 90vh;
+        display: flex;
+        flex-wrap: nowrap;
         width: 100%;
         padding: 0.5em;
         margin-bottom: 40px;
+
     }
     .column {
-        min-height: 50%;
-        min-width: 250px; /* Use min-width to ensure content dictates size, but not smaller than 250px */
+        width: 300px;
+        min-width: 300px;
+        min-height: 200px; 
+        flex-grow: 1;     
         padding: 0.5em;
         margin: 1em;
-        float: none; /* Since we're using flexbox, float is not necessary */
         border: 1px solid #333333;
-        display: flex; /* Added to ensure title and content are flex children */
-        flex-direction: column; /* Stack title and content vertically */
-        overflow-y: hidden; /* Updated - Ensure this is hidden to prevent double scrollbars */
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;  /* Ensure no internal scrollbar */
     }
     .column-content {
-        overflow-y: auto; /* Allow this area to scroll if content overflows */
-        flex-grow: 1; /* Allow this area to expand to fill available space */
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    .column-titles {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 1em;
     }
     .column-title {
         margin-bottom: 1em;
@@ -189,6 +164,7 @@
     }
     .card {
         height: 15%;
+        min-height: 100px;
         width: 100%;
         margin: 0.4em 0;
         display: flex;
@@ -199,23 +175,23 @@
     }
 </style>
 
-<input type="text" placeholder="Search issues..." bind:value={searchTerm} />
 
-<!-- Use filteredColumnItems for rendering -->
-<section class="board" use:dndzone={{items:columnItems, flipDurationMs, type:'columns'}} on:consider={handleDndConsiderColumns} on:finalize={handleDndFinalizeColumns}>
-    {#each filteredColumnItems as column (column.id)}
-    <div class="column" animate:flip="{{duration: flipDurationMs}}">
+
+  
+
+<section class="board">
+
+    {#each columnItems as column (column.id)}
+      <div class="column">
         <div class="column-title">{column.name}</div>
-        <div class="column-content" use:dndzone={{items:column.items, flipDurationMs}}
+        <div class="column-content" use:dndzone={{ items: column.items, flipDurationMs }}
              on:consider={(e) => handleDndConsiderCards(column.id, e)} on:finalize={(e) => handleDndFinalizeCards(column.id, e)}>
-            {#each column.items as item (item.id)}
-                <div class="card" data-id={item.id} animate:flip="{{duration: flipDurationMs}}" on:click={handleClick}>
-                    {item.name}
-                </div>
-            {/each}
+          {#each column.items as item (item.id)}
+            <div class="card" data-id={item.id} animate:flip={{ duration: flipDurationMs }} on:click={handleClick}>
+              {item.name}
+            </div>
+          {/each}
         </div>
-    </div>
-{/each}
-
-
+      </div>
+    {/each}
 </section>

@@ -202,7 +202,7 @@
   
   <div>
     {#each groupedIssues as { key, issues }}
-      <h2>{key}</h2>
+      <h1>{key}</h1>
       <ul>
         {#each issues as issue}
           <li>
