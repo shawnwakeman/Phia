@@ -11,6 +11,10 @@
     export let columnByField;
     export let orderBy;
 
+
+   
+    export let applyHideEmptyRowsAndColumns;
+    export let board;
     let exportingColumns = columnItems;
 
     const flipDurationMs = 130;
@@ -25,16 +29,19 @@
         columnItems = [...columnItems];
     }
 
-    async function handleDndFinalizeCards(cid, e) {
-       
+        async function handleDndFinalizeCards(cid, e) {
         isDragging.set(false); // set isDragging to false
         const colIdx = columnItems.findIndex(c => c.id === cid);
         const newColumn = columnItems[colIdx];
-        const updatedItems = e.detail.items.map((item, index) => ({
-            ...item,
-            [rowByField]: rowName,
-            [columnByField]: newColumn.name
-        }));
+
+        const updatedItems = e.detail.items.map((item, index) => {
+            let updatedItem = {
+                ...item,
+                [rowByField]: rowName === `no ${rowByField}` ? null : rowName,
+                [columnByField]: newColumn.name === `no ${columnByField}` ? null : newColumn.name,
+            };
+            return updatedItem;
+        });
 
         // Sort updated items in the new column based on the orderBy field
         updatedItems.sort((a, b) => {
@@ -58,6 +65,11 @@
                 console.error('Error updating issue', error);
             }
         });
+
+        applyHideEmptyRowsAndColumns();
+
+        board = [...board];
+        columnItems = [...columnItems];
     }
 
     function handleClick(event) {
@@ -79,48 +91,7 @@
         }
     }
 
-
-    // let boardContainer;
     
-    // let isDragging = false;
-    // let startX = 0;
-    // let startY = 0;
-    // let scrollLeft = 0;
-    // let scrollTop = 0;
-
-
-    // function handleMouseDown(event) {
-    //     isPanning = true;
-    //     startX = event.pageX - boardContainer.offsetLeft;
-    //     startY = event.pageY - boardContainer.offsetTop;
-    //     scrollLeft = boardContainer.scrollLeft;
-    //     scrollTop = boardContainer.scrollTop;
-    //     boardContainer.style.cursor = 'grabbing';
-    //     // Add grabbing style to column titles as well
-    //     columnTitlesContainer.style.cursor = 'grabbing';
-    // }
-
-    // function handleMouseUp() {
-    //     isPanning = false;
-    //     boardContainer.style.cursor = 'grab';
-    //     columnTitlesContainer.style.cursor = 'grab'; // Reset cursor style
-    // }
-
-    // function handleMouseMove(event) {
-    //     if (!isPanning) return;
-    //     event.preventDefault();
-    //     requestAnimationFrame(() => {
-    //         console.log("as");
-            
-    //         const x = event.pageX - boardContainer.offsetLeft;
-    //         const y = event.pageY - boardContainer.offsetTop;
-    //         const walkX = (x - startX);
-    //         const walkY = (y - startY);
-    //         boardContainer.scrollLeft = scrollLeft - walkX;
-    //         columnTitlesContainer.scrollLeft = boardContainer.scrollLeft; // Sync scroll position
-    //         boardContainer.scrollTop = scrollTop - walkY;
-    //     });
-    // }
 
 </script>
 
