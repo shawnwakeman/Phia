@@ -4,7 +4,9 @@
     import {isDragging} from '../../../stores'
     import { updateIssue } from "$lib/supabaseClient";
     import { currentSelectedIssue } from "../../../stores";
-  
+    import Card from './Card.svelte';
+
+
     export let columnItems;
     export let rowName;
     export let rowByField;
@@ -101,26 +103,26 @@
         display: flex;
         flex-wrap: nowrap;
         width: 100%;
-        padding: 0.5em;
+        padding: 1em;
         margin-bottom: 40px;
 
     }
     .column {
-        width: 300px;
-        min-width: 300px;
-        min-height: 200px; 
-        flex-grow: 1;     
+  
+        min-height: 200px;
+        flex: 0 0 370px; /* Prevent columns from growing or shrinking */
         padding: 0.5em;
         margin: 1em;
         border: 1px solid #333333;
         display: flex;
         flex-direction: column;
-        overflow: hidden;  /* Ensure no internal scrollbar */
+        overflow: hidden; /* Ensure no internal scrollbar */
     }
     .column-content {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
+        width: 100%;
     }
     .column-titles {
         display: flex;
@@ -151,15 +153,15 @@
   
 
 <section class="board">
-
     {#each columnItems as column (column.id)}
       <div class="column">
-        <div class="column-title">{column.name}</div>
+        <!-- <div class="column-title">{column.name}</div> -->
         <div class="column-content" use:dndzone={{ items: column.items, flipDurationMs }}
              on:consider={(e) => handleDndConsiderCards(column.id, e)} on:finalize={(e) => handleDndFinalizeCards(column.id, e)}>
           {#each column.items as item (item.id)}
-            <div class="card" data-id={item.id} animate:flip={{ duration: flipDurationMs }} on:click={handleClick}>
-              {item.name}
+            
+            <div animate:flip="{{duration: flipDurationMs}}" >
+                <Card {item} {flipDurationMs} />
             </div>
           {/each}
         </div>

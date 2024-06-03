@@ -366,12 +366,11 @@ function customSort(a, b, field) {
   let mouseX = 0;
   let mouseY = 0;
 
-  if (typeof window !== 'undefined') {
-    window.addEventListener('mousemove', (event) => {
-      mouseX = event.clientX;
-      mouseY = event.clientY;
-    });
+  function handleGlobalMouseMove(event) {
+    mouseX = event.clientX;
+    mouseY = event.clientY;
   }
+
 
   function handleMouseDown(event) {
     if ($isDragging) return;
@@ -382,28 +381,72 @@ function customSort(a, b, field) {
     scrollTop = boardContainer.scrollTop;
     boardContainer.style.cursor = 'grabbing';
     columnTitlesContainer.style.cursor = 'grabbing';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseleave', handleMouseLeave);
+    console.log('Mouse down event:', { startX, startY, scrollLeft, scrollTop });
   }
 
   function handleMouseUp() {
     isPanning = false;
     boardContainer.style.cursor = 'grab';
-    columnTitlesContainer.style.cursor = 'grab';
+  
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+    window.removeEventListener('mouseleave', handleMouseLeave);
+    console.log('Mouse up event');
   }
 
-  function handleMouseMove(event) {
-    if ($isDragging) return;
-    if (!isPanning) return;
-    event.preventDefault();
-    requestAnimationFrame(() => {
-      const x = event.pageX - boardContainer.offsetLeft;
-      const y = event.pageY - boardContainer.offsetTop;
-      const walkX = (x - startX);
-      const walkY = (y - startY);
-      boardContainer.scrollLeft = scrollLeft - walkX;
-      columnTitlesContainer.scrollLeft = boardContainer.scrollLeft;
-      boardContainer.scrollTop = scrollTop - walkY;
-    });
+  function handleMouseLeave() {
+    if (isPanning) {
+      isPanning = false;
+      boardContainer.style.cursor = 'grab';
+      columnTitlesContainer.style.cursor = 'grab';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseleave', handleMouseLeave);
+      console.log('Mouse leave event');
+    }
   }
+
+
+  function handleMouseMove(event) {
+  if ($isDragging) return;
+  if (!isPanning) return;
+  event.preventDefault();
+  requestAnimationFrame(() => {
+    const x = event.pageX - boardContainer.getBoundingClientRect().left;
+    const y = event.pageY - boardContainer.getBoundingClientRect().top;
+    let walkX = (x - startX);
+    let walkY = (y - startY);
+
+    // Adjust scroll positions
+    let newScrollLeft = scrollLeft - walkX;
+    let newScrollTop = scrollTop - walkY;
+
+    // Constrain the scroll values within the limits
+    newScrollLeft = Math.max(0, Math.min(boardContainer.scrollWidth - boardContainer.clientWidth, newScrollLeft));
+    newScrollTop = Math.max(0, Math.min(boardContainer.scrollHeight - boardContainer.clientHeight, newScrollTop));
+
+    // If the scroll position hits the limit, reset start positions to avoid dead dragging
+    if (newScrollLeft === 0 || newScrollLeft === boardContainer.scrollWidth - boardContainer.clientWidth) {
+      startX = x;
+      scrollLeft = newScrollLeft;
+    }
+
+    if (newScrollTop === 0 || newScrollTop === boardContainer.scrollHeight - boardContainer.clientHeight) {
+      startY = y;
+      scrollTop = newScrollTop;
+    }
+
+    boardContainer.scrollLeft = newScrollLeft;
+    boardContainer.scrollTop = newScrollTop;
+    columnTitlesContainer.scrollLeft = boardContainer.scrollLeft;
+
+    console.log('Mouse move event:', { x, y, walkX, walkY, scrollLeft: boardContainer.scrollLeft, scrollTop: boardContainer.scrollTop });
+  });
+}
+
 
   function handleAutoScroll() {
     const rect = boardContainer.getBoundingClientRect();
@@ -444,15 +487,7 @@ function customSort(a, b, field) {
     }
   }
 
-  function handleScroll(event) {
-    event.stopPropagation();
-    event.preventDefault();
-    console.log("Scroll event detected");
-    if ($isDragging) {
-      console.log("Dragging is active");
-      columnTitlesContainer.scrollLeft = boardContainer.scrollLeft;
-    }
-  }
+
 
   $: if ($isDragging) {
     startAutoScroll();
@@ -460,26 +495,23 @@ function customSort(a, b, field) {
     stopAutoScroll();
   }
 
+  function syncScroll() {
+  columnTitlesContainer.scrollLeft = boardContainer.scrollLeft;
+    }
+
   onMount(() => {
     updateBoard();
     names = board[0].columns;
-    boardContainer.addEventListener('scroll', handleScroll);
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('mousemove', (event) => {
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-      });
+    boardContainer.addEventListener('mousedown', handleMouseDown);
+    boardContainer.addEventListener('scroll', syncScroll);
+    window.addEventListener('mousemove', handleGlobalMouseMove);
 
-      return () => {
-        window.removeEventListener('mousemove', (event) => {
-          mouseX = event.clientX;
-          mouseY = event.clientY;
-        });
-
-        boardContainer.removeEventListener('scroll', handleScroll);
-      };
-    }
+    return () => {
+        boardContainer.removeEventListener('mousedown', handleMouseDown);
+        boardContainer.removeEventListener('scroll', syncScroll);
+        window.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
   });
 
   onDestroy(() => {
@@ -519,28 +551,63 @@ function customSort(a, b, field) {
   :global(*) {
     box-sizing: border-box;
     margin: 0;
+    user-select: none;
   }
   .board-container {
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
     width: 100%;
     height: 100%;
     cursor: grab;
     border: 1px solid #333333;
+    
   }
   .board-container.grabbing {
     cursor: grabbing;
   }
-  .column-titles {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 1em;
-    padding: 1em;
+  .column-titles-container {
+  overflow-x: hidden; /* Allow horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling */
+  white-space: nowrap; /* Prevent line breaks */
+  
+}
+
+.column-titles {
+    display: inline-flex; /* Change to inline-flex to allow horizontal scrolling */
+    justify-content: flex-start;
+    margin-bottom: 2em;
+    padding: 2.05em;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-radius: 8px; /* Rounded corners for the column titles */
   }
+
+
   .column-title {
-    min-width: 400px;
-    width: 400px;
+
+    width: 370px;
+    padding: 1em; /* Increased padding inside each column title */
+    border-radius: 8px; /* Rounded corners for each column title */
+    background-color: #ffffff; /* Background color for each column title */
+    margin-right: 2em; /* Increased margin between column titles */
+    display: flex; /* Use flexbox for centering content */
+    align-items: center; /* Vertically center content */
+    justify-content: center; /* Horizontally center content */
+    text-align: center; /* Center text */
+    border: 1px solid #cccccc; /* Add a border to the column titles */
   }
+
+  .row-title {
+    position: sticky;
+    left: 0;
+    background-color: #ffffff; /* Match the background color with the column titles */
+    z-index: 9; /* Ensure it stays behind the column titles but above the board */
+    padding: 1em;
+    border-right: 1px solid #cccccc; /* Add a right border to separate from the board */
+  }
+
+
 </style>
 
 <div>
@@ -567,20 +634,26 @@ function customSort(a, b, field) {
 
 </div>
 
-<div bind:this={columnTitlesContainer} class="column-titles">
-  {#each names as column}
-    <div class="column-title">{column.name}</div>
-  {/each}
-</div>
 
-<div bind:this={boardContainer} class="board-container" 
+<div class="column-titles-container" bind:this={columnTitlesContainer}>
+    <div class="column-titles">
+        {#each names as column}
+          <div class="column-title">{column.name}</div>
+        {/each}
+    </div>
+  </div>
+
+
+  <div bind:this={boardContainer} class="board-container" 
   on:mousedown={handleMouseDown} 
   on:mouseup={handleMouseUp} 
-  on:mouseleave={handleMouseUp} 
+  on:mouseleave={handleMouseLeave} 
   on:mousemove={handleMouseMove}>
+
   {#each board as row (row.id)}
+  
     {#if rowByField !== 'none'}
-      <h1>{row.name}</h1>
+        <div class="row-title">{row.name}</div>
     {/if}
         <Board
             columnItems={row.columns}

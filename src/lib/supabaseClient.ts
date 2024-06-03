@@ -441,64 +441,60 @@ export async function findRootNodes() {
 
 
 
-export async function addIssue(parent_id: number | null,) {
-    
+export async function addIssue(parent_id: number | null) {
     if (!parent_id) {
         console.error('Parent ID is null');
         // Optionally, you can update the store with an error or handle this case as needed
         return;
     }
 
-
-        const { data, error } = await supabase
-            .from('issues')
-            .insert([
-                {
-                    description: '', 
-                    node_id: parent_id, // Placeholder, adjust as needed
-                    project_id: projectID, 
-                    priority: 'High', // Default value
-                    state: null, 
-                    name: '', 
-
-                }
-            ])
-            .select()
-            
-        
-        
-
-        if (data) {
-            console.log('Added issue:', data);
-            console.error(get(issuesDataStore));
-            addedIssue.set(true)
-            // Update the issuesDataStore with the new data
-            issuesDataStore.update(currentIssues => {
-                const newIssue = data[0]; // Assuming the inserted data is returned
-                
-                
-                return [...currentIssues, newIssue];
-            });
-
-            console.error(get(issuesDataStore));
-        } else {
-            console.error('No data returned from the database');
-            // Optionally, update the store to indicate that no data was returned
-    }
+    console.log(projectID);
     
 
+    const currentTimestamp = new Date().toISOString(); // Get current timestamp
 
-        return { success: true, data: data };
+    const { data, error } = await supabase
+        .from('issues')
+        .insert([
+            {
+                description: '', 
+                node_id: parent_id, // Placeholder, adjust as needed
+                project_id: projectID, 
+                priority: 'High', // Default value
+                state: null, 
+                name: '', 
+                creator_id: 1, // Default value for creator_id
+                completed_at: null,
+                due_date: null,
+                created_at: currentTimestamp // Add created_at field
+            }
+        ])
+        .select();
 
+    if (data) {
+        console.log('Added issue:', data);
+        console.error(get(issuesDataStore));
+        addedIssue.set(true);
+        // Update the issuesDataStore with the new data
+        issuesDataStore.update(currentIssues => {
+            const newIssue = data[0]; // Assuming the inserted data is returned
+            return [...currentIssues, newIssue];
+        });
 
+        console.error(get(issuesDataStore));
+    } else {
+        console.error('No data returned from the database', error);
+        // Optionally, update the store to indicate that no data was returned
+    }
 
-
+    return { success: true, data: data };
 }
+
 
 
 function sanitizeIssue(rawIssue: any): Issue {
     return {
-        created_at: String(rawIssue.created_at),
+        created_at: rawIssue.created_at ? new Date(rawIssue.created_at).toISOString() : null,
         customcolumns: rawIssue.customcolumns, // Assuming this needs to be a JSON object; validation might be needed depending on use case
         description: String(rawIssue.description),
         id: Number(rawIssue.id),
@@ -506,9 +502,13 @@ function sanitizeIssue(rawIssue: any): Issue {
         node_id: rawIssue.node_id === null ? null : Number(rawIssue.node_id),
         priority: rawIssue.priority === null ? null : String(rawIssue.priority),
         state: rawIssue.state === null ? null : String(rawIssue.state),
-        columnIndex: Number(rawIssue.columnIndex)
+        columnIndex: Number(rawIssue.columnIndex),
+        creator_id: Number(rawIssue.creator_id), // Assuming creator_id should always be a number
+        completed_at: rawIssue.completed_at ? new Date(rawIssue.completed_at).toISOString() : null,
+        due_date: rawIssue.due_date ? new Date(rawIssue.due_date).toISOString() : null
     };
 }
+
 
 
 
@@ -532,6 +532,7 @@ export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes a
             priority: issue.priority,
             state: issue.state,
             name: issue.name,
+            creator_id: issue.creator_id
 
         })
         .eq('id', issue.id); // Match the issue 'id' for updating
