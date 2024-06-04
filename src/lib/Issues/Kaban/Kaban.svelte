@@ -1,15 +1,19 @@
 <script lang="ts">
   import { onMount, onDestroy  } from 'svelte';
   import { issuesDataStore, addedIssue, filteredIssuesDataStore } from "../../../stores";
+
+  import { addIssue } from '$lib/supabaseClient';
   import { get } from 'svelte/store';
   import Board from './Board.svelte';
   import type { Issue } from "../../../types/collection";
   import SearchAndFilter from './Filter.svelte';
   import FilterControls from './FilterControls.svelte'; // Import the new component
   import { isDragging } from '../../../stores';
-
+  import { Button } from "$lib/components/ui/button";
+  import * as Collapsible from "$lib/components/ui/collapsible";
+    import AddButton from './AddButton.svelte';
   
-
+ 
   interface BoardColumn {
     id: number;
     name: string;
@@ -71,6 +75,8 @@
 
 
     function updateBoard() {
+        console.trace("asd");
+        
     const configRows = rowByField !== 'none' ? Configs[rowByField] : null;
     const configColumns = Configs[columnByField];
 
@@ -106,6 +112,7 @@
     }
 
     applyHideEmptyRowsAndColumns();
+    names = board[0].columns;
   }
 
   function applyHideEmptyRowsAndColumns() {
@@ -294,6 +301,11 @@ function customSort(a, b, field) {
     addedIssue.set(false);
   }
 
+  function addIssueMain() {
+        addIssue(2);
+        callUpdateBoard();
+        updateBoard();
+    }
 
 
   function handleRowByChange(event) {
@@ -501,7 +513,7 @@ function customSort(a, b, field) {
 
   onMount(() => {
     updateBoard();
-    names = board[0].columns;
+ 
 
     boardContainer.addEventListener('mousedown', handleMouseDown);
     boardContainer.addEventListener('scroll', syncScroll);
@@ -607,10 +619,34 @@ function customSort(a, b, field) {
     border-right: 1px solid #cccccc; /* Add a right border to separate from the board */
   }
 
+  .row-container {
+    display: flex;
+    align-items: center;
+    padding: 1em;
+    background-color: #ffffff;
+    border-bottom: 1px solid #cccccc;
+    position: sticky;
+    top: 0;
+    z-index: 9;
+    width: 100%;
+  }
+
+  .row-title {
+    flex-grow: 1;
+    margin-left: 1em;
+  }
+
+  .toggle-button {
+    margin-right: 1em;
+  }
 
 </style>
 
 <div>
+
+    <!-- <button on:click={() => addIssueMain()}>add is broken</button>  -->
+
+
     <FilterControls
     bind:rowByField={rowByField}
     bind:columnByField={columnByField}
@@ -629,6 +665,8 @@ function customSort(a, b, field) {
     on:hideNullRowsChange={handleHideNullRowsChange}
     on:hideNullColumnsChange={handleHideNullColumnsChange}
   />
+
+    <AddButton addIssueMain={addIssueMain}/>
 
   <SearchAndFilter bind:this={childRef} />
 
@@ -651,19 +689,27 @@ function customSort(a, b, field) {
   on:mousemove={handleMouseMove}>
 
   {#each board as row (row.id)}
-  
-    {#if rowByField !== 'none'}
-        <div class="row-title">{row.name}</div>
-    {/if}
+    <Collapsible.Root open={true}>
+      <div class="row-container">
+        <Collapsible.Trigger asChild let:builder>
+          <Button builders={[builder]} variant="ghost" size="sm" class="toggle-button">
+            Toggle
+            <span class="sr-only">Toggle</span>
+          </Button>
+        </Collapsible.Trigger>
+        <div class="row-title">{#if rowByField !== 'none'}{row.name}{/if}</div>
+      </div>
+      <Collapsible.Content>
         <Board
-            columnItems={row.columns}
-            rowName={row.name} 
-            rowByField={rowByField}
-            columnByField={columnByField} 
-            orderBy={orderByField}
-            applyHideEmptyRowsAndColumns={applyHideEmptyRowsAndColumns2} 
-            board={board}
+          columnItems={row.columns}
+          rowName={row.name}
+          rowByField={rowByField}
+          columnByField={columnByField}
+          orderBy={orderByField}
+          applyHideEmptyRowsAndColumns={applyHideEmptyRowsAndColumns2}
+          board={board}
         />
+      </Collapsible.Content>
+    </Collapsible.Root>
   {/each}
 </div>
-

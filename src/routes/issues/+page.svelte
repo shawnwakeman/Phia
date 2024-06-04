@@ -1,5 +1,6 @@
 <script lang="ts">
     import Kaban from '../../lib/Issues/Kaban/Kaban.svelte'
+    import Card from '$lib/Issues/Kaban/Card.svelte'
     import Table from '../../lib/Issues/Table.svelte'
     import DataTable from '../../lib/Issues/DataTable/DataTable.svelte'
     import Treemap from '../../lib/Issues/Treemap.svelte'
@@ -75,8 +76,7 @@
 
    
 
-
-
+    const flipDurationMs = 130;
 
 
 </script>
@@ -86,7 +86,8 @@
     <Sidebar/>
     <div class="content">
         <h1>Issue Tracker</h1>
-
+  
+       
         <h1>{$currentSelectedIssue?.id}</h1>
         <h1>{currentSelectedNode?.id}</h1>
         

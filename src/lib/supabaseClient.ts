@@ -441,54 +441,74 @@ export async function findRootNodes() {
 
 
 
+
+
 export async function addIssue(parent_id: number | null) {
     if (!parent_id) {
         console.error('Parent ID is null');
-        // Optionally, you can update the store with an error or handle this case as needed
         return;
     }
 
     console.log(projectID);
-    
 
-    const currentTimestamp = new Date().toISOString(); // Get current timestamp
+    const currentTimestamp = new Date().toISOString();
 
+    // Create a temporary issue object with a temporary ID
+    const tempIssue = {
+        id: Date.now(), // Temporary ID (you can use any unique identifier)
+        description: '',
+        node_id: parent_id,
+        project_id: projectID,
+        priority: 'High',
+        state: null,
+        name: '',
+        creator_id: 1,
+        completed_at: null,
+        due_date: null,
+        created_at: currentTimestamp
+    };
+
+    // Update the store immediately with the temporary issue
+    issuesDataStore.update(currentIssues => [...currentIssues, tempIssue]);
+
+    // Proceed with the database insert
     const { data, error } = await supabase
         .from('issues')
-        .insert([
-            {
-                description: '', 
-                node_id: parent_id, // Placeholder, adjust as needed
-                project_id: projectID, 
-                priority: 'High', // Default value
-                state: null, 
-                name: '', 
-                creator_id: 1, // Default value for creator_id
-                completed_at: null,
-                due_date: null,
-                created_at: currentTimestamp // Add created_at field
-            }
-        ])
+        .insert([{
+            description: '',
+            node_id: parent_id,
+            project_id: projectID,
+            priority: 'High',
+            state: null,
+            name: '',
+            creator_id: 1,
+            completed_at: null,
+            due_date: null,
+            created_at: currentTimestamp
+        }])
         .select();
 
     if (data) {
         console.log('Added issue:', data);
-        console.error(get(issuesDataStore));
-        addedIssue.set(true);
-        // Update the issuesDataStore with the new data
+
+        // Replace the temporary issue with the issue from the database
         issuesDataStore.update(currentIssues => {
-            const newIssue = data[0]; // Assuming the inserted data is returned
-            return [...currentIssues, newIssue];
+            const newIssue = data[0];
+            return currentIssues.map(issue =>
+                issue.id === tempIssue.id ? newIssue : issue
+            );
         });
 
-        console.error(get(issuesDataStore));
+        addedIssue.set(true);
     } else {
         console.error('No data returned from the database', error);
-        // Optionally, update the store to indicate that no data was returned
+        // Optionally, handle the error case (e.g., remove the temporary issue)
+        issuesDataStore.update(currentIssues => currentIssues.filter(issue => issue.id !== tempIssue.id));
     }
 
-    return { success: true, data: data };
+    return { success: !!data, data: data };
 }
+
 
 
 

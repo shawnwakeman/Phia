@@ -1,9 +1,9 @@
 <script lang="ts">
     import { flip } from 'svelte/animate';
     import { dndzone } from 'svelte-dnd-action';
-    import {isDragging} from '../../../stores'
+    import {isDragging, issuesSelectedItems} from '../../../stores'
     import { updateIssue } from "$lib/supabaseClient";
-    import { currentSelectedIssue } from "../../../stores";
+ 
     import Card from './Card.svelte';
 
 
@@ -24,6 +24,8 @@
 
 
     function handleDndConsiderCards(cid, e) {
+
+        
         // set isdragging store to true
         isDragging.set(true); 
         const colIdx = columnItems.findIndex(c => c.id === cid);
@@ -31,7 +33,7 @@
         columnItems = [...columnItems];
     }
 
-        async function handleDndFinalizeCards(cid, e) {
+    async function handleDndFinalizeCards(cid, e) {
         isDragging.set(false); // set isDragging to false
         const colIdx = columnItems.findIndex(c => c.id === cid);
         const newColumn = columnItems[colIdx];
@@ -74,24 +76,7 @@
         columnItems = [...columnItems];
     }
 
-    function handleClick(event) {
-        const issueId = event.target.dataset.id;
 
-        if (issueId) {
-            const clickedIssue = columnItems
-                .flatMap(column => column.items)
-                .find(issue => issue.id === parseInt(issueId, 10));
-
-            if (clickedIssue) {
-                currentSelectedIssue.set(clickedIssue);
-                console.log('Selected issue:', clickedIssue);
-            } else {
-                console.log("Issue not found with ID:", issueId);
-            }
-        } else {
-            console.log("No issue ID found on the clicked element.");
-        }
-    }
 
     
 

@@ -100,6 +100,7 @@
     "tailwind-merge": "^2.2.2",
     "tailwind-variants": "^0.2.1",
     "tippy.js": "^6.3.7",
+    "vaul-svelte": "^0.3.1",
     "y-prosemirror": "^1.2.3",
     "y-webrtc": "^10.3.0",
     "y-websocket": "^2.0.2",
