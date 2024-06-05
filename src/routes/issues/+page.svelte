@@ -5,7 +5,7 @@
     import DataTable from '../../lib/Issues/DataTable/DataTable.svelte'
     import Treemap from '../../lib/Issues/Treemap.svelte'
     import Sidebar from '../../lib/Sidebar.svelte'
-    import List from '$lib/issues/List/index.svelte'
+    import List from '$lib/Issues/List/index.svelte'
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
     import { addIssue, supabase, findRootNodes } from "../../lib/supabaseClient";
@@ -22,7 +22,7 @@
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
 
-    let currentViewID = "kaban"
+    let currentViewID = "table"
 
     let show = false;
     let sidebarWidth: string = "50%"

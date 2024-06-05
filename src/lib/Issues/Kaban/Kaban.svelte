@@ -511,18 +511,37 @@ function customSort(a, b, field) {
   columnTitlesContainer.scrollLeft = boardContainer.scrollLeft;
     }
 
+    let resizeObserver;
+    function adjustRowContainerWidth() {
+    const boardWidth = boardContainer.scrollWidth;
+    document.querySelectorAll('.row-container').forEach(container => {
+      container.style.width = `${boardWidth}px`;
+    });
+  }
+
   onMount(() => {
     updateBoard();
+
+    resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        adjustRowContainerWidth();
+      }
+    });
+
+    resizeObserver.observe(boardContainer);
  
 
     boardContainer.addEventListener('mousedown', handleMouseDown);
     boardContainer.addEventListener('scroll', syncScroll);
     window.addEventListener('mousemove', handleGlobalMouseMove);
 
+
+
     return () => {
         boardContainer.removeEventListener('mousedown', handleMouseDown);
         boardContainer.removeEventListener('scroll', syncScroll);
         window.removeEventListener('mousemove', handleGlobalMouseMove);
+        window.removeEventListener('resize', adjustRowContainerWidth);
     };
   });
 
@@ -563,6 +582,10 @@ function customSort(a, b, field) {
   :global(*) {
     box-sizing: border-box;
     margin: 0;
+
+  }
+
+  .main-container {
     user-select: none;
   }
   .board-container {
@@ -584,16 +607,16 @@ function customSort(a, b, field) {
   
 }
 
-.column-titles {
-    display: inline-flex; /* Change to inline-flex to allow horizontal scrolling */
-    justify-content: flex-start;
-    margin-bottom: 2em;
-    padding: 2.05em;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    border-radius: 8px; /* Rounded corners for the column titles */
-  }
+    .column-titles {
+        display: inline-flex; /* Change to inline-flex to allow horizontal scrolling */
+        justify-content: flex-start;
+        margin-bottom: 2em;
+        padding: 2.05em;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-radius: 8px; /* Rounded corners for the column titles */
+    }
 
 
   .column-title {
@@ -609,8 +632,8 @@ function customSort(a, b, field) {
     text-align: center; /* Center text */
     border: 1px solid #cccccc; /* Add a border to the column titles */
   }
-
-  .row-title {
+  
+      .row-title {
     position: sticky;
     left: 0;
     background-color: #ffffff; /* Match the background color with the column titles */
@@ -618,22 +641,22 @@ function customSort(a, b, field) {
     padding: 1em;
     border-right: 1px solid #cccccc; /* Add a right border to separate from the board */
   }
-
   .row-container {
     display: flex;
     align-items: center;
     padding: 1em;
     background-color: #ffffff;
     border-bottom: 1px solid #cccccc;
-    position: sticky;
-    top: 0;
-    z-index: 9;
-    width: 100%;
-  }
-
-  .row-title {
-    flex-grow: 1;
-    margin-left: 1em;
+    position: sticky; /* Make the whole container sticky */
+    top: 0; /* Set the top position to 0 so it sticks to the top of the viewport */
+    z-index: 10; /* Higher z-index to ensure it's above other content */
+    width: 100%; /* Ensure the row container stretches with content */
+    min-width: 100%; /* Ensure the row container stretches with content */
+}
+  .row-content {
+    flex: 1;
+    display: flex;
+    min-width: 100%; /* Ensure the content stretches the full width */
   }
 
   .toggle-button {
@@ -642,7 +665,7 @@ function customSort(a, b, field) {
 
 </style>
 
-<div>
+<div class="main-container" >
 
     <!-- <button on:click={() => addIssueMain()}>add is broken</button>  -->
 
@@ -669,14 +692,18 @@ function customSort(a, b, field) {
     <AddButton addIssueMain={addIssueMain}/>
 
   <SearchAndFilter bind:this={childRef} />
-
-</div>
+  <!--  -->
+</div >
 
 
 <div class="column-titles-container" bind:this={columnTitlesContainer}>
     <div class="column-titles">
         {#each names as column}
-          <div class="column-title">{column.name}</div>
+            <div class="column-title">
+                <AddButton addIssueMain={addIssueMain}/>
+                {column.name}
+            </div>
+      
         {/each}
     </div>
   </div>
@@ -701,7 +728,7 @@ function customSort(a, b, field) {
       </div>
       <Collapsible.Content>
         <Board
-          columnItems={row.columns}
+          items={row.columns}
           rowName={row.name}
           rowByField={rowByField}
           columnByField={columnByField}

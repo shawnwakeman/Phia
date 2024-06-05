@@ -3,10 +3,12 @@ import { Button } from "$lib/components/ui/button";
 import * as Drawer from "$lib/components/ui/drawer";
 
 export let addIssueMain;
+
+
 </script>
 
 <Drawer.Root>
-    <Drawer.Trigger>|   +   |</Drawer.Trigger>
+    <Drawer.Trigger>|   +   |- </Drawer.Trigger>
     <Drawer.Content>
       <Drawer.Header>
         <Drawer.Title>Are you sure absolutely sure?</Drawer.Title>
@@ -18,3 +20,6 @@ export let addIssueMain;
       </Drawer.Footer>
     </Drawer.Content>
   </Drawer.Root>
+
+
+  

@@ -45,3 +45,5 @@ export const targetStatesStore = writable<TargetStates[]>();
 export const currentBlock = writable<Blocks>();
 
 export const isDragging = writable(false);
+export let AddDrawerOpen  = writable(false);
+export const selectedIssues = writable<Issue[]>([]);// Store for selected issues
