@@ -28,6 +28,7 @@
       padding: 0.5rem;
       overflow-y: auto;
       overflow-x: hidden; /* Hide horizontal scrollbar */
+      user-select: none;  /* user */
     }
   
     .sidebar:hover {

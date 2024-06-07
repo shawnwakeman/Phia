@@ -100,48 +100,97 @@ function createHierarchy(data: Node[]): WritableNode | null {
         }
     });
     // Recalculate child values after hierarchy is built
-    Object.values(elements).forEach((element) => {
-    if (element.children && element.children.length > 0) {
-        const totalChildValue = element.children.reduce((acc, child) => acc + child.value, 0);
 
-        // Determine if all children have the same value
-        const firstChildValue = element.children[0].value;
-        let allChildrenSame = element.children.every(child => child.value === firstChildValue);
-        const moreThanTenChildren = element.children.length > 10;
-        element.children.forEach((child) => {
-            if (totalChildValue > 1) {
-                // Apply existing conditions
-                if (element.children.length === 3) {
-                    child.value = ((child.value / totalChildValue) / 1.9) * 1.2 * element.value;
-                } else if (element.children.length === 2) {
-                    child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
-                } else {
-                    child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
-                }
 
-                // New conditions based on children's values uniformity
-                if (allChildrenSame) {
-                    child.value *= .95; // Slight scale down if all children have the same value
-                } else if (!allChildrenSame && element.children.length === 3) {
-                    child.value *= .95;
-                }
-                else {
-                    child.value *= 1.15; // Scale up more significantly if values are different
-                }
 
-                if (moreThanTenChildren) {
-                    child.value *= 0.95; // Additional 10% scale down
-                }
-            } else {
-                // If totalChildValue is zero, distribute parent's value equally
-                child.value = element.value;
+    const lookupTables = [
+        {
+            nodes: [1,2],
+            1: 1,
+            2: 3.1,
+
+        },
+        {
+            nodes: [2, 2, 2],
+            2: 3.4,
+            4: 2.1,
+            8: 7.6
+        },
+        // Add more lookup tables as needed
+    ];
+
+    function findMatchingTable(childrenValues) {
+        for (const table of lookupTables) {
+            const sortedNodes = [...table.nodes].sort((a, b) => a - b);
+            const sortedChildren = [...childrenValues].sort((a, b) => a - b);
+            if (JSON.stringify(sortedNodes) === JSON.stringify(sortedChildren)) {
+                return table;
             }
-
-            child.value *= 0.9; // Apply final scaling factor
-   
-        });
+        }
+        return null;
     }
-});
+
+    // First loop to apply lookup table values
+    Object.values(elements).forEach((element) => {
+        if (element.children && element.children.length > 0) {
+            const childrenValues = element.children.map(child => child.value);
+            const matchingTable = findMatchingTable(childrenValues);
+
+            if (matchingTable) {
+                element.children.forEach((child) => {
+                    if (matchingTable.hasOwnProperty(child.value)) {
+                        child.value = matchingTable[child.value];
+                    }
+                });
+            }
+        }
+    });
+
+
+    // Object.values(elements).forEach((element) => {
+    //     if (element.children && element.children.length > 0) {
+
+
+    //         const totalChildValue = element.children.reduce((acc, child) => acc + child.value, 0);
+
+    //         // Determine if all children have the same value
+    //         const firstChildValue = element.children[0].value;
+    //         let allChildrenSame = element.children.every(child => child.value === firstChildValue);
+    //         const moreThanTenChildren = element.children.length > 10;
+    //         element.children.forEach((child) => {
+    //             if (totalChildValue > 1) {
+    //                 // Apply existing conditions
+    //                 if (element.children.length === 3) {
+    //                     child.value = ((child.value / totalChildValue) / 1.9) * 1.2 * element.value;
+    //                 } else if (element.children.length === 2) {
+    //                     child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
+    //                 } else {
+    //                     child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
+    //                 }
+
+    //                 // New conditions based on children's values uniformity
+    //                 if (allChildrenSame) {
+    //                     child.value *= .95; // Slight scale down if all children have the same value
+    //                 } else if (!allChildrenSame && element.children.length === 3) {
+    //                     child.value *= .95;
+    //                 }
+    //                 else {
+    //                     child.value *= 1.15; // Scale up more significantly if values are different
+    //                 }
+
+    //                 if (moreThanTenChildren) {
+    //                     child.value *= 0.95; // Additional 10% scale down
+    //                 }
+    //             } else {
+    //                 // If totalChildValue is zero, distribute parent's value equally
+    //                 child.value = element.value;
+    //             }
+
+    //             child.value *= 0.9; // Apply final scaling factor
+    
+    //         });
+    //     }
+    // });
 
 
 
@@ -844,7 +893,7 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
             const scale = (d.r * 0.02)   // Scale down text size as depth increases
             return `translate(${d.x},${d.y}) scale(${scale})`;
           })
-          .text(d => d.data.name)
+          .text(d => d.r.toPrecision(4))
           .attr("class", "text")
       );
 }

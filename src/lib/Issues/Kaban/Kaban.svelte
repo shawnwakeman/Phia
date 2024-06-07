@@ -586,7 +586,8 @@ function customSort(a, b, field) {
   }
 
   .main-container {
-    user-select: none;
+    user-select: none;  /* user */
+   
   }
   .board-container {
     overflow-y: auto;
@@ -595,6 +596,7 @@ function customSort(a, b, field) {
     height: 100%;
     cursor: grab;
     border: 1px solid #333333;
+    user-select: none;  /* user */
     
   }
   .board-container.grabbing {
@@ -604,7 +606,7 @@ function customSort(a, b, field) {
   overflow-x: hidden; /* Allow horizontal scrolling */
   overflow-y: hidden; /* Prevent vertical scrolling */
   white-space: nowrap; /* Prevent line breaks */
-  
+  user-select: none;  /* user */
 }
 
     .column-titles {

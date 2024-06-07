@@ -1,155 +1,148 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { writable } from 'svelte/store';
+    import { get, writable } from 'svelte/store';
     import { issuesDataStore, filteredIssuesDataStore } from "../../../stores";
     import IssueItem from './IssueItem.svelte';
     import FilterControls from '../Kaban/Filter.svelte';
     import ListDisplayOptions from './ListDisplayOptions.svelte';
-  
+    import * as Collapsible from "$lib/components/ui/collapsible";
+    import AddButton from '../Kaban/AddButton.svelte';
+    
     let groupedIssues = [];
     let rowByField = 'state';
     let orderByField = 'id';
     let orderDirection = 'asc';
-    let searchQuery = '';
     let hideEmptyRows = false;
     let hideNullRows = false;
-  
+    let notFirstLoad = false;
+
     let filters = [];
-  
+    let searchQuery = '';
+
     const Configs = {
-      state: [
-        { id: 0, name: 'Open' },
-        { id: 1, name: 'DOING' },
-        { id: 2, name: 'DONE' },
-      ],
-      priority: [
-        { id: 0, name: 'High' },
-        { id: 1, name: 'Medium' },
-        { id: 2, name: 'Low' },
-      ],
+        state: [
+            { id: 0, name: 'Open' },
+            { id: 1, name: 'DOING' },
+            { id: 2, name: 'DONE' },
+        ],
+        priority: [
+            { id: 0, name: 'High' },
+            { id: 1, name: 'Medium' },
+            { id: 2, name: 'Low' },
+        ],
     };
-  
-    // Function to filter issues based on search query and filters
-    function filterIssues(data, query, filters) {
-      let filteredData = data;
-      if (query) {
-        filteredData = filteredData.filter(issue => {
-          return Object.values(issue).some(value => 
-            value !== null && value.toString().toLowerCase().includes(query.toLowerCase())
-          );
-        });
-      }
-  
-      filters.forEach(filter => {
-        filteredData = filteredData.filter(issue => issue[filter.field] === filter.value);
-      });
-  
-      return filteredData;
-    }
-  
+
     function groupAndSortIssues(data, groupBy, orderBy, orderDir) {
-      const grouped = data.reduce((acc, issue) => {
-        const groupKey = issue[groupBy] || `No ${groupBy}`;
-        if (!acc[groupKey]) {
-          acc[groupKey] = [];
+        if (groupBy === 'none') {
+            const sortedIssues = [...data].sort((a, b) => {
+                const sortResult = customSort(a, b, orderBy);
+                return orderDir === 'asc' ? sortResult : -sortResult;
+            });
+            return [{ key: 'All Issues', issues: sortedIssues }];
         }
-        acc[groupKey].push(issue);
-        return acc;
-      }, {});
-  
-      // Apply specific order to groups
-      const groupOrder = Configs[groupBy]?.map(item => item.name) || [];
-      const orderedGroups = Object.keys(grouped).sort((a, b) => {
-        const indexA = groupOrder.indexOf(a);
-        const indexB = groupOrder.indexOf(b);
-        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-      });
-  
-      // Apply specific order to items within each group
-      Object.values(grouped).forEach(group => {
-        group.sort((a, b) => {
-          const sortResult = customSort(a, b, orderBy);
-          return orderDir === 'asc' ? sortResult : -sortResult;
+
+        const config = Configs[groupBy];
+        const grouped = config.reduce((acc, configItem) => {
+            acc[configItem.name] = [];
+            return acc;
+        }, {});
+
+        data.forEach(issue => {
+            const groupKey = issue[groupBy] || `No ${groupBy}`;
+            if (!grouped[groupKey]) {
+                grouped[groupKey] = [];
+            }
+            grouped[groupKey].push(issue);
         });
-      });
-  
-      let result = orderedGroups.map(key => ({ key, issues: grouped[key] }));
-  
-      if (hideEmptyRows) {
-        result = result.filter(group => group.issues.length > 0);
-      }
-  
-      if (hideNullRows) {
-        result = result.filter(group => group.key !== `No ${groupBy}`);
-      }
-  
-      return result;
+
+        Object.values(grouped).forEach(group => {
+            group.sort((a, b) => {
+                const sortResult = customSort(a, b, orderBy);
+                return orderDir === 'asc' ? sortResult : -sortResult;
+            });
+        });
+
+        let result = Object.entries(grouped).map(([key, issues]) => ({ key, issues }));
+
+        if (hideEmptyRows) {
+            result = result.filter(group => group.issues.length > 0);
+        }
+
+        if (hideNullRows) {
+            result = result.filter(group => group.key !== `No ${groupBy}`);
+        }
+        console.log(result);
+        
+        return result;
     }
-  
+
     function customSort(a, b, field) {
-      if (a[field] === null || a[field] === undefined) return 1;
-      if (b[field] === null || b[field] === undefined) return -1;
-      if (field === 'id') return a.id - b.id;
-      if (field === 'name') return a.name.localeCompare(b.name);
-      if (field === 'priority') return a.priority - b.priority;
-      if (field === 'state') return a.state.localeCompare(b.state);
-      return 0;
+        if (a[field] === null || a[field] === undefined) return 1;
+        if (b[field] === null || b[field] === undefined) return -1;
+        if (field === 'id') return a.id - b.id;
+        if (field === 'name') return a.name.localeCompare(b.name);
+        if (field === 'priority') return a.priority - b.priority;
+        if (field === 'state') return a.state.localeCompare(b.state);
+        return 0;
     }
-  
-    // Update the grouped issues when the store changes, search query changes, or filters change
-    $: {
-      const filteredIssues = filterIssues($issuesDataStore, searchQuery, filters);
-      groupedIssues = groupAndSortIssues(filteredIssues, rowByField, orderByField, orderDirection);
-      filteredIssuesDataStore.set(filteredIssues); // Update the filtered issues store
-    }
-  
+
     // Handle display option changes
     function handleRowByChange(event) {
-      rowByField = event.detail;
+        rowByField = event.detail;
+        updateBoard();
     }
-  
+
     function handleOrderByChange(event) {
-      orderByField = event.detail;
+        orderByField = event.detail;
+        updateBoard();
     }
-  
+
     function handleOrderDirectionChange(event) {
-      orderDirection = event.detail;
+        orderDirection = event.detail;
+        updateBoard();
     }
-  
+
     function handleHideEmptyRowsChange(event) {
-      hideEmptyRows = event.detail;
+        hideEmptyRows = event.detail;
+        updateBoard();
     }
-  
+
     function handleHideNullRowsChange(event) {
-      hideNullRows = event.detail;
+        hideNullRows = event.detail;
+        updateBoard();
     }
-  
-    // Handle filter changes and update the filtered issues store
-    function handleFilterUpdate(event) {
-      filters = event.detail.filters;
-      searchQuery = event.detail.searchQuery;
-      const filteredIssues = filterIssues($issuesDataStore, searchQuery, filters);
-      filteredIssuesDataStore.set(filteredIssues);
+
+    // Update the board
+    function updateBoard() {
+        const filteredIssues = get(filteredIssuesDataStore);
+        groupedIssues = groupAndSortIssues(filteredIssues, rowByField, orderByField, orderDirection);
     }
-  </script>
 
-  <style>
+    // Initialize the board on mount
+    onMount(() => {
+        const issues = get(issuesDataStore);
+        filteredIssuesDataStore.set(issues);  // Set the initial filtered issues store value
+        updateBoard();
+    });
 
+    // Subscribe to filteredIssuesDataStore
+    const unsubscribe = filteredIssuesDataStore.subscribe(value => {
+        if(notFirstLoad) {
+            updateBoard();
+        }
+        notFirstLoad = true;
+    });
+</script>
 
+<style>
     .list-container {
         overflow-y: auto;
-
     }
-  </style>
-  
-  <FilterControls
-    on:filterUpdate={handleFilterUpdate}
-  />
-  
-  <ListDisplayOptions
+</style>
+<AddButton/>
+<FilterControls/>
+
+<ListDisplayOptions
     bind:rowByField
     bind:orderByField
     bind:orderDirection
@@ -160,17 +153,21 @@
     on:orderDirectionChange={handleOrderDirectionChange}
     on:hideEmptyRowsChange={handleHideEmptyRowsChange}
     on:hideNullRowsChange={handleHideNullRowsChange}
-  />
-  
-  <div class="list-container">
+/>
+
+<div class="list-container">
     <h3>Issues List:</h3>
     {#each groupedIssues as { key, issues }}
-      <h4>{key}</h4>
-      <ul>
-        {#each issues as issue}
-          <IssueItem {issue} />
-        {/each}
-      </ul>
+        <Collapsible.Root open={true}>
+            <AddButton/>
+            <Collapsible.Trigger class="collapsible-header"><h1>{key}</h1></Collapsible.Trigger>
+            <Collapsible.Content class="collapsible-content">
+                <ul>
+                    {#each issues as issue}
+                        <IssueItem {issue} {groupedIssues} />
+                    {/each}
+                </ul>
+            </Collapsible.Content>
+        </Collapsible.Root>
     {/each}
-  </div>
-  
+</div>
