@@ -110,45 +110,65 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
     // Function to pack nodes layer by layer
     function packLayer(node: WritableNode, parentRadius: number) {
-        if (!node.children || node.children.length === 0) return;
+    if (!node.children || node.children.length === 0) return;
 
+    const tempNode = {
+        ...node,
+        children: node.children.map(child => ({ ...child, children: [] }))
+    };
+    console.log(tempNode);
     
-        
-
-        const tempNode = {
-            ...node,
-            children: node.children.map(child => ({ ...child, children: [] }))
-        };
-        console.log(tempNode);
-        
-
-        const hierarchy = d3.hierarchy(tempNode).sum(d => d.value);
-        const pack = d3.pack<WritableNode>().size([parentRadius * 2, parentRadius * 2])
-        const packed = pack(hierarchy);
-        console.log(packed);
-        
-        packed.children!.forEach(child => {
-            console.log(node.name, child.data.name);
-            const originalChild = node.children!.find(c => c.id === child.data.id);
-            if (originalChild) {
-                originalChild.value = Math.PI * Math.pow(child.r, 2); // Use area of the circle to set the value
-                packLayer(originalChild, child.r); // Recursively pack the next layer
+    const proportionalPadding = 100 * 0.01;
+    const hierarchy = d3.hierarchy(tempNode).sum(d => d.value).sort((a, b) => b.data.value - a.data.value);
+    const pack = d3.pack<WritableNode>()
+        .size([parentRadius * 2, parentRadius * 2])
+        .padding(d => {
+            // Depth-based padding logic with proportional adjustment
+            if (d.depth === 0) {
+                return proportionalPadding * 1.1; // Adjust padding for non-root nodes with children
+            } else if (d.depth === 1) {
+                return proportionalPadding * 1.1; // Consistent padding for root's direct children
+            } else {
+                return d.r * proportionalPadding * 1.03; // Proportional to the node's radius
             }
         });
 
-        // Set the parent node's value based on the total area of the children
-        
-    }
+    const packed = pack(hierarchy);
+    console.log(packed);
+    
+    packed.children!.forEach(child => {
+        console.log(node.name, child.data.name);
+        const originalChild = node.children!.find(c => c.id === child.data.id);
+        if (originalChild) {
+            const padding = child.depth === 0 ? proportionalPadding * 1.1 :
+                            child.depth === 1 ? proportionalPadding * 1.1 :
+                            child.r * proportionalPadding * 1.03;
+            const effectiveRadius = child.r - padding / 2;
+            originalChild.value = effectiveRadius * effectiveRadius * Math.PI; // Store radius squared times PI
+
+            packLayer(originalChild, effectiveRadius); // Recursively pack the next layer
+        }
+    });
+
+    // Set the parent node's value based on the total area of the children
+}
+
     const root = rootCandidates[0];
 
-    // const rootHierarchy = d3.hierarchy(root).sum(d => d.value);
-    // const rootPack = d3.pack<WritableNode>().size([200, 500])
-    // rootPack(rootHierarchy); // Pack the root node directly
-    // packLayer(root, rootHierarchy.r);
+
+
+    const rootHierarchy = d3.hierarchy(root).sum(d => d.value);
+    const rootPack = d3.pack().size([200, 200]);
+    rootPack(rootHierarchy); // Pack the root node directly
+    packLayer(root, rootHierarchy.r); // Function you want to time
+
+
+
     
     return root;
 }
 
+// Function to simulate node values as if they had no children
 
 
     let data: WritableNode | null;
@@ -415,12 +435,14 @@ function centerOnNodeALL(node) {
 
 const root = d3.hierarchy<WritableNode>(data)
     .sum(d => d.value ?? 0) // Only use the node's own value
-
+    .sort(function(a, b) { return b.data.value - a.data.value; });
 
 const scaleFactor = 1;
+const proportionalPadding = Math.min(width, height) * 0.01;
 const pack = d3.pack<WritableNode>()
+   
     .size([width * scaleFactor, height * scaleFactor])
-    .radius(d => d.data.value);
+    .padding(proportionalPadding);
 
 nodes = pack(root);
 console.log(nodes);
