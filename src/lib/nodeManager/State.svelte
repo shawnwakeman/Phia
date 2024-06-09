@@ -38,9 +38,10 @@
     <label for="valueDropdown">Select Value:</label>
     <select id="valueDropdown" bind:value={value} on:change={handleChange}>
         <option value=1>low</option>
-        <option value=2>Medium</option>
-        <option value=4>High</option>
-        <option value=8>Crucial</option>
+        <option value=2.25>Medium</option>
+        <option value=5.0625>High</option>
+        <option value=11.3907>Crucial</option>
+        <option value=25.6313>extraCritical</option>
 
 
     </select>

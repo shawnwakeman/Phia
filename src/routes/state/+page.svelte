@@ -12,7 +12,7 @@
     import DirectedGraph from '$lib/Notbook/DirectedGraph.svelte'
     import NodeManager from '$lib/nodeManager/index.svelte'
 
-
+    import TestBoard from "$lib/TestBoard.svelte";
 
 
     import Kaban from '$lib/Issues/Kaban/Kaban.svelte'
@@ -99,6 +99,7 @@
         <Pane bind:size={sidebarWidth[0]} class="centered-content">
           <div class="viz-wrapper">
             <BarChart />
+  
           </div>
         </Pane>
         <Pane class="centered-content">

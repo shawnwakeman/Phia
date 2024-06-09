@@ -68,136 +68,86 @@
 }
 
     
-function createHierarchy(data: Node[]): WritableNode | null {
-    // Mapping object to store nodes by id for quick reference, and to track the parent-child relationships
-    const elements: { [key: number]: WritableNode } = {};
-        
 
-    
-    // Temporary variable to hold identified root node(s)
+function createHierarchy(data: Node[]): WritableNode | null {
+    const elements: { [key: number]: WritableNode } = {};
     let rootCandidates: WritableNode[] = [];
-    
+
+    // Create elements and identify root candidates
     data.forEach((d) => {
-        const element: WritableNode = { id : d.id, name: d.name, value: d.value, children: [], fillColor: "red", state: d.state };
+        const element: WritableNode = { 
+            id: d.id, 
+            name: d.name, 
+            value: d.value, 
+            children: [], 
+            fillColor: "red", 
+            state: d.state, 
+            totalPriority: 0, 
+            innerGradientStop: "", 
+            outerGradientStop: "" 
+        };
         elements[d.id] = element;
-      
-        
-        if(d.parent_id === null) {
-            rootCandidates.push(element); // Potential root node based on missing parent_id
+        if (d.parent_id === null) {
+            rootCandidates.push(element);
         }
     });
-  
+
     if (rootCandidates.length === 0) {
         console.error("No root node found in the data.");
-        return null; // Return null if no root node is found
+        return null;
     } else if (rootCandidates.length > 1) {
         console.warn("Multiple root nodes found. Using the first one found as the root.");
     }
-  
+
+    // Build parent-child relationships
     data.forEach((d) => {
         if (d.parent_id !== null && elements[d.parent_id]) {
             elements[d.parent_id].children!.push(elements[d.id]);
         }
     });
-    // Recalculate child values after hierarchy is built
 
 
 
-    const lookupTables = [
-        {
-            nodes: [1,2],
-            1: 1,
-            2: 3.1,
+    // Function to pack nodes layer by layer
+    function packLayer(node: WritableNode, parentRadius: number) {
+        if (!node.children || node.children.length === 0) return;
 
-        },
-        {
-            nodes: [2, 2, 2],
-            2: 3.4,
-            4: 2.1,
-            8: 7.6
-        },
-        // Add more lookup tables as needed
-    ];
+    
+        
 
-    function findMatchingTable(childrenValues) {
-        for (const table of lookupTables) {
-            const sortedNodes = [...table.nodes].sort((a, b) => a - b);
-            const sortedChildren = [...childrenValues].sort((a, b) => a - b);
-            if (JSON.stringify(sortedNodes) === JSON.stringify(sortedChildren)) {
-                return table;
+        const tempNode = {
+            ...node,
+            children: node.children.map(child => ({ ...child, children: [] }))
+        };
+        console.log(tempNode);
+        
+
+        const hierarchy = d3.hierarchy(tempNode).sum(d => d.value);
+        const pack = d3.pack<WritableNode>().size([parentRadius * 2, parentRadius * 2])
+        const packed = pack(hierarchy);
+        console.log(packed);
+        
+        packed.children!.forEach(child => {
+            console.log(node.name, child.data.name);
+            const originalChild = node.children!.find(c => c.id === child.data.id);
+            if (originalChild) {
+                originalChild.value = Math.PI * Math.pow(child.r, 2); // Use area of the circle to set the value
+                packLayer(originalChild, child.r); // Recursively pack the next layer
             }
-        }
-        return null;
+        });
+
+        // Set the parent node's value based on the total area of the children
+        
     }
+    const root = rootCandidates[0];
 
-    // First loop to apply lookup table values
-    Object.values(elements).forEach((element) => {
-        if (element.children && element.children.length > 0) {
-            const childrenValues = element.children.map(child => child.value);
-            const matchingTable = findMatchingTable(childrenValues);
-
-            if (matchingTable) {
-                element.children.forEach((child) => {
-                    if (matchingTable.hasOwnProperty(child.value)) {
-                        child.value = matchingTable[child.value];
-                    }
-                });
-            }
-        }
-    });
-
-
-    // Object.values(elements).forEach((element) => {
-    //     if (element.children && element.children.length > 0) {
-
-
-    //         const totalChildValue = element.children.reduce((acc, child) => acc + child.value, 0);
-
-    //         // Determine if all children have the same value
-    //         const firstChildValue = element.children[0].value;
-    //         let allChildrenSame = element.children.every(child => child.value === firstChildValue);
-    //         const moreThanTenChildren = element.children.length > 10;
-    //         element.children.forEach((child) => {
-    //             if (totalChildValue > 1) {
-    //                 // Apply existing conditions
-    //                 if (element.children.length === 3) {
-    //                     child.value = ((child.value / totalChildValue) / 1.9) * 1.2 * element.value;
-    //                 } else if (element.children.length === 2) {
-    //                     child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
-    //                 } else {
-    //                     child.value = ((child.value / totalChildValue) / 1.9) * 1 * element.value;
-    //                 }
-
-    //                 // New conditions based on children's values uniformity
-    //                 if (allChildrenSame) {
-    //                     child.value *= .95; // Slight scale down if all children have the same value
-    //                 } else if (!allChildrenSame && element.children.length === 3) {
-    //                     child.value *= .95;
-    //                 }
-    //                 else {
-    //                     child.value *= 1.15; // Scale up more significantly if values are different
-    //                 }
-
-    //                 if (moreThanTenChildren) {
-    //                     child.value *= 0.95; // Additional 10% scale down
-    //                 }
-    //             } else {
-    //                 // If totalChildValue is zero, distribute parent's value equally
-    //                 child.value = element.value;
-    //             }
-
-    //             child.value *= 0.9; // Apply final scaling factor
+    // const rootHierarchy = d3.hierarchy(root).sum(d => d.value);
+    // const rootPack = d3.pack<WritableNode>().size([200, 500])
+    // rootPack(rootHierarchy); // Pack the root node directly
+    // packLayer(root, rootHierarchy.r);
     
-    //         });
-    //     }
-    // });
-
-
-
-
-return rootCandidates[0];
+    return root;
 }
-    
 
 
 
@@ -247,9 +197,12 @@ return rootCandidates[0];
 
                 if (!isFirstLoad) {
                     console.log("ads");
-                    
+                        
                         width = innerWidth;
                         height = innerHeight
+  
+                     
+                        
                         updateViewBox(innerWidth, innerHeight);
                         updateVisuals();
                  
@@ -462,24 +415,12 @@ function centerOnNodeALL(node) {
 
 const root = d3.hierarchy<WritableNode>(data)
     .sum(d => d.value ?? 0) // Only use the node's own value
-    .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)); // Keep sorting if needed
+
 
 const scaleFactor = 1;
 const pack = d3.pack<WritableNode>()
     .size([width * scaleFactor, height * scaleFactor])
-    .padding(d => {
-        // Keep your dynamic padding logic
-        if (d.depth === 0) {
-            return .7; // Adjust padding for non-root nodes with children
-        } else if (d.depth === 1) {
-            return .3; // Consistent padding for root's direct children
-        } else {
-      
-            
-            return d.r * 1 
-        }
-        
-    });
+    .radius(d => d.data.value);
 
 nodes = pack(root);
 console.log(nodes);
@@ -893,7 +834,8 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
             const scale = (d.r * 0.02)   // Scale down text size as depth increases
             return `translate(${d.x},${d.y}) scale(${scale})`;
           })
-          .text(d => d.r.toPrecision(4))
+          .text(d => `${d.r.toPrecision(6)}`)
+
           .attr("class", "text")
       );
 }

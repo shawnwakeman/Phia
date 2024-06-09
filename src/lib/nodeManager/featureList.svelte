@@ -50,7 +50,7 @@
         if (newFeatureName.trim() === '') return;
 
             // Call addNode function and wait for its result
-            const result = await addNode(newFeatureName, 3, $selectedNodeId);
+            const result = await addNode(newFeatureName, 2.25, $selectedNodeId);
             console.log(result);
             
             // Check if the node was successfully added
