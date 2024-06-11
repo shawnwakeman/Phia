@@ -122,16 +122,6 @@ function createHierarchy(data: Node[]): WritableNode | null {
     const hierarchy = d3.hierarchy(tempNode).sum(d => d.value).sort((a, b) => b.data.value - a.data.value);
     const pack = d3.pack<WritableNode>()
         .size([parentRadius * 2, parentRadius * 2])
-        .padding(d => {
-            // Depth-based padding logic with proportional adjustment
-            if (d.depth === 0) {
-                return proportionalPadding * 1.1; // Adjust padding for non-root nodes with children
-            } else if (d.depth === 1) {
-                return proportionalPadding * 1.1; // Consistent padding for root's direct children
-            } else {
-                return d.r * proportionalPadding * 1.03; // Proportional to the node's radius
-            }
-        });
 
     const packed = pack(hierarchy);
     console.log(packed);
@@ -140,13 +130,11 @@ function createHierarchy(data: Node[]): WritableNode | null {
         console.log(node.name, child.data.name);
         const originalChild = node.children!.find(c => c.id === child.data.id);
         if (originalChild) {
-            const padding = child.depth === 0 ? proportionalPadding * 1.1 :
-                            child.depth === 1 ? proportionalPadding * 1.1 :
-                            child.r * proportionalPadding * 1.03;
-            const effectiveRadius = child.r - padding / 2;
-            originalChild.value = effectiveRadius * effectiveRadius * Math.PI; // Store radius squared times PI
+          
+  
+            originalChild.value = child.r * child.r * Math.PI; // Store radius squared times PI
 
-            packLayer(originalChild, effectiveRadius); // Recursively pack the next layer
+            packLayer(originalChild, child.r); // Recursively pack the next layer
         }
     });
 
@@ -438,11 +426,11 @@ const root = d3.hierarchy<WritableNode>(data)
     .sort(function(a, b) { return b.data.value - a.data.value; });
 
 const scaleFactor = 1;
-const proportionalPadding = Math.min(width, height) * 0.01;
+const proportionalPadding = width * 0.01;
 const pack = d3.pack<WritableNode>()
    
     .size([width * scaleFactor, height * scaleFactor])
-    .padding(proportionalPadding);
+   
 
 nodes = pack(root);
 console.log(nodes);
@@ -622,7 +610,7 @@ function updateParentColor(node) {
 
 // Radius is calculated by D3, taking into account the dynamic padding
     .attr("fill", d => `url(#gradient-${d.data.id})`)
-    .attr("stroke-width", d => d.r * 0.03)  // Decrease stroke-width with depth
+    .attr("stroke-width", d => d.r * 0.01)  // Decrease stroke-width with depth
     .attr("class", d => {
        
     // Add 'circle' class to all, 'circle-selected' if it is the selected node
@@ -856,7 +844,7 @@ function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
             const scale = (d.r * 0.02)   // Scale down text size as depth increases
             return `translate(${d.x},${d.y}) scale(${scale})`;
           })
-          .text(d => `${d.r.toPrecision(6)}`)
+          .text(d => `${d.data.name}`)
 
           .attr("class", "text")
       );

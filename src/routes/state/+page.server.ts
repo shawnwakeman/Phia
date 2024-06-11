@@ -5,7 +5,7 @@ import { get } from 'svelte/store';
 
 
 export async function load() {
-	let projectID = 2;
+	let projectID = 1;
     let nodes
     let issues
     let selectedNode

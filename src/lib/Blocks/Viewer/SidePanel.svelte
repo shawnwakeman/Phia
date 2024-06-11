@@ -2,7 +2,7 @@
     import { createSnapshot, deleteSnapshot, loadSnapshots } from '$lib/supabaseClient';
     import { onMount } from 'svelte';
 
-    let projectID = 2; // Set this to your current project's ID
+    let projectID = 1; // Set this to your current project's ID
     let snapshots = [];
     let error = '';
 

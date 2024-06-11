@@ -7,7 +7,7 @@ import { get } from 'svelte/store';
 import { type JSONContent } from '@tiptap/core';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-const projectID = 2
+const projectID = 1
 export const supabase = createClient<Database>(
     supabaseUrl,
     supabaseAnonKey
