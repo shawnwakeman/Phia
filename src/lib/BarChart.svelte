@@ -457,9 +457,9 @@ function getColorByStatus(status) {
         case "Planned":
             return "#6FB1FC";
         case "In Progress":
-            return "#185A9D";
+            return "#3A72B9";
         case "Completed":
-            return "#43CEA2";
+            return "#00E08A";
         default:
             return "#cccccc";
     }
@@ -547,39 +547,28 @@ function updateParentColor(node) {
     }
 }
 
-    function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
-        
-        
-        let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
+function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
+    let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1;
 
-        nodes.descendants().forEach(node => {
+    nodes.descendants().forEach(node => {
+        node.data.totalPriority = getNestedIssuesTotalPriority(node.data.id, $nodesDataStore, $issuesDataStore);
+        let normalizedPriority = (node.data.totalPriority / maxPriority) * 100;
 
-            
-            node.data.totalPriority = getNestedIssuesTotalPriority(node.data.id, $nodesDataStore, $issuesDataStore);
+        if (node.data.totalPriority === 0) {
+            node.data.innerGradientStop = `${123 + normalizedPriority * 0.2}%`;
+            node.data.outerGradientStop = `${123 + normalizedPriority * 0.1}%`;
+        } else {
+            let scale = (maxPriority - node.data.totalPriority) / maxPriority * 10;
+            let basePercentage = 90;
+            node.data.innerGradientStop = `${90}%`;
+            node.data.outerGradientStop = `${100}%`;
+        }
+    });
 
-            // Normalize totalPriority to fit within the gradient range
-            let normalizedPriority = (node.data.totalPriority / maxPriority) * 100; // Normalize to percentage
+    updateTreeColors(nodes);
 
-           
-            
-            if (node.data.totalPriority === 0) {
-                node.data.innerGradientStop = `${123 + normalizedPriority * 0.2}%`; // Center color extends further based on priority
-                node.data.outerGradientStop = `${123 + normalizedPriority * 0.1}%`; // Quick transition to edge color
-            } else {
-                let scale = (maxPriority - node.data.totalPriority) / maxPriority * 10; // This scales the remaining to between 0 and 10
-                let basePercentage = 90; // Base percentage for max priority
-                node.data.innerGradientStop = `${90}%`; // 60% of the scale added to 90%
-                node.data.outerGradientStop = `${100}%`; 
-            }
-            // Use normalizedPriority to adjust gradient transition
-           
-        });
-
-        updateTreeColors(nodes);
-        
-
-        const defs = svg.select("defs") ;
-        const gradients = defs.selectAll("radialGradient")
+    const defs = svg.select("defs");
+    const gradients = defs.selectAll("radialGradient")
         .data(nodes.descendants(), (d) => d.data.id)
         .join(
             enter => enter.append("radialGradient").attr("id", d => `gradient-${d.data.id}`),
@@ -587,7 +576,6 @@ function updateParentColor(node) {
             exit => exit.remove()
         );
 
-    // Add stops to each gradient
     gradients.selectAll("stop").data(d => [
         { offset: "0%", color: d.data.fillColor },
         { offset: d.data.innerGradientStop, color: d.data.fillColor },
@@ -601,52 +589,65 @@ function updateParentColor(node) {
     .attr("offset", d => d.offset)
     .attr("stop-color", d => d.color);
 
+    function brighterColor(color: string, factor = 1.2) {
+        const rgb = d3.color(color);
+        if (!rgb) return color;
+        rgb.r = Math.min(255, rgb.r * factor);
+        rgb.g = Math.min(255, rgb.g * factor);
+        rgb.b = Math.min(255, rgb.b * factor);
+        return rgb.toString();
+    }
 
-  g.selectAll("circle")
-    .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
-    .join("circle")
-    .attr("transform", d => `translate(${d.x},${d.y})`)
-    .attr("r", d => d.r)
+    const shineGradients = defs.selectAll("linearGradient")
+        .data(nodes.descendants(), (d) => d.data.id)
+        .join(
+            enter => enter.append("linearGradient").attr("id", d => `shine-gradient-${d.data.id}`),
+            update => update,
+            exit => exit.remove()
+        )
+        .attr("x1", () => `${Math.random() * 100}%`)
+        .attr("y1", () => `${Math.random() * 100}%`)
+        .attr("x2", () => `${Math.random() * 100}%`)
+        .attr("y2", () => `${Math.random() * 100}%`);
 
-// Radius is calculated by D3, taking into account the dynamic padding
-    .attr("fill", d => `url(#gradient-${d.data.id})`)
-    .attr("stroke-width", d => d.r * 0.01)  // Decrease stroke-width with depth
-    .attr("class", d => {
-       
-    // Add 'circle' class to all, 'circle-selected' if it is the selected node
-        let classes = d.data.id === currentSelectedNodeId ? "circle circle-selected" : "circle";
-        // Add 'hoverable' class only if the node has children
-        if (d.parent?.data.id == $selectedNodeStore?.id) {
-        classes += " hoverable";
-        }
-        return classes;
-    })
-    .on("click", (event, d) => {
-    //   event.stopPropagation();
+    shineGradients.selectAll("stop").data(d => [
+        { offset: "0%", color: d.data.fillColor },
+        { offset: "50%", color: brighterColor(d.data.fillColor) },
+        { offset: "100%", color: d.data.fillColor }
+    ])
+    .join(
+        enter => enter.append("stop"),
+        update => update,
+        exit => exit.remove()
+    )
+    .attr("offset", d => d.offset)
+    .attr("stop-color", d => d.color);
 
-      if (d.children != null || d.depth == 1) {
-        handleCircleClick(d);
-        
-      } else if (!d.children && d.depth === selectedNode?.depth && d.parent?.data.id === selectedNode.parent?.data.id ) {
-        handleCircleClickInternal(d)
-        
-        
-        
-      } else if (d.parent?.data.id == $selectedNodeStore?.id) {
-        handleCircleClick(d); // Assuming you want to handle this case the same as if the node had children
-        
-        }
-      else {
-            handleCircleClickFarNode(d)
-            
-      }
- 
-
-      
-    });
-
-
-  
+    g.selectAll("circle")
+        .data(nodes.descendants(), (d) => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
+        .join("circle")
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .attr("r", d => d.r)
+        .attr("fill", d => `url(#shine-gradient-${d.data.id})`)
+        .attr("stroke-width", d => d.r * 0.01)
+        .attr("class", d => {
+            let classes = d.data.id === currentSelectedNodeId ? "circle circle-selected" : "circle";
+            if (d.parent?.data.id == $selectedNodeStore?.id) {
+                classes += " hoverable";
+            }
+            return classes;
+        })
+        .on("click", (event, d) => {
+            if (d.children != null || d.depth == 1) {
+                handleCircleClick(d);
+            } else if (!d.children && d.depth === selectedNode?.depth && d.parent?.data.id === selectedNode.parent?.data.id ) {
+                handleCircleClickInternal(d)
+            } else if (d.parent?.data.id == $selectedNodeStore?.id) {
+                handleCircleClick(d);
+            } else {
+                handleCircleClickFarNode(d);
+            }
+        });
 }
 
 
