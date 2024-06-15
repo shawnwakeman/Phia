@@ -225,50 +225,55 @@
     button:hover {
       background-color: #0056b3;
     }
+
+
+    
   </style>
-  
-  <div>
-    <input
-      type="text"
-      bind:value={newFeatureName}
-      placeholder="Enter new feature"
-      on:keydown={handleKeydown}
-    />
-    <button on:click={addFeature}>Add Feature</button>
-  </div>
-  
-  {#if $features.length > 0}
-    <ul class="feature-list">
-        {#each $features as feature, index (feature.id)}
-            <li
-            class="feature-item"
-            on:mouseenter={() => handleMouseEnter(index)}
-            on:mouseleave={() => handleMouseLeave(index)}
-            >
-            {#if feature.isEditing}
-                <input
-                type="text"
-                class="editing-input"
-                bind:value={editingFeatureName}
-                on:keydown={(event) => {
-                    if (event.key === 'Enter') {
-                    saveEditedFeature(index, feature.id);
-                    }
-                }}
-                />
-                <button on:click={() => saveEditedFeature(index, feature.id)}>Save</button>
-            {:else}
-                {feature.name}
-                {#if feature.isHovered}
-                <button class="edit-button" on:click={() => startEditingFeature(index)}>
-                    Edit
-                </button>
-                <button class="delete-button" on:click={() => deleteFeature(index, feature.id)}>
-                    Delete
-                </button>
+<div class="feature-container">
+    <div>
+        <input
+          type="text"
+          bind:value={newFeatureName}
+          placeholder="Enter new feature"
+          on:keydown={handleKeydown}
+        />
+        <button on:click={addFeature}>Add Feature</button>
+      </div>
+      
+      {#if $features.length > 0}
+        <ul class="feature-list">
+            {#each $features as feature, index (feature.id)}
+                <li
+                class="feature-item"
+                on:mouseenter={() => handleMouseEnter(index)}
+                on:mouseleave={() => handleMouseLeave(index)}
+                >
+                {#if feature.isEditing}
+                    <input
+                    type="text"
+                    class="editing-input"
+                    bind:value={editingFeatureName}
+                    on:keydown={(event) => {
+                        if (event.key === 'Enter') {
+                        saveEditedFeature(index, feature.id);
+                        }
+                    }}
+                    />
+                    <button on:click={() => saveEditedFeature(index, feature.id)}>Save</button>
+                {:else}
+                    {feature.name}
+                    {#if feature.isHovered}
+                    <button class="edit-button" on:click={() => startEditingFeature(index)}>
+                        Edit
+                    </button>
+                    <button class="delete-button" on:click={() => deleteFeature(index, feature.id)}>
+                        Delete
+                    </button>
+                    {/if}
                 {/if}
-            {/if}
-            </li>
-        {/each}
-    </ul>
-  {/if}
+                </li>
+            {/each}
+        </ul>
+      {/if}
+</div>
+  

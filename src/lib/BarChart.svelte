@@ -155,9 +155,11 @@ function createHierarchy(data: Node[]): WritableNode | null {
     let data: WritableNode | null;
     let isFirstLoad = true; 
     let width: number = 100;
+    let halfWidth = 100;
     let height: number = 100;
     let callCount = 0;
     onMount(async () => {
+        const parentDiv = document.getElementById('state-wrapper');
   
         function updateDimensions(value) {
             callCount++;
@@ -165,10 +167,10 @@ function createHierarchy(data: Node[]): WritableNode | null {
             
             
             if (value[0] > 15) {
-                const browserWidth = window.innerWidth;
-                const browserHeight = window.innerHeight;
-                const parentWidth = (value[0] / 100) * browserWidth;
-                const parentHeight = browserHeight * 1.1;
+                const parentRect = parentDiv.getBoundingClientRect();
+                const parentWidth = parentRect.width;
+                halfWidth = (value[0] / 100) * parentRect.width;
+                const parentHeight = parentRect.height;
                 const aspectRatio = parentWidth / parentHeight;
                 const innerWidth = Math.min(aspectRatio * parentHeight, parentWidth);
                 const innerHeight = innerWidth / aspectRatio;
@@ -176,6 +178,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 if (!isFirstLoad) {
                     width = innerWidth;
                     height = innerHeight;
+                    console.log(halfWidth,height);
                     updateViewBox(innerWidth, innerHeight);
                     updateVisuals();
                 }
@@ -245,20 +248,21 @@ function createHierarchy(data: Node[]): WritableNode | null {
         const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
 
         // Calculate potential scales for both width and height to keep the circle within view
-        const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
+        const scaleWidth = (halfWidth * maxWidthRatio) / (node.r * 2); // Scale based on width
         const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
 
         // Use the smaller scale to ensure the circle fits in both dimensions without clipping
         const k = Math.min(scaleWidth, scaleHeight);
 
-        const x = width / 2 - k * node.x;
-        const y = height / 2 - k * node.y - 15;
+        // Center the node within the new full screen dimensions
+        const x = halfWidth / 2 - k * node.x;
+        const y = height / 2 - k * node.y;
 
         const transform = d3.zoomIdentity.translate(x, y).scale(k);
         svg.transition()
-        .duration(750)
-        .ease(d3.easePoly.exponent(2.5))
-        .call(zoom.transform, transform);
+            .duration(750)
+            .ease(d3.easePoly.exponent(2.5))
+            .call(zoom.transform, transform);
     }
 
 
@@ -273,17 +277,21 @@ function createHierarchy(data: Node[]): WritableNode | null {
     function updateViewBox(newWidth: number, newHeight: number) {
         d3.select("#circle-packing svg")
             .attr("viewBox", `0 0 ${newWidth} ${newHeight}`);
+
+         
+
+   
     }
     
 
     const svg = d3.select("#circle-packing")
-        .append("svg")
-        .attr("viewBox", `0 0 ${width} ${height}`)
-        .attr("text-anchor", "middle")
-        .style("font-size", "12px")
- 
+    .append("svg")
+    .attr("viewBox", `0 0 ${width} ${height}`)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px");
 
-    svg.call(zoom as any);
+// Append a rectangle as the background box
+
 
     const g = svg.append("g");
 
@@ -291,12 +299,12 @@ function createHierarchy(data: Node[]): WritableNode | null {
         .append("pattern")
         .attr("id", "dot-pattern")
         .attr("patternUnits", "userSpaceOnUse")
-        .attr("width", 40)
-        .attr("height", 40)
+        .attr("width", 80)
+        .attr("height", 80)
         .append("circle")
-        .attr("cx", 10)
-        .attr("cy", 10)
-        .attr("r", 2)
+        .attr("cx", 20)
+        .attr("cy", 20)
+        .attr("r", 4)
         .attr("fill", "#c2c2c1");
 
 
@@ -819,6 +827,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
         margin: 0 auto;
         min-width: 150px;
         background: radial-gradient(ellipse at left top, #102441 0%, #0e1525 80%);
+        border: 2px solid #c2c5cc; /* Added border with a width of 2px */
     }
 
     :global(.text-node) {
@@ -833,9 +842,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
     
     }
 
-    :global(svg) {
- 
-    }
+
 
 
 </style>
