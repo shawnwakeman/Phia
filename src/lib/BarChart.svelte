@@ -228,13 +228,14 @@ function createHierarchy(data: Node[]): WritableNode | null {
         const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
 
         // Calculate potential scales for both width and height to keep the circle within view
-        const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
+        const scaleWidth = (halfWidth * maxWidthRatio) / (node.r * 2); // Scale based on width
         const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
 
         // Use the smaller scale to ensure the circle fits in both dimensions without clipping
         const k = Math.min(scaleWidth, scaleHeight);
 
-        const x = width / 2 - k * node.x;
+        // Center the node within the new full screen dimensions
+        const x = halfWidth / 2 - k * node.x;
         const y = height / 2 - k * node.y;
 
         const transform = d3.zoomIdentity.translate(x, y).scale(k);
@@ -349,7 +350,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
         shrinkChildrenAndRepack(root);
         updateCircles(nodes);
         updateText(nodes);
-        applyZoom(selectedNode)
+        centerOnNode(selectedNode)
 
     }
 
