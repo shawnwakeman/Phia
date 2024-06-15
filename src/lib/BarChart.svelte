@@ -142,252 +142,146 @@ function createHierarchy(data: Node[]): WritableNode | null {
 }
 
     const root = rootCandidates[0];
-
-
-
     const rootHierarchy = d3.hierarchy(root).sum(d => d.value);
     const rootPack = d3.pack().size([200, 200]);
     rootPack(rootHierarchy); // Pack the root node directly
     packLayer(root, rootHierarchy.r); // Function you want to time
 
-
-
     
     return root;
 }
 
-function duplicateNodes(data: Node[], duplicates: number): Node[] {
-    let newId = Math.max(...data.map(d => d.id)) + 1;
-    const duplicatedData: Node[] = [];
-
-    data.forEach(node => {
-        for (let i = 0; i < duplicates; i++) {
-            duplicatedData.push({
-                ...node,
-                id: newId++,
-                name: `${node.name}_dup${i}`,
-            });
-        }
-    });
-
-    return duplicatedData;
-}
-
-// Function to simulate node values as if they had no children
-
 
     let data: WritableNode | null;
-
-
-    let currentZoomLevel = 1;
-
     let isFirstLoad = true; 
-    let isFirstLoad2 = true; 
-
     let width: number = 100;
     let height: number = 100;
-    let lastWidth = [0];
-    
+    let callCount = 0;
     onMount(async () => {
   
         function updateDimensions(value) {
+            callCount++;
+            console.log(callCount);
+            
+            
             if (value[0] > 15) {
-            
-
-// Get current browser dimensions
-    
-        const browserWidth = window.innerWidth;
+                const browserWidth = window.innerWidth;
                 const browserHeight = window.innerHeight;
+                const parentWidth = (value[0] / 100) * browserWidth;
+                const parentHeight = browserHeight * 1.1;
+                const aspectRatio = parentWidth / parentHeight;
+                const innerWidth = Math.min(aspectRatio * parentHeight, parentWidth);
+                const innerHeight = innerWidth / aspectRatio;
 
-                let parentWidth = (value[0] / 100) * browserWidth;
-                let parentHeight = browserHeight * 1.1;
-
-                // Calculate aspect ratio based on parent dimensions
-                let aspectRatio = parentWidth / parentHeight;
-
-                // Calculate the width and height based on the aspect ratio
-                let innerWidth = Math.min(aspectRatio * parentHeight, parentWidth);
-                let innerHeight = innerWidth / aspectRatio;
-
-                // Ensure the dimensions maintain the proper aspect ratio
-                if (innerHeight > parentHeight) {
-                    innerHeight = parentHeight;
-                    innerWidth = innerHeight * aspectRatio;
-                }
-            
                 if (!isFirstLoad) {
-                   
-                        
-                        width = innerWidth;
-                        height = innerHeight
-  
-                     
-                        updateViewBox(innerWidth, innerHeight);
-                       
-                        updateVisuals();
-                 
-                    
-                    
-                    
-                    
-
+                    width = innerWidth;
+                    height = innerHeight;
+                    updateViewBox(innerWidth, innerHeight);
+                    updateVisuals();
                 }
-              
-
             }
         }
+
+
         sidebarWidthStore.subscribe((value) => {
             updateDimensions(value)
         
         });
+
+
         window.addEventListener('resize', () => {
-            sidebarWidthStore.update(value => {
-                updateDimensions(value);
-                return value;
-            });
+          
+            updateDimensions($sidebarWidthStore);
+               
+           
         });
 
-
-     
    
         nodesDataStore.subscribe((value) => {
-
-      
-            
             data = createHierarchy(value)
+
             if (!isFirstLoad) {
-  
-                
-                
                 updateVisuals();
                 if (selectedNode) {
                     centerOnNode(selectedNode);
                 }
-            
-               
-                
             }
-            isFirstLoad = false; // Update flag after first run
-        }); // logs 'got a subscriber', then '1'
+            isFirstLoad = false;
+        }); 
+
 
         navigateNodeStore.subscribe(value => {
             if (value) {
-
                 if (nodes && !isFirstLoad) {
-
-                    
                     let currentNode = nodes.find(d => d.data.id === value.id);
-            
                     handleCircleClick(currentNode)
                 }
             }
         });
 
-            ////////////////////////////////////////////////////////////// 
-			////////////////// Create Set-up variables  ////////////////// 
-			////////////////////////////////////////////////////////////// 
-
-
-
-
-
-// Assuming the payload structure is known and matches the Node interface
-// Adjust the types as necessary to match your actual data structure
     
-function centerOnNode(node) {
-    const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
-    const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
+    function centerOnNode(node) {
+        const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
+        const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
 
-    // Calculate potential scales for both width and height to keep the circle within view
-    const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
-    const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
+        // Calculate potential scales for both width and height to keep the circle within view
+        const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
+        const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
 
-    // Use the smaller scale to ensure the circle fits in both dimensions without clipping
-    const k = Math.min(scaleWidth, scaleHeight);
+        // Use the smaller scale to ensure the circle fits in both dimensions without clipping
+        const k = Math.min(scaleWidth, scaleHeight);
 
-    const x = width / 2 - k * node.x;
-    const y = height / 2 - k * node.y;
+        const x = width / 2 - k * node.x;
+        const y = height / 2 - k * node.y;
 
-    const transform = d3.zoomIdentity.translate(x, y).scale(k);
-    svg.call(zoom.transform, transform); // Apply the transformation without transition
-}
+        const transform = d3.zoomIdentity.translate(x, y).scale(k);
+        svg.call(zoom.transform, transform); // Apply the transformation without transition
+    }
 
-function applyZoom(node) {
+    function applyZoom(node) {
+        
+        // Constants to control the maximum visible size of the circle
+        const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
+        const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
 
-    console.log(node);
-    
-    // Constants to control the maximum visible size of the circle
-    const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
-    const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
+        // Calculate potential scales for both width and height to keep the circle within view
+        const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
+        const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
 
-    // Calculate potential scales for both width and height to keep the circle within view
-    const scaleWidth = (width * maxWidthRatio) / (node.r * 2); // Scale based on width
-    const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
+        // Use the smaller scale to ensure the circle fits in both dimensions without clipping
+        const k = Math.min(scaleWidth, scaleHeight);
 
-    // Use the smaller scale to ensure the circle fits in both dimensions without clipping
-    const k = Math.min(scaleWidth, scaleHeight);
+        const x = width / 2 - k * node.x;
+        const y = height / 2 - k * node.y - 15;
 
-    const x = width / 2 - k * node.x;
-    const y = height / 2 - k * node.y - 15;
+        const transform = d3.zoomIdentity.translate(x, y).scale(k);
+        svg.transition()
+        .duration(750)
+        .ease(d3.easePoly.exponent(2.5))
+        .call(zoom.transform, transform);
+    }
 
-    const transform = d3.zoomIdentity.translate(x, y).scale(k);
-    svg.transition()
-       .duration(750)
-       .ease(d3.easePoly.exponent(2.5))
-       .call(zoom.transform, transform);
-}
-
-
-
-
-  
-    let okay = false;
 
     // Create SVG element
     const zoom = d3.zoom<SVGSVGElement, unknown>()
 
     .on("zoom", (event) => {
         g.attr("transform", event.transform);
-        currentZoomLevel = event.transform.k;
-  
-        
-
-        // Use debounced function to handle updates
-
     });
-
-
-    function debounce(func, timeout = 300) {
-        let timer;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => { func.apply(this, args); }, timeout);
-    };
-}
-
-    const debouncedUpdateVisuals = debounce(() => {
-        updateVisuals();
-    });
-
-
-
 
 
     function updateViewBox(newWidth: number, newHeight: number) {
-    d3.select("#circle-packing svg")
-        .attr("viewBox", `0 0 ${newWidth} ${newHeight}`);
+        d3.select("#circle-packing svg")
+            .attr("viewBox", `0 0 ${newWidth} ${newHeight}`);
     }
     
+
     const svg = d3.select("#circle-packing")
         .append("svg")
-
         .attr("viewBox", `0 0 ${width} ${height}`)
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
  
-
-
-
 
     svg.call(zoom as any);
 
@@ -405,213 +299,177 @@ function applyZoom(node) {
         .attr("r", 2)
         .attr("fill", "#c2c2c1");
 
-    // Append a rectangle to cover the entire SVG area with the dot pattern
-
 
     g.append("rect")
-    .attr("width", 10010)
-    .attr("height", 5010)
-    .attr("fill", "url(#dot-pattern)")
-    .attr("transform", "translate(-2010, -1000)");
+        .attr("width", 10010)
+        .attr("height", 5010)
+        .attr("fill", "url(#dot-pattern)")
+        .attr("transform", "translate(-2010, -1000)");
 
 
-    
-
-    // Set the default zoom level to 80% and center it
-
-    
     if (data === null) {
         console.error("Failed to create hierarchical data.");
         return; // or return some fallback value if needed
     }
 
 
-
-
- 
-    // Prepare the data for visualization
-
-
-
     let selectedNode: d3.HierarchyCircularNode<WritableNode> | null = nodes;
 
 
-    let currentDepth = 0;
-
-
-    // Stack to keep track of zoom levels
-
-
     function updateVisuals() {
-        console.trace("update");
         
-    if (!data) {
-        console.error("Failed to create hierarchical data.");
-        return;
+        if (!data) {
+            console.error("Failed to create hierarchical data.");
+            return;
+        }
+
+
+        const root = d3.hierarchy<WritableNode>(data)
+            .sum(d => d.value ?? 0) // Only use the node's own value
+            .sort(function(a, b) { return b.data.value - a.data.value; });
+
+
+        const pack = d3.pack<WritableNode>()
+            .size([width, height])
+
+        nodes = pack(root);
+
+
+        if (!isFirstLoad) { selectedNode = nodes.find(n => n.data.id === $selectedNodeId); }
+            
+
+        shrinkChildrenAndRepack(root);
+        updateCircles(nodes);
+        updateText(nodes);
+        applyZoom(selectedNode)
+
     }
 
-    const rootPadding = 20; // Extra padding for the root node
-    const childNodePadding = 5; // Extra padding for nodes with children
+    function shrinkChildrenAndRepack(node) {
+        if (!node.children) return;
 
+        // Repack children with a new hierarchy
 
-const root = d3.hierarchy<WritableNode>(data)
-    .sum(d => d.value ?? 0) // Only use the node's own value
-    .sort(function(a, b) { return b.data.value - a.data.value; });
+        const padding = node.r * 0.15
+        const childrenRoot = d3.hierarchy({ children: node.children })
+            .sum(d => d.value ?? 0);
 
-const scaleFactor = 1;
-const proportionalPadding = width * 0.01;
-const pack = d3.pack<WritableNode>()
+        const childrenPack = d3.pack()
+            .size([node.r * 2 - padding * 2, node.r * 2 - padding * 2])
         
-    .size([width * scaleFactor, height * scaleFactor])
 
-nodes = pack(root);
+        childrenPack(childrenRoot);
 
-function shrinkChildrenAndRepack(node) {
-    if (!node.children) return;
+        // Adjust children positions to fit within the parent node with padding
+        node.children.forEach((child, i) => {
+            const packedChild = childrenRoot.children[i];
+            child.x = node.x + packedChild.x - node.r + padding;
+            child.y = node.y + packedChild.y - node.r + padding;
+            child.r = packedChild.r;
+        });
 
-    // Repack children with a new hierarchy
-
-    const padding = node.r * 0.15
-    const childrenRoot = d3.hierarchy({ children: node.children })
-        .sum(d => d.value ?? 0);
-
-    const childrenPack = d3.pack()
-        .size([node.r * 2 - padding * 2, node.r * 2 - padding * 2])
-        .padding(0);
-
-    childrenPack(childrenRoot);
-
-    // Adjust children positions to fit within the parent node with padding
-    node.children.forEach((child, i) => {
-        const packedChild = childrenRoot.children[i];
-        child.x = node.x + packedChild.x - node.r + padding;
-        child.y = node.y + packedChild.y - node.r + padding;
-        child.r = packedChild.r;
-    });
-
-    // Recursively apply to children
-    node.children.forEach(child => shrinkChildrenAndRepack(child));
-}
-
-
-// Apply padding adjustment recursively
-shrinkChildrenAndRepack(root, 10);
-
-
-
-selectedNode = nodes.find(n => n.data.id === $selectedNodeId);
-// Apply the pack layout to your hierarchy
-
-
-
-
-
-
-
-
-    updateCircles(nodes);
-    updateText(nodes);
-    applyZoom(selectedNode)
-}
-
-function getColorByStatus(status) {
-    switch (status) {
-        case "Open":
-            return "#c4def4 ";
-        case "Planned":
-            return "#7CADDD";
-        case "In Progress":
-            return "#3A72B9";
-        case "Completed":
-            return "#0AD196";
-        default:
-            return "#cccccc";
-    }
-}
-
-function hexToRgb(hex) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return [r, g, b];
-}
-
-function rgbToHex(r, g, b) {
-    const hex = (x) => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    };
-    return "#" + hex(r) + hex(g) + hex(b);
-}
-
-// Helper functions for color conversions
-
-
-// Calculate the average color of an array of children nodes
-function getAverageColor(children) {
-    
-    let totalR = 0, totalG = 0, totalB = 0, totalPriority = 0;
-    children.forEach(child => {
-        let priority = child.data.value;
-
-        
-        let [r, g, b] = hexToRgb(child.data.fillColor); // Assuming each child has a fillColor and totalPriority
-        totalR += r * priority;
-        totalG += g * priority;
-        totalB += b * priority;
-        totalPriority += priority;
-    });
-
-    if (totalPriority === 0) {
-        // Prevent division by zero if totalPriority is unexpectedly zero
-        return "#cccccc"; // Return a default neutral color
+        // Recursively apply to children
+        node.children.forEach(child => shrinkChildrenAndRepack(child));
     }
 
-    const avgR = Math.round(totalR / totalPriority);
-    const avgG = Math.round(totalG / totalPriority);
-    const avgB = Math.round(totalB / totalPriority);
+    function getColorByStatus(status) {
+        switch (status) {
+            case "Open":
+                return "#c4def4 ";
+            case "Planned":
+                return "#7CADDD";
+            case "In Progress":
+                return "#3A72B9";
+            case "Completed":
+                return "#0AD196";
+            default:
+                return "#cccccc";
+        }
+    }
 
-    return rgbToHex(avgR, avgG, avgB);
-}
+    function hexToRgb(hex) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return [r, g, b];
+    }
 
-function updateNodeColors(node) {
-    if (!node.children || node.children.length === 0) {
-        // Leaf node, set color based on its status
-        node.data.fillColor = getColorByStatus(node.data.state);
-    } else {
-        // Recursively update child nodes first
-        node.children.forEach(child => updateNodeColors(child));
+    function rgbToHex(r, g, b) {
+        const hex = (x) => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        };
+        return "#" + hex(r) + hex(g) + hex(b);
+    }
 
-        // After all children are updated, calculate and set this node's average color
+    // Helper functions for color conversions
+
+
+    // Calculate the average color of an array of children nodes
+    function getAverageColor(children) {
+        
+        let totalR = 0, totalG = 0, totalB = 0, totalPriority = 0;
+        children.forEach(child => {
+            let priority = child.data.value;
+            let [r, g, b] = hexToRgb(child.data.fillColor); // Assuming each child has a fillColor and totalPriority
+            totalR += r * priority;
+            totalG += g * priority;
+            totalB += b * priority;
+            totalPriority += priority;
+        });
+
+        if (totalPriority === 0) { return "#cccccc"; } // Return a default neutral color
+            // Prevent division by zero if totalPriority is unexpectedly zero
+            
+        const avgR = Math.round(totalR / totalPriority);
+        const avgG = Math.round(totalG / totalPriority);
+        const avgB = Math.round(totalB / totalPriority);
+
+        return rgbToHex(avgR, avgG, avgB);
+
+    }
+
+    function updateNodeColors(node) {
+        if (!node.children || node.children.length === 0) {
+
+            // Leaf node, set color based on its status
+            node.data.fillColor = getColorByStatus(node.data.state);
+        } else {
+
+            // Recursively update child nodes first
+            node.children.forEach(child => updateNodeColors(child));
+
+            // After all children are updated, calculate and set this node's average color
+            node.data.fillColor = getAverageColor(node.children);
+        }
+        
+        // Update the parent node's color, if it exists
+        if (node.parent) {
+            updateParentColor(node.parent);
+        }
+        
+    }
+
+    function updateTreeColors(node) {
+        updateNodeColors(node); // Update the current node and all children first
+
+        // After updating this node and its children, if there's a parent, update it
+        if (node.parent) {
+            updateParentColor(node.parent); // Recursively update parent node
+        }
+    }
+
+    function updateParentColor(node) {
+        // Calculate average color from child nodes
         node.data.fillColor = getAverageColor(node.children);
+
+        // If this node has a parent, update the parent's color
+        if (node.parent) {
+            updateParentColor(node.parent);
+        }
     }
-    
-    // Update the parent node's color, if it exists
-    if (node.parent) {
-        updateParentColor(node.parent);
-    }
-}
 
-function updateTreeColors(node) {
-    updateNodeColors(node); // Update the current node and all children first
-
-    // After updating this node and its children, if there's a parent, update it
-    if (node.parent) {
-        updateParentColor(node.parent); // Recursively update parent node
-    }
-}
-
-function updateParentColor(node) {
-    // Calculate average color from child nodes
-    node.data.fillColor = getAverageColor(node.children);
-
-    // If this node has a parent, update the parent's color
-    if (node.parent) {
-        updateParentColor(node.parent);
-    }
-}
-
-function darkerColor(color: string, factor = 0.55) {
+    function darkerColor(color: string, factor = 0.55) {
         const rgb = d3.color(color);
         if (!rgb) return color;
         rgb.r = Math.max(0, rgb.r * factor);
@@ -621,441 +479,347 @@ function darkerColor(color: string, factor = 0.55) {
     }
 
 
-function hashData(data: any): string {
-    return JSON.stringify(data);
-}
+    function hashData(data: any): string {
+        return JSON.stringify(data);
+    }
 
-let previousDataHash = "";
+    let previousDataHash = "";
 
-function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
-    let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
+    function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
+        let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
 
-    let gradientCache = new Map();
+        let gradientCache = new Map();
 
-    nodes.descendants().forEach(node => {
-        let id = node.data.id;
-        let totalPriority = getNestedIssuesTotalPriority(id, $nodesDataStore, $issuesDataStore);
-        node.data.totalPriority = totalPriority;
+        nodes.descendants().forEach(node => {
+            let id = node.data.id;
+            let totalPriority = getNestedIssuesTotalPriority(id, $nodesDataStore, $issuesDataStore);
+            node.data.totalPriority = totalPriority;
 
-        if (!gradientCache.has(id)) {
-            let normalizedPriority = (totalPriority / maxPriority) * 100;
+            if (!gradientCache.has(id)) {
+                let normalizedPriority = (totalPriority / maxPriority) * 100;
 
-            if (totalPriority === 0) {
-                node.data.innerGradientStop = `${121}%`;
-                node.data.outerGradientStop = `${110}%`;
+                if (totalPriority === 0) {
+                    node.data.innerGradientStop = `${121}%`;
+                    node.data.outerGradientStop = `${110}%`;
+                } else {
+                    node.data.innerGradientStop = `${90}%`;
+                    node.data.outerGradientStop = `${110}%`;
+                }
+                gradientCache.set(id, {
+                    inner: node.data.innerGradientStop,
+                    outer: node.data.outerGradientStop
+                });
             } else {
-                node.data.innerGradientStop = `${90}%`;
-                node.data.outerGradientStop = `${110}%`;
+                let cached = gradientCache.get(id);
+                node.data.innerGradientStop = cached.inner;
+                node.data.outerGradientStop = cached.outer;
             }
-            gradientCache.set(id, {
-                inner: node.data.innerGradientStop,
-                outer: node.data.outerGradientStop
-            });
-        } else {
-            let cached = gradientCache.get(id);
-            node.data.innerGradientStop = cached.inner;
-            node.data.outerGradientStop = cached.outer;
-        }
-    });
-
-    // Calculate the hash of the current data
-    let currentDataHash = hashData(nodes.descendants().map(d => d.data));
-
-    // Call updateTreeColors only if the data has changed
-    if (currentDataHash !== previousDataHash) {
-        updateTreeColors(nodes);
-        previousDataHash = currentDataHash;
-    }
-
-    const defs = svg.select("defs");
-
-
-
-    const filter = defs.append("filter")
-    .attr("id", "drop-shadow")
-    .attr("height", "130%");
-
-    filter.append("feGaussianBlur")
-        .attr("in", "SourceAlpha")
-        .attr("stdDeviation", 10)
-        .attr("result", "blur");
-
-    filter.append("feOffset")
-        .attr("in", "blur")
-        .attr("dx", 2)
-        .attr("dy", 3)
-        .attr("result", "offsetBlur");
-
-    const feMerge = filter.append("feMerge");
-
-    feMerge.append("feMergeNode")
-        .attr("in", "offsetBlur");
-    feMerge.append("feMergeNode")
-        .attr("in", "SourceGraphic");
-    const gradients = defs.selectAll("radialGradient")
-        .data(nodes.descendants(), (d) => d.data.id)
-        .join(
-            enter => enter.append("radialGradient").attr("id", d => `gradient-${d.data.id}`),
-            update => update,
-            exit => exit.remove()
-        );
-
-    // Add stops to each gradient
-    gradients.selectAll("stop").data(d => [
-        { offset: d.data.innerGradientStop, color: d.data.fillColor },
-        { offset: d.data.outerGradientStop, color: "#654ea3" }
-    ])
-    .join(
-        enter => enter.append("stop"),
-        update => update,
-        exit => exit.remove()
-    )
-    .attr("offset", d => d.offset)
-    .attr("stop-color", d => d.color);
-
-    g.selectAll("circle")
-    .data(nodes.descendants(), d => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
-    .join("circle")
-    
-    .attr("transform", d => `translate(${d.x},${d.y})`)
-    .attr("r", d => d.r * .988)
-    .attr("fill", d => `url(#gradient-${d.data.id})`)
-    .attr("stroke-width", d => (d.r * 0.05 + (1/d.depth) * 0.06) / 2)
-
-
-    .attr("stroke", d => {
-      
-        if (d.data.totalPriority == 0) {
-            return darkerColor(d.data.fillColor)
-        }
-        else {
-            return '#654ea3'
-        }
-    
-    
-    }) // Adjust the brightness
-    .attr("class", d => {
-        let classes = "circle";
-        if (d.data.id === currentSelectedNodeId) {
-            classes += " circle-selected";
-        }
-        if (d.parent?.data.id == $selectedNodeStore?.id) {
-            classes += " hoverable";
-        }
-        return classes;
-    })
-    .attr("filter", d => d.depth === 0 ? "url(#drop-shadow)" : null)
-    
-    .on("click", (event, d) => {
-
-
-
-        if (d.children != null || d.depth == 1) {
-            handleCircleClick(d);
-        } else if (!d.children && d.depth === selectedNode?.depth && d.parent?.data.id === selectedNode.parent?.data.id) {
-            handleCircleClickInternal(d);
-        } else if (d.parent?.data.id == $selectedNodeStore?.id) {
-            handleCircleClick(d); // Assuming you want to handle this case the same as if the node had children
-        } else {
-            handleCircleClickFarNode(d);
-        }
-    });
-}
-
-
-function convertToNodeType(d3Node: d3.HierarchyCircularNode<WritableNode> | null): Node | null {
-  if (d3Node === null) {
-    return null; // or return a default NodeType object if preferred
-  }
-
-  // If d3Node is not null, proceed with conversion
-  return {
-    id: d3Node.data.id,
-    name: d3Node.data.name,
-    parent_id: d3Node.parent ? d3Node.parent.data.id : null,
-    value: d3Node.value ?? null,
-  };
-}
-
-
-function updateCircleClasses() {
-    g.selectAll("circle")
-        .attr("class", d => {
-            let classes = "circle";
-            if (d.data.id === $selectedNodeStore?.id) {
-                classes += " circle-selected";
-            }
-            if (d.parent?.data.id == $selectedNodeStore?.id) {
-                classes += " hoverable";
-            }
-            return classes;
         });
-}
 
+        // Calculate the hash of the current data
+        let currentDataHash = hashData(nodes.descendants().map(d => d.data));
 
-function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
-    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
-   
-    
-    
-
-    // Check if the clicked node is the currently selected node
-    if (selectedNode && d.data.id === selectedNode.data.id) {
-        // Reset selection and zoom out
-
-        
-        
-        selectedNode = nodes
-        currentDepth = 0;
-        selectedNodeId.set(nodes.data.id)
-        
-        // Apply a zoom reset
-           applyZoom(nodes);
-    } else {
-        // Update the selected node and current depth for a new selection
-        selectedNode = d;
-        currentDepth = d.depth;
-        selectedNodeId.set(d.data.id);
-        // Calculate and apply zoom transformation for the new selection
-        applyZoom(d);
-        
-    }
-
-    // selectedNodeId.set(d.data.id)
-  
-  
-    selectedNodeStore.set(convertToNodeType(selectedNode))
-    updateText(nodes)
-    // Refresh visuals with the updated selection or reset
-    updateCircleClasses();
-}
-
-function handleCircleClickInternal(d: d3.HierarchyCircularNode<WritableNode>) {
-    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
-   
-   
-
-    // Check if the clicked node is the currently selected node
-        if (!d.children || d.children.length === 0) {
-
-            if (selectedNode && d.data.id === selectedNode.data.id) {
-          
-                
-                selectedNode = nodes
-                currentDepth = 0;
-                selectedNodeId.set(nodes.data.id)
-                applyZoom(nodes);
-
-                // Apply a zoom reset
-                
-        } else {
-
-            selectedNode = d
-            currentDepth = d.depth;
-            selectedNodeId.set(d.data.id);
-            applyZoom(nodes);
-
-         
-
-
+        // Call updateTreeColors only if the data has changed
+        if (currentDataHash !== previousDataHash) {
+            updateTreeColors(nodes);
+            previousDataHash = currentDataHash;
         }
-        
-        
-        selectedNodeStore.set(convertToNodeType(selectedNode))
-        updateText(nodes)
-        updateCircleClasses();
-  
-        return; // Exit the function early
-    }
-}
 
-function handleCircleClickFarNode(d: d3.HierarchyCircularNode<WritableNode>) {
-    const maxDepth = d3.max(nodes.descendants(), d => d.depth) || 0
-    console.log(d);
+        const defs = svg.select("defs");
 
 
-    // Check if the clicked node is the currently selected node
- 
+        let filter = defs.select("#drop-shadow");
 
-        if (selectedNode && d.data.id === selectedNode.data.id) {
-                // Reset selection and zoom out
+
+        if (filter.empty()) {
+
+            filter = defs.append("filter")
+                .attr("id", "drop-shadow")
+                .attr("height", "130%");
+
+
+            filter.append("feGaussianBlur")
+                .attr("in", "SourceAlpha")
+                .attr("stdDeviation", 10)
+                .attr("result", "blur");
+
+            filter.append("feOffset")
+                .attr("in", "blur")
+                .attr("dx", 2)
+                .attr("dy", 3)
+                .attr("result", "offsetBlur");
+
                 
-                
-                const parent = nodes.find(node => node.depth === 0 && node.parent === null) || null;
-                selectedNode = parent
-                currentDepth = 0;
-                selectedNodeId.set(parent.data.id)
-                // Apply a zoom reset
-                applyZoom(nodes);
-        } else {
-           
-            selectedNode = d.parent
-            selectedNodeId.set(d.parent?.data.id);
-            currentDepth = d.depth;
-            applyZoom(d.parent)
-
-
+            const feMerge = filter.append("feMerge");
+            feMerge.append("feMergeNode").attr("in", "offsetBlur");
+            feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+            
         }
-        
-        
-        
-        selectedNodeStore.set(convertToNodeType(selectedNode))
-        updateText(nodes)
-        updateCircleClasses();
-     
-        return; // Exit the function early
-  
-}
 
+        // Add stops to each gradient
+        const gradients = defs.selectAll("radialGradient")
+            .data(nodes.descendants(), d => d.data.id)
+            .join(
+                enter => enter.append("radialGradient").attr("id", d => `gradient-${d.data.id}`),
+                update => update,
+                exit => exit.remove()
+            );
 
+            gradients.each(function(d) {
+                const gradient = d3.select(this);
+                const stops = [
+                    { offset: d.data.innerGradientStop, color: d.data.fillColor },
+                    { offset: d.data.outerGradientStop, color: "#654ea3" }
+                ];
 
+            gradient.selectAll("stop")
+                .data(stops)
+                .join(
+                    enter => enter.append("stop"),
+                    update => update,
+                    exit => exit.remove()
+                )
+                .attr("offset", stop => stop.offset)
+                .attr("stop-color", stop => stop.color);
+        });
 
-
-
-function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
-    let selectedLeafParentId = null;
-    if (selectedNode && (!selectedNode.children || selectedNode.children.length === 0)) {
-        selectedLeafParentId = selectedNode.parent?.data.id;
-    }
-    
-    
-    const selectedNodeId = $selectedNodeStore.id;
-    const selectedNodeDepth = selectedNode.depth;
-    const selectedNodeParentId = selectedNode.parent?.data.id;
-
-    // Select all existing text elements and bind new data
-    const texts = g.selectAll("text.text-node")
-        .data(
-            nodes.descendants().filter(d =>
-                (d.depth === selectedNodeDepth && d.parent?.data.id === selectedNodeParentId && d.data.id !== selectedNodeId) ||  // Same level and parent as the selected node, exclude the selected node
-                (d.parent?.data.id === selectedNodeId) ||  // Children of the selected node
-                (d.data.id === selectedNodeId && (!d.children || d.children.length === 0))  // Include the selected node only if it is a leaf
-            ),
-            d => d.data.id // Use data ID for key function
-        );
-
-    // Handle the exit of old elements
-    texts.exit().remove();
-
-    // Handle entering elements
-    const enterTexts = texts.enter().append("text")
-        .attr("class", "text-node font-default font-medium ")
-        .attr("text-anchor", "middle")
-        .attr("alignment-baseline", "middle")
-
-    // Merge enter and update selections
-    const mergedTexts = enterTexts.merge(texts);
-
-    mergedTexts.each(function(d) {
-        const text = d3.select(this)
-            .text(d => d.data.name)
-            .attr("transform", d => {
-                const scale = d.r * 0.02;
-                return `translate(${d.x},${d.y}) scale(${scale})`;
+        g.selectAll("circle")
+            .data(nodes.descendants(), d => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
+            .join (
+                enter => enter.append("circle"),
+                update => update,
+                exit => exit.remove()
+            )
+            .attr("transform", d => `translate(${d.x},${d.y})`)
+            .attr("r", d => d.r * 0.988)
+            .attr("fill", d => `url(#gradient-${d.data.id})`)
+            .attr("stroke-width", d => {
+                    if (d.depth === 0) { // Assuming depth 0 means it's the parent node
+                        return 2; // Set the stroke width for the parent separately (example: 2)
+                    }
+                    return (d.r * 0.05 + (1 / d.depth) * 0.06) / 2;
+                })  
+            .attr("stroke", d => d.data.totalPriority === 0 ? darkerColor(d.data.fillColor) : '#654ea3')
+            .attr("class", d => {
+                let classes = "circle";
+                if (d.data.id === currentSelectedNodeId) {
+                    classes += " circle-selected";
+                }
+                if (d.parent?.data.id === $selectedNodeStore?.id) {
+                    classes += " hoverable";
+                }
+                return classes;
             })
-            .call(wrap, 13);  // Apply the wrapping function
+            .attr("filter", d => d.depth === 0 ? "url(#drop-shadow)" : null)
+            .on("click", (event, d) => {
+                if (d.children != null || d.depth == 1) {
+                    handleCircleClick(d);
+                } else if (!d.children && d.depth === selectedNode?.depth && d.parent?.data.id === selectedNode.parent?.data.id) {
+                    handleCircleClickInternal(d);
+                } else if (d.parent?.data.id == $selectedNodeStore?.id) {
+                    handleCircleClick(d); // Assuming you want to handle this case the same as if the node had children
+                } else {
+                    handleCircleClickFarNode(d);
+                }
+            });
+    }
 
-        // Add hover behavior
-        text.on("click", function(event, d) {
-            handleCircleClick(d);  // Call the handleClick function
+
+    function convertToNodeType(d3Node: d3.HierarchyCircularNode<WritableNode> | null): Node | null {
+        if (!d3Node) return null;
+        const { id, name, value } = d3Node.data;
+        const parent_id = d3Node.parent ? d3Node.parent.data.id : null;
+        return { id, name, parent_id, value: value ?? null };
+    }
+
+
+    function updateCircleClasses() {
+        g.selectAll("circle")
+        .attr("class", d => {
+            const classes = ["circle"];
+            if (d.data.id === $selectedNodeStore?.id) classes.push("circle-selected");
+            if (d.parent?.data.id === $selectedNodeStore?.id) classes.push("hoverable");
+            return classes.join(" ");
         });
-    });
-}
-
-
-function wrap(text, width) {
-  text.each(function() {
-    var text = d3.select(this),
-        words = text.text().split(/\s+/).reverse(),
-        word,
-        line = [],
-        lineNumber = 0,
-        lineHeight = 1.1, // ems
-        y = text.attr("y") !== null ? text.attr('y') : 0,
-        dy = text.attr("dy") !== null ? parseFloat(text.attr("dy")) : 0,
-        tspanElements = [];
-
-    // Construct lines from words
-    while (word = words.pop()) {
-      let prospectiveLine = line.length ? line.join(" ") + " " + word : word;
-      if (prospectiveLine.length > width) {
-        tspanElements.push(line.join(" "));
-        line = [word];
-      } else {
-        line.push(word);
-      }
-    }
-    if (line.length > 0) {
-      tspanElements.push(line.join(" "));
     }
 
-    // Clear existing text and compute the vertical adjustment
-    text.text(null);
-    const totalLines = tspanElements.length;
-    const initialYOffset = -((totalLines - 1) / 2) * lineHeight;
 
-    // Append each line as a tspan, adjusting for vertical centering
-    tspanElements.forEach((lineText, index) => {
-      text.append("tspan")
-        .attr("x", 0)
-        .attr("y", y)
-        .attr("dy", (initialYOffset + (index * lineHeight)) + "em")
-        .text(lineText);
-    });
-  });
-}
+    function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
+        if (selectedNode && d.data.id === selectedNode.data.id) {
+            // Reset selection and zoom out
+            selectedNode = nodes;
+          
+            selectedNodeId.set(nodes.data.id);
+            applyZoom(nodes);
+        } else {
+            // Update the selected node and current depth for a new selection
+            selectedNode = d;
+            
+            selectedNodeId.set(d.data.id);
+            applyZoom(d);
+        }
+
+        selectedNodeStore.set(convertToNodeType(selectedNode));
+        updateText(nodes);
+        updateCircleClasses();
+    }
+
+    function handleCircleClickInternal(d: d3.HierarchyCircularNode<WritableNode>) {
+        if (!d.children || d.children.length === 0) {
+            if (selectedNode && d.data.id === selectedNode.data.id) {
+                selectedNode = nodes;
+          
+                selectedNodeId.set(nodes.data.id);
+                applyZoom(nodes);
+            } else {
+                selectedNode = d;
+        
+                selectedNodeId.set(d.data.id);
+                applyZoom(nodes);
+            }
+
+            selectedNodeStore.set(convertToNodeType(selectedNode));
+            updateText(nodes);
+            updateCircleClasses();
+            return; 
+        }
+    }
 
 
+    function handleCircleClickFarNode(d: d3.HierarchyCircularNode<WritableNode>) {
+        if (selectedNode && d.data.id === selectedNode.data.id) {
+            // Reset selection and zoom out
+            const parent = nodes.find(node => node.depth === 0 && !node.parent) || null;
+            selectedNode = parent;
+       
+            selectedNodeId.set(parent.data.id);
+            applyZoom(nodes);
+        } else {
+            selectedNode = d.parent;
+     
+            selectedNodeId.set(d.parent?.data.id);
+            applyZoom(d.parent);
+        }
+
+        selectedNodeStore.set(convertToNodeType(selectedNode));
+        updateText(nodes);
+        updateCircleClasses();
+    }
 
 
+    function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
+        const selectedLeafParentId = (selectedNode && (!selectedNode.children || selectedNode.children.length === 0))
+            ? selectedNode.parent?.data.id
+            : null;
+        
+        const selectedNodeId = $selectedNodeStore.id;
+        const selectedNodeDepth = selectedNode.depth;
+        const selectedNodeParentId = selectedNode.parent?.data.id;
 
-updateDimensions([50])
+        const filteredNodes = nodes.descendants().filter(d =>
+            (d.depth === selectedNodeDepth && d.parent?.data.id === selectedNodeParentId && d.data.id !== selectedNodeId) ||
+            (d.parent?.data.id === selectedNodeId) ||
+            (d.data.id === selectedNodeId && (!d.children || d.children.length === 0))
+        );
+
+    const texts = g.selectAll("text.text-node")
+            .data(filteredNodes, d => d.data.id);
+
+        texts.exit().remove();
+
+        const enterTexts = texts.enter().append("text")
+            .attr("class", "text-node font-default font-medium")
+            .attr("text-anchor", "middle")
+            .attr("alignment-baseline", "middle");
+
+        const mergedTexts = enterTexts.merge(texts);
+
+        mergedTexts.each(function(d) {
+            const text = d3.select(this)
+                .text(d => d.data.name)
+                .attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`)
+                .call(wrap, 13);
+
+            text.on("click", (event, d) => handleCircleClick(d));
+        });
+    }
+
+    function wrap(text, width) {
+        text.each(function() {
+            var text = d3.select(this),
+                words = text.text().split(/\s+/).reverse(),
+                word,
+                line = [],
+                lineNumber = 0,
+                lineHeight = 1.1, // ems
+                y = text.attr("y") !== null ? text.attr('y') : 0,
+                dy = text.attr("dy") !== null ? parseFloat(text.attr("dy")) : 0,
+                tspanElements = [];
+
+            // Construct lines from words
+            while (word = words.pop()) {
+                let prospectiveLine = line.length ? line.join(" ") + " " + word : word;
+                if (prospectiveLine.length > width) {
+                    tspanElements.push(line.join(" "));
+                    line = [word];
+                } else {
+                    line.push(word);
+                }
+            }
+            if (line.length > 0) {
+            tspanElements.push(line.join(" "));
+            }
+
+            // Clear existing text and compute the vertical adjustment
+            text.text(null);
+            const totalLines = tspanElements.length;
+            const initialYOffset = -((totalLines - 1) / 2) * lineHeight;
+
+            // Append each line as a tspan, adjusting for vertical centering
+            tspanElements.forEach((lineText, index) => {
+            text.append("tspan")
+                .attr("x", 0)
+                .attr("y", y)
+                .attr("dy", (initialYOffset + (index * lineHeight)) + "em")
+                .text(lineText);
+            });
+        });
+    }
 
 
-svg.on("wheel.zoom", event => event.preventDefault())
-    .on("dblclick.zoom", null) ;
+    updateDimensions([50])
 
-    svg.on("dblclick.zoom", null);
 
-            svg.on("mousedown.zoom", null)
-           .on("mousemove.zoom", null)
-           .on("mouseup.zoom", null)
-           .on("touchstart.zoom", null)
-           .on("touchmove.zoom", null)
-           .on("touchend.zoom", null);
- });
+    svg.on("wheel.zoom dblclick.zoom mousedown.zoom mousemove.zoom mouseup.zoom touchstart.zoom touchmove.zoom touchend.zoom", null);
 
+});
 
 
 </script>
 
 
-
-    <div id="circle-packing"></div>
+<div id="circle-packing"></div>
 
 
 
 <style>
 
-    :global(.circle) {
-    
-        transition: fill 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease;
 
+    :global(.circle) {
+        transition: fill 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease;
     }
+
     :global(.circle-selected) {
         stroke: rgb(0, 255, 255);
         transition: fill 0.3s ease, stroke-width 0.3s ease;
     }
 
     #circle-packing {
-    width: 100%;
-    margin: 0 auto;
-    min-width: 150px;
-    background: radial-gradient(ellipse at left top, #102441 0%, #0e1525 80%);
-  
-
-}
-    
+        width: 100%;
+        margin: 0 auto;
+        min-width: 150px;
+        background: radial-gradient(ellipse at left top, #102441 0%, #0e1525 80%);
+    }
 
     :global(.text-node) {
         fill: #0e1525;       /* Text color */
@@ -1063,20 +827,15 @@ svg.on("wheel.zoom", event => event.preventDefault())
     }
 
     :global(.hoverable:hover) {
-    stroke: rgb(161, 134, 187); /* Change color on hover */
-
-    fill: rgba(255, 255, 255, 0.1); /* Add a translucent fill on hover */
-    transition: stroke 0.3s ease, stroke-width 0.3s ease, fill 0.3s ease;
+        stroke: rgb(161, 134, 187); /* Change color on hover */
+        fill: rgba(255, 255, 255, 0.1); /* Add a translucent fill on hover */
+        transition: stroke 0.3s ease, stroke-width 0.3s ease, fill 0.3s ease;
     
-}
-
-
-
-
-    :global(svg) {
-        /* shape-rendering: optimizeSpeed;
-        image-rendering: optimizeSpeed; */
     }
 
-    
-  </style>
+    :global(svg) {
+ 
+    }
+
+
+</style>
