@@ -1,9 +1,11 @@
 <script lang="ts">
     import Sidebar from '$lib/Sidebar.svelte';
-
+    import * as d3 from 'd3';
     import type { PageData } from './$types';
     
     export let data: PageData;
+
+    
 </script>
 
 <style>
@@ -33,6 +35,6 @@
 <main class="main">
     <Sidebar/>
 
-    <div class="content"></div>
+    <div class="content font-default">shawn</div>
       
 </main>

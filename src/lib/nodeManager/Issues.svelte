@@ -27,7 +27,7 @@
     $: if (currentSelectedNode) {
         issues = getNestedIssues(currentSelectedNode.id, $nodesDataStore, $issuesDataStore);
         groupedIssues = groupIssues(issues, groupBy)
-        console.log(issues);
+   
         
         
     } else {
@@ -36,7 +36,7 @@
     }
 
     function getNestedIssues(nodeId: number, nodes: Node[], issues: Issue[]): Issue[] {
-  console.time('getNestedIssues');
+  
 
   function findChildNodeIds(nodeId: number, nodes: Node[]): number[] {
     const childNodes = nodes.filter(node => node.parent_id === nodeId);
@@ -50,7 +50,7 @@
   const nestedNodeIds = [nodeId, ...findChildNodeIds(nodeId, nodes)];
   const filteredIssues = issues.filter(issue => issue.node_id !== null && nestedNodeIds.includes(issue.node_id));
 
-  console.timeEnd('getNestedIssues');
+  
   return filteredIssues;
 }
 

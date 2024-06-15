@@ -40,7 +40,7 @@
     selectedNodeId.set(data.rootNode.id)
     selectedNodeStore.set(data.rootNode)
     targetStatesStore.set(data.targetStates)
-    console.log("asdasasdaad", data.targetStates);
+
     onMount(() => {
         updateSelectedNodeStore();
        

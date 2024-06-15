@@ -39,7 +39,6 @@
 
 
     function createNewNode() {
-        console.log("no call");
         
         const rootNode = data.nodes.find(node => node.parent_id === null);
         if (rootNode) {
@@ -59,8 +58,7 @@
             selectedNodeStore.set(selectedNode || null);
     }
     
-    console.log("sadddddddd");
-    
+
     nodesDataStore.set(data.nodes)
     issuesDataStore.set(data.issues);
     
