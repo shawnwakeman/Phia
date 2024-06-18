@@ -111,7 +111,8 @@
     main {
         max-height: 100vh; 
         overflow-y: auto; /* Enables vertical scrolling */
-        padding: 20px; /* Optional: Adds some spacing inside the main container */
         pointer-events: auto;
     }
+
+    
 </style>

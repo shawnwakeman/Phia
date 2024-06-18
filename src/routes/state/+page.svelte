@@ -57,10 +57,10 @@
 
     <div class="content">
 
-        <Button on:click={toggleMode} variant="outline" size="icon">
+        <!-- <Button on:click={toggleMode} variant="outline" size="icon">
             <h1>one</h1>
             <span class="sr-only">Toggle theme</span>
-        </Button>
+        </Button> -->
 
 
         <div class="container">

@@ -175,7 +175,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
     onMount(async () => {
         const parentDiv = document.getElementById('state-wrapper');
   
-        function updateDimensions(value) {
+        function updateDimensions(value, viewBoxResize = false) {
             callCount++;
             console.log(callCount);
             
@@ -184,17 +184,24 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 const parentRect = parentDiv.getBoundingClientRect();
                 const parentWidth = parentRect.width;
                 halfWidth = (value[0] / 100) * parentRect.width;
-                const parentHeight = parentRect.height;
+                const parentHeight = parentRect.height * 1.5;
                 const aspectRatio = parentWidth / parentHeight;
                 const innerWidth = Math.min(aspectRatio * parentHeight, parentWidth);
                 const innerHeight = innerWidth / aspectRatio;
 
                 if (!isFirstLoad) {
-                    width = innerWidth;
-                    height = innerHeight;
+                    width = parentWidth;
+                    height = parentHeight;
                     console.log(halfWidth,height);
-                    updateViewBox(innerWidth, innerHeight);
-                    updateVisuals();
+                    if (viewBoxResize) {
+                        updateViewBox(parentWidth, parentHeight);
+                    }
+                    if (selectedNode) {
+                        applyResize(selectedNode);
+                    } else {
+                        updateVisuals()
+                    }
+                    
                 }
             }
         }
@@ -208,7 +215,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
         window.addEventListener('resize', () => {
           
-            updateDimensions($sidebarWidthStore);
+            updateDimensions($sidebarWidthStore, true);
                
            
         });
@@ -292,7 +299,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
     
             g.transition()
             .duration(750)
-            .ease(d3.easePoly.exponent(2.5))
+            .ease(d3.easeCubicInOut)
             .call(zoom.transform, transform)
             .attr("transform", `translate(${x},${y}) scale(${k})`)
 
@@ -300,6 +307,51 @@ function createHierarchy(data: Node[]): WritableNode | null {
             
         
     }
+
+    let previousHalfWidth = null;
+
+    function applyResize(node) {
+
+       
+
+        // Constants to control the maximum visible size of the circle
+        const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
+        const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
+
+        // Calculate potential scales for both width and height to keep the circle within view
+        const scaleWidth = (halfWidth * maxWidthRatio) / (node.r * 2); // Scale based on width
+        const scaleHeight = ((height / 1.5 ) * maxHeightRatio) / (node.r * 2); // Scale based on height
+
+        // Use the smaller scale to ensure the circle fits in both dimensions without clipping
+        const k = Math.min(scaleWidth, scaleHeight);
+
+        // Center the node within the new full screen dimensions
+        const x = halfWidth / 2 - k * node.x ;
+        const y = (height / 1.5 ) / 2 - k * node.y;
+
+
+        const selectedDepth = selectedNode ? selectedNode.depth : 0;
+        let duration = Math.min(Math.abs(node.depth - selectedDepth) * 20 + 750, 900); // Cap duration to avoid long transitions
+
+
+
+
+
+        
+
+        g.interrupt();
+
+        // Apply the new transition
+        g.transition()
+            .duration(500)
+            .ease(d3.easePoly.exponent(2))
+            .attr("transform", `translate(${x},${y}) scale(${k})`);
+
+
+            
+
+        }
+
 
 
 
@@ -360,7 +412,6 @@ function createHierarchy(data: Node[]): WritableNode | null {
         d3.select("#circle-packing svg")
             .attr("viewBox", `0 0 ${newWidth} ${newHeight}`);
 
-         
 
    
     }
@@ -395,10 +446,10 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
 
     g.append("rect")
-        .attr("width", 10010)
-        .attr("height", 5010)
+        .attr("width", width * 1000 )
+        .attr("height", height * 1000)
         .attr("fill", "url(#dot-pattern)")
-        .attr("transform", "translate(-2010, -1000)");
+        .attr("transform", "translate(-2010, -4000)");
 
 
     if (data === null) {
@@ -411,6 +462,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
 
     function updateVisuals() {
+        console.trace("update");
         
         if (!data) {
             console.error("Failed to create hierarchical data.");
@@ -435,7 +487,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
         shrinkChildrenAndRepack(root);
         updateCircles(nodes);
         updateText(nodes);
-        applyZoom(selectedNode)
+        applyResize(selectedNode)
     
     }
 
@@ -667,13 +719,18 @@ function createHierarchy(data: Node[]): WritableNode | null {
             )
  
             .attr("transform", d => `translate(${d.x},${d.y})`)
-            .attr("r", d => d.r * 0.988)
+            .attr("r", d => d.r * 0.975)
             .attr("fill", d => d.data.totalPriority === 0 ? d.data.fillColor : `url(#gradient-${d.data.id})`)
             .attr("stroke-width", d => {
                 if (d.depth === 0) { // Assuming depth 0 means it's the parent node
-                    return 2; // Set the stroke width for the parent separately (example: 2)
+                    return 10; // Set the stroke width for the parent separately (example: 2)
                 }
-                return (d.r * 0.05 + (1 / d.depth) * 0.06) / 2;
+                const depthSquared = d.depth * d.depth;
+                const adjustedDepth = depthSquared !== 0 ? (1 / depthSquared) : 0; // Avoid division by zero
+                const radiusContribution = d.r * 0.1;
+                const depthContribution = adjustedDepth * 0.06;
+
+                return (radiusContribution + depthContribution) / 2;
             })
             .attr("stroke", d => d.data.totalPriority === 0 ? darkerColor(d.data.fillColor) : '#654ea3')
             .attr("class", d => {
@@ -751,7 +808,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 selectedNodeId.set(nodes.data.id);
                
             } else {
-                applyZoom(nodes);
+                applyZoom(d);
                 selectedNode = d;
         
                 selectedNodeId.set(d.data.id);
@@ -844,50 +901,81 @@ function createHierarchy(data: Node[]): WritableNode | null {
 }
 
 
-    function wrap(text, width) {
-        text.each(function() {
-            var text = d3.select(this),
-                words = text.text().split(/\s+/).reverse(),
-                word,
-                line = [],
-                lineNumber = 0,
-                lineHeight = 1.1, // ems
-                y = text.attr("y") !== null ? text.attr('y') : 0,
-                dy = text.attr("dy") !== null ? parseFloat(text.attr("dy")) : 0,
-                tspanElements = [];
+function wrap(text, width) {
+    text.each(function() {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0,
+            lineHeight = 1.1, // ems
+            y = text.attr("y") !== null ? text.attr('y') : 0,
+            dy = text.attr("dy") !== null ? parseFloat(text.attr("dy")) : 0,
+            tspanElements = [],
+            ellipsis = '...';
 
-            // Construct lines from words
-            while (word = words.pop()) {
-                let prospectiveLine = line.length ? line.join(" ") + " " + word : word;
-                if (prospectiveLine.length > width) {
+        // Function to split long words
+        function splitLongWord(word, width) {
+            let parts = [];
+            while (word.length > width) {
+                parts.push(word.slice(0, width));
+                word = word.slice(width);
+            }
+            parts.push(word);
+            return parts;
+        }
+
+        // Construct lines from words
+        while (word = words.pop()) {
+            let prospectiveLine = line.length ? line.join(" ") + " " + word : word;
+            if (prospectiveLine.length > width) {
+                if (word.length > width) {
+                    let splitParts = splitLongWord(word, width);
+                    while (splitParts.length) {
+                        tspanElements.push(line.join(" "));
+                        line = [splitParts.shift()];
+                    }
+                } else {
                     tspanElements.push(line.join(" "));
                     line = [word];
-                } else {
-                    line.push(word);
                 }
+            } else {
+                line.push(word);
             }
-            if (line.length > 0) {
+        }
+        if (line.length > 0) {
             tspanElements.push(line.join(" "));
-            }
+        }
 
-            // Clear existing text and compute the vertical adjustment
-            text.text(null);
-            const totalLines = tspanElements.length;
-            const initialYOffset = -((totalLines - 1) / 2) * lineHeight;
+        // Check if text is cut off and needs ellipsis
+        let totalText = tspanElements.join(' ');
+        if (tspanElements.length > 2 || totalText.length > 2 * width) {
+            let truncatedText = totalText.slice(0, (2 * width) - ellipsis.length) + ellipsis;
+            tspanElements = truncatedText.match(new RegExp('.{1,' + width + '}', 'g'));
+            tspanElements = tspanElements.slice(0, 2); // Ensure it only takes up to 2 lines
+        }
 
-            // Append each line as a tspan, adjusting for vertical centering
-            tspanElements.forEach((lineText, index) => {
+        // Clear existing text and compute the vertical adjustment
+        text.text(null);
+        const totalLines = tspanElements.length;
+        const initialYOffset = -((totalLines - 1) / 2) * lineHeight;
+
+        // Append each line as a tspan, adjusting for vertical centering
+        tspanElements.forEach((lineText, index) => {
             text.append("tspan")
                 .attr("x", 0)
                 .attr("y", y)
                 .attr("dy", (initialYOffset + (index * lineHeight)) + "em")
                 .text(lineText);
-            });
         });
-    }
+    });
+}
 
 
-    updateDimensions([50])
+
+
+
+    updateDimensions([50], true)
 
 
     svg.on("wheel.zoom dblclick.zoom mousedown.zoom mousemove.zoom mouseup.zoom touchstart.zoom touchmove.zoom touchend.zoom", null);
@@ -905,11 +993,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 <style>
 
 
-    :global(.circle) {
-        transition: fill 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease, transform 0.3s ease;
 
-        
-    }
 
     
 
@@ -933,13 +1017,16 @@ function createHierarchy(data: Node[]): WritableNode | null {
         user-select: none;
     }
 
-    :global(.hoverable:hover) {
-        stroke: rgb(161, 134, 187); /* Change color on hover */
-        fill: rgba(255, 255, 255, 0.1); /* Add a translucent fill on hover */
-        transition: stroke 0.3s ease, stroke-width 0.3s ease, fill 0.3s ease;
-    
+    :global(.circle) {
+       
     }
 
+    :global(.hoverable:hover) {
+        stroke: rgb(240, 88, 0);
+    }
+
+
+  
 
 
 
