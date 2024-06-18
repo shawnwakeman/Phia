@@ -282,17 +282,22 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
     
         const selectedDepth = selectedNode ? selectedNode.depth : 0;
-        let duration = Math.abs(node.depth - selectedDepth) * 10 + 750 // fix
+        let duration = Math.min(Math.abs(node.depth - selectedDepth) * 20 + 750, 900); // Cap duration to avoid long transitions
+
         
 
         
         
         const transform = d3.zoomIdentity.translate(x, y).scale(k);
+    
             g.transition()
-            .duration(duration)
-  
+            .duration(750)
+            .ease(d3.easePoly.exponent(2.5))
             .call(zoom.transform, transform)
             .attr("transform", `translate(${x},${y}) scale(${k})`)
+
+
+            
         
     }
 
@@ -342,32 +347,14 @@ function createHierarchy(data: Node[]): WritableNode | null {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
 
     .on("zoom", (event) => {
-        g.attr("transform", event.transform);
-      
-        console.log(event.transform.k);
+
         
         zoomed(event)
   
-        
-
-        // Use debounced function to handle updates
 
     });
 
     
-
-    function debounce(func, timeout = 300) {
-        let timer;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => { func.apply(this, args); }, timeout);
-    };
-}
-
-    const debouncedUpdateVisuals = debounce(() => {
-        updateVisuals();
-    });
-
 
     function updateViewBox(newWidth: number, newHeight: number) {
         d3.select("#circle-packing svg")
@@ -632,28 +619,6 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
         const defs = svg.select("defs");
 
-        let filter = defs.select("#drop-shadow");
-
-        if (filter.empty()) {
-            filter = defs.append("filter")
-                .attr("id", "drop-shadow")
-                .attr("height", "130%");
-
-            filter.append("feGaussianBlur")
-                .attr("in", "SourceAlpha")
-                .attr("stdDeviation", 10)
-                .attr("result", "blur");
-
-            filter.append("feOffset")
-                .attr("in", "blur")
-                .attr("dx", 2)
-                .attr("dy", 3)
-                .attr("result", "offsetBlur");
-
-            const feMerge = filter.append("feMerge");
-            feMerge.append("feMergeNode").attr("in", "offsetBlur");
-            feMerge.append("feMergeNode").attr("in", "SourceGraphic");
-        }
 
         console.log(nodes.depth);
         
@@ -691,10 +656,10 @@ function createHierarchy(data: Node[]): WritableNode | null {
         });
 
 
-        const filteredNodes = nodes.descendants().filter(d => d.depth <= nodes.depth + 4);
+        
         
         g.selectAll("circle")
-        .data(filteredNodes, d => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
+        .data(nodes.descendants(), d => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
             .join(
                 enter => enter.append("circle"),
                 update => update,
@@ -941,12 +906,17 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
 
     :global(.circle) {
-        transition: fill 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease;
+        transition: fill 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease, transform 0.3s ease;
+
+        
     }
+
+    
 
     :global(.circle-selected) {
         stroke: rgb(0, 255, 255);
         transition: fill 0.3s ease, stroke-width 0.3s ease;
+
     }
 
     #circle-packing {
@@ -955,6 +925,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
         min-width: 150px;
         background: radial-gradient(ellipse at left top, #102441 0%, #0e1525 80%);
         border: 2px solid #c2c5cc; /* Added border with a width of 2px */
+        
     }
 
     :global(.text-node) {
