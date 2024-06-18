@@ -21,7 +21,7 @@
     totalPriority: number
     innerGradientStop: string;
     outerGradientStop: string;
-    
+    isVisible: boolean
 };
 
         
@@ -35,7 +35,8 @@
 
         
     let nodes: d3.HierarchyCircularNode<WritableNode>;    
-
+    let originalNodes: d3.HierarchyCircularNode<WritableNode>;
+    let lastNode: WritableNode; 
     function getNestedIssuesTotalPriority(nodeId: number, nodes: Node[], issues: Issue[]): number {
 
 
@@ -67,11 +68,24 @@
 }
 
     
+function generateDummyData(count: number): Node[] {
+    const data: Node[] = [];
+    for (let i = 0; i < count; i++) {
+        data.push({
+            id: i,
+            parent_id: i === 0 ? null : 0, // Random parent_id
+            name: `Element ${i}`,
+            value: Math.floor(Math.random() * 100) + 1, // Random value
+            state: 'Open' // Example state
+        });
+    }
+    return data;
+}
 
 function createHierarchy(data: Node[]): WritableNode | null {
     
-    console.log("asd");
-    
+
+  
     const elements: { [key: number]: WritableNode } = {};
     let rootCandidates: WritableNode[] = [];
 
@@ -239,11 +253,14 @@ function createHierarchy(data: Node[]): WritableNode | null {
         const y = height / 2 - k * node.y;
 
         const transform = d3.zoomIdentity.translate(x, y).scale(k);
-        svg.call(zoom.transform, transform); // Apply the transformation without transition
+        g.attr("transform", `translate(${x},${y}) scale(${k})`);
     }
 
     function applyZoom(node) {
+
+       
         
+ 
         // Constants to control the maximum visible size of the circle
         const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
         const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
@@ -259,19 +276,102 @@ function createHierarchy(data: Node[]): WritableNode | null {
         const x = halfWidth / 2 - k * node.x;
         const y = height / 2 - k * node.y;
 
+        updateCircles(nodes);
+        updateText(nodes);
+
+
         const transform = d3.zoomIdentity.translate(x, y).scale(k);
-        svg.transition()
+            g.transition()
             .duration(750)
-            .ease(d3.easePoly.exponent(2.5))
+            .ease(d3.easeCubicInOut) 
             .call(zoom.transform, transform);
+
+
+
+
+
+
+
+
+
+    // Update visibility for the entire hierarchy
+   
+// Log the filtered nodes and the current node for debugging
+       
+
+        // Update the visual elements using the filtered nodes hierarchy
+  
+    
     }
 
 
+
+    function zoomed(event) {
+        console.log("adss");
+        
+    // Get the transform
+        const transform = event.transform;
+
+        // Update the transform of the group
+        g.attr('transform', transform);
+
+        // Calculate the visible bounds
+        const visibleXMin = -transform.x / transform.k;
+        const visibleXMax = (halfWidth - transform.x) / transform.k;
+        const visibleYMin = -transform.y / transform.k;
+        const visibleYMax = (height - transform.y) / transform.k;
+
+        // Function to check if an element is visible
+        function isVisible(d) {
+            return d.x + d.r > visibleXMin && d.x - d.r < visibleXMax && d.y + d.r > visibleYMin && d.y - d.r < visibleYMax;
+        }
+
+        // Update the visibility of the elements
+        g.selectAll('circle, text.text-node').each(function(d) {
+            const element = d3.select(this);
+            if (isVisible(d)) {
+                element.style('display', 'block');
+            } else {
+                element.style('display', 'none');
+            }
+        });
+    }
+
+
+
+
+
+
     // Create SVG element
+
+
+   
     const zoom = d3.zoom<SVGSVGElement, unknown>()
 
     .on("zoom", (event) => {
         g.attr("transform", event.transform);
+        console.log("asdasd");
+        
+        zoomed(event)
+  
+        
+
+        // Use debounced function to handle updates
+
+    });
+
+    
+
+    function debounce(func, timeout = 300) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
+
+    const debouncedUpdateVisuals = debounce(() => {
+        updateVisuals();
     });
 
 
@@ -292,9 +392,13 @@ function createHierarchy(data: Node[]): WritableNode | null {
     .style("font-size", "12px");
 
 // Append a rectangle as the background box
+    svg.call(zoom as any);
 
 
     const g = svg.append("g");
+
+
+
 
     svg.append("defs")
         .append("pattern")
@@ -351,8 +455,10 @@ function createHierarchy(data: Node[]): WritableNode | null {
         updateCircles(nodes);
         updateText(nodes);
         centerOnNode(selectedNode)
-
+    
     }
+
+  
 
     function shrinkChildrenAndRepack(node) {
         if (!node.children) return;
@@ -494,32 +600,28 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
     let previousDataHash = "";
 
-    function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
-        let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
+    function updateCircles(nodesTemp: d3.HierarchyCircularNode<WritableNode>) {
+        let maxPriority = d3.max(nodesTemp.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
 
         let gradientCache = new Map();
 
         nodes.descendants().forEach(node => {
-            let id = node.data.id;
-            let totalPriority = getNestedIssuesTotalPriority(id, $nodesDataStore, $issuesDataStore);
+            const id = node.data.id;
+            const totalPriority = getNestedIssuesTotalPriority(id, $nodesDataStore, $issuesDataStore);
             node.data.totalPriority = totalPriority;
 
             if (!gradientCache.has(id)) {
-                let normalizedPriority = (totalPriority / maxPriority) * 100;
+                const normalizedPriority = (totalPriority / maxPriority) * 100;
 
-                if (totalPriority === 0) {
-                    node.data.innerGradientStop = `${121}%`;
-                    node.data.outerGradientStop = `${110}%`;
-                } else {
-                    node.data.innerGradientStop = `${90}%`;
-                    node.data.outerGradientStop = `${110}%`;
-                }
+                node.data.innerGradientStop = totalPriority === 0 ? `${121}%` : `${90}%`;
+                node.data.outerGradientStop = `${110}%`;
+
                 gradientCache.set(id, {
                     inner: node.data.innerGradientStop,
                     outer: node.data.outerGradientStop
                 });
             } else {
-                let cached = gradientCache.get(id);
+                const cached = gradientCache.get(id);
                 node.data.innerGradientStop = cached.inner;
                 node.data.outerGradientStop = cached.outer;
             }
@@ -530,22 +632,18 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
         // Call updateTreeColors only if the data has changed
         if (currentDataHash !== previousDataHash) {
-            updateTreeColors(nodes);
+            updateTreeColors(nodesTemp);
             previousDataHash = currentDataHash;
         }
 
         const defs = svg.select("defs");
 
-
         let filter = defs.select("#drop-shadow");
 
-
         if (filter.empty()) {
-
             filter = defs.append("filter")
                 .attr("id", "drop-shadow")
                 .attr("height", "130%");
-
 
             filter.append("feGaussianBlur")
                 .attr("in", "SourceAlpha")
@@ -558,28 +656,34 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 .attr("dy", 3)
                 .attr("result", "offsetBlur");
 
-                
             const feMerge = filter.append("feMerge");
             feMerge.append("feMergeNode").attr("in", "offsetBlur");
             feMerge.append("feMergeNode").attr("in", "SourceGraphic");
-            
         }
+
+        console.log(nodesTemp.depth);
+        
+        // Filter nodes to render only up to 3 levels deep
+
+
+        
+        const filteredNodes = nodesTemp.descendants().filter(d => d.depth - nodesTemp.depth <= 4);
 
         // Add stops to each gradient
         const gradients = defs.selectAll("radialGradient")
-            .data(nodes.descendants(), d => d.data.id)
+            .data(filteredNodes.filter(d => d.data.totalPriority !== 0), d => d.data.id)
             .join(
                 enter => enter.append("radialGradient").attr("id", d => `gradient-${d.data.id}`),
                 update => update,
                 exit => exit.remove()
             );
 
-            gradients.each(function(d) {
-                const gradient = d3.select(this);
-                const stops = [
-                    { offset: d.data.innerGradientStop, color: d.data.fillColor },
-                    { offset: d.data.outerGradientStop, color: "#654ea3" }
-                ];
+        gradients.each(function (d) {
+            const gradient = d3.select(this);
+            const stops = [
+                { offset: d.data.innerGradientStop, color: d.data.fillColor },
+                { offset: d.data.outerGradientStop, color: "#654ea3" }
+            ];
 
             gradient.selectAll("stop")
                 .data(stops)
@@ -593,21 +697,22 @@ function createHierarchy(data: Node[]): WritableNode | null {
         });
 
         g.selectAll("circle")
-            .data(nodes.descendants(), d => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
-            .join (
+            .data(filteredNodes, d => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
+            .join(
                 enter => enter.append("circle"),
                 update => update,
                 exit => exit.remove()
             )
+ 
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .attr("r", d => d.r * 0.988)
-            .attr("fill", d => `url(#gradient-${d.data.id})`)
+            .attr("fill", d => d.data.totalPriority === 0 ? d.data.fillColor : `url(#gradient-${d.data.id})`)
             .attr("stroke-width", d => {
-                    if (d.depth === 0) { // Assuming depth 0 means it's the parent node
-                        return 2; // Set the stroke width for the parent separately (example: 2)
-                    }
-                    return (d.r * 0.05 + (1 / d.depth) * 0.06) / 2;
-                })  
+                if (d.depth === 0) { // Assuming depth 0 means it's the parent node
+                    return 2; // Set the stroke width for the parent separately (example: 2)
+                }
+                return (d.r * 0.05 + (1 / d.depth) * 0.06) / 2;
+            })
             .attr("stroke", d => d.data.totalPriority === 0 ? darkerColor(d.data.fillColor) : '#654ea3')
             .attr("class", d => {
                 let classes = "circle";
@@ -717,41 +822,59 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
 
     function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
-        const selectedLeafParentId = (selectedNode && (!selectedNode.children || selectedNode.children.length === 0))
-            ? selectedNode.parent?.data.id
-            : null;
-        
-        const selectedNodeId = $selectedNodeStore.id;
-        const selectedNodeDepth = selectedNode.depth;
-        const selectedNodeParentId = selectedNode.parent?.data.id;
+    const selectedLeafParentId = (selectedNode && (!selectedNode.children || selectedNode.children.length === 0))
+        ? selectedNode.parent?.data.id
+        : null;
 
-        const filteredNodes = nodes.descendants().filter(d =>
-            (d.depth === selectedNodeDepth && d.parent?.data.id === selectedNodeParentId && d.data.id !== selectedNodeId) ||
-            (d.parent?.data.id === selectedNodeId) ||
-            (d.data.id === selectedNodeId && (!d.children || d.children.length === 0))
-        );
+    const selectedNodeId = $selectedNodeStore.id;
+    const selectedNodeDepth = selectedNode.depth;
+    const selectedNodeParentId = selectedNode.parent?.data.id;
+
+    const isAtSameDepthAndParent = (d) => d.depth === selectedNodeDepth && d.parent?.data.id === selectedNodeParentId && d.data.id !== selectedNodeId;
+    const isChildOfSelectedNode = (d) => d.parent?.data.id === selectedNodeId;
+    const isSelectedLeafNode = (d) => d.data.id === selectedNodeId && (!d.children || d.children.length === 0);
+
+    const filteredNodes = nodes.descendants().filter(d =>
+        isAtSameDepthAndParent(d) ||
+        isChildOfSelectedNode(d) ||
+        isSelectedLeafNode(d)
+    );
 
     const texts = g.selectAll("text.text-node")
-            .data(filteredNodes, d => d.data.id);
+        .data(filteredNodes, d => d.data.id)
+        .join(
+            enter => {
+                const enterTexts = enter.append("text")
+                    .attr("class", "text-node font-default font-medium")
+                    .attr("text-anchor", "middle")
+                    .attr("alignment-baseline", "middle")
+                    .text(d => d.data.name)
+                    .on("click", handleCircleClick);
 
-        texts.exit().remove();
+                // Only wrap text if the radius is large enough
+                enterTexts.filter(d => d.r > 10)
+                    .call(wrap, 13);
 
-        const enterTexts = texts.enter().append("text")
-            .attr("class", "text-node font-default font-medium")
-            .attr("text-anchor", "middle")
-            .attr("alignment-baseline", "middle");
+                // Reduce text quality for small nodes
+                enterTexts.filter(d => d.r <= 10)
+                    .attr("class", "text-node font-default font-small");
 
-        const mergedTexts = enterTexts.merge(texts);
+                return enterTexts;
+            },
+            update => update,
+            exit => exit.remove()
+        );
 
-        mergedTexts.each(function(d) {
-            const text = d3.select(this)
-                .text(d => d.data.name)
-                .attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`)
-                .call(wrap, 13);
+    // Only update and transform visible texts
+    texts.filter(d => d.r > 1) // skip nodes that are too small
+        .attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`);
 
-            text.on("click", (event, d) => handleCircleClick(d));
-        });
-    }
+    // Optionally reduce update frequency with requestAnimationFrame
+    requestAnimationFrame(() => {
+        texts.attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`);
+    });
+}
+
 
     function wrap(text, width) {
         text.each(function() {
