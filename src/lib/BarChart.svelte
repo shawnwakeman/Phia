@@ -84,7 +84,8 @@ function generateDummyData(count: number): Node[] {
 
 function createHierarchy(data: Node[]): WritableNode | null {
     
-
+    console.log("mew shi");
+    
   
     const elements: { [key: number]: WritableNode } = {};
     let rootCandidates: WritableNode[] = [];
@@ -223,7 +224,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
    
         nodesDataStore.subscribe((value) => {
             data = createHierarchy(value)
-
+            console.log("change");
+            
             if (!isFirstLoad) {
                 updateVisuals();
                 if (selectedNode) {
@@ -252,14 +254,14 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
         // Calculate potential scales for both width and height to keep the circle within view
         const scaleWidth = (halfWidth * maxWidthRatio) / (node.r * 2); // Scale based on width
-        const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
+        const scaleHeight = ((height / 1.5 ) * maxHeightRatio) / (node.r * 2); // Scale based on height
 
         // Use the smaller scale to ensure the circle fits in both dimensions without clipping
         const k = Math.min(scaleWidth, scaleHeight);
 
         // Center the node within the new full screen dimensions
         const x = halfWidth / 2 - k * node.x;
-        const y = height / 2 - k * node.y;
+        const y = (height / 1.5 ) / 2 - k * node.y;
 
         const transform = d3.zoomIdentity.translate(x, y).scale(k);
         g     
@@ -278,14 +280,14 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
         // Calculate potential scales for both width and height to keep the circle within view
         const scaleWidth = (halfWidth * maxWidthRatio) / (node.r * 2); // Scale based on width
-        const scaleHeight = (height * maxHeightRatio) / (node.r * 2); // Scale based on height
+        const scaleHeight = ((height / 1.5 ) * maxHeightRatio) / (node.r * 2); // Scale based on height
 
         // Use the smaller scale to ensure the circle fits in both dimensions without clipping
         const k = Math.min(scaleWidth, scaleHeight);
 
         // Center the node within the new full screen dimensions
         const x = halfWidth / 2 - k * node.x;
-        const y = height / 2 - k * node.y;
+        const y = (height / 1.5 ) / 2 - k * node.y;
 
     
         const selectedDepth = selectedNode ? selectedNode.depth : 0;
@@ -366,7 +368,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
         // Calculate the visible bounds
         const visibleXMin = -transform.x / transform.k;
-        const visibleXMax = (halfWidth - transform.x) / transform.k;
+        const visibleXMax = (width - transform.x) / transform.k;
         const visibleYMin = -transform.y / transform.k;
         const visibleYMax = (height - transform.y) / transform.k;
 
@@ -482,7 +484,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
 
         if (!isFirstLoad) { selectedNode = nodes.find(n => n.data.id === $selectedNodeId); }
-            
+        console.log(nodes, "nodes");
+        
 
         shrinkChildrenAndRepack(root);
         updateCircles(nodes);
@@ -878,7 +881,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
                 // Only wrap text if the radius is large enough
                 enterTexts.filter(d => d.r > 10)
-                    .call(wrap, 13);
+                    .call(wrap, 10);
 
                 // Reduce text quality for small nodes
                 enterTexts.filter(d => d.r <= 10)
@@ -886,7 +889,14 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
                 return enterTexts;
             },
-            update => update,
+            update => {
+                update.text(d => d.data.name)  // Ensure the text is updated
+                    .attr("class", d => d.r > 10 ? "text-node font-default font-medium" : "text-node font-default font-small")
+                    .filter(d => d.r > 10)
+                    .call(wrap, 10);
+
+                return update;
+            },
             exit => exit.remove()
         );
 
@@ -932,11 +942,13 @@ function wrap(text, width) {
                 if (word.length > width) {
                     let splitParts = splitLongWord(word, width);
                     while (splitParts.length) {
-                        tspanElements.push(line.join(" "));
+                        if (line.join(" ").length > 0) {
+                            tspanElements.push(line.join(" ").trim());
+                        }
                         line = [splitParts.shift()];
                     }
                 } else {
-                    tspanElements.push(line.join(" "));
+                    tspanElements.push(line.join(" ").trim());
                     line = [word];
                 }
             } else {
@@ -944,13 +956,14 @@ function wrap(text, width) {
             }
         }
         if (line.length > 0) {
-            tspanElements.push(line.join(" "));
+            tspanElements.push(line.join(" ").trim());
         }
 
         // Check if text is cut off and needs ellipsis
         let totalText = tspanElements.join(' ');
         if (tspanElements.length > 2 || totalText.length > 2 * width) {
-            let truncatedText = totalText.slice(0, (2 * width) - ellipsis.length) + ellipsis;
+            let truncatedText = totalText.slice(0, (2 * width) - ellipsis.length).trim();
+            truncatedText += ellipsis;
             tspanElements = truncatedText.match(new RegExp('.{1,' + width + '}', 'g'));
             tspanElements = tspanElements.slice(0, 2); // Ensure it only takes up to 2 lines
         }
@@ -970,6 +983,7 @@ function wrap(text, width) {
         });
     });
 }
+
 
 
 
