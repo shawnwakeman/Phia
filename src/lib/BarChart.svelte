@@ -238,6 +238,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
     
     function centerOnNode(node) {
+        console.log("asd");
+        
         const maxWidthRatio = 0.8; // Circle should cover up to 80% of the width
         const maxHeightRatio = 0.8; // Circle should cover up to 80% of the height
 
@@ -253,7 +255,9 @@ function createHierarchy(data: Node[]): WritableNode | null {
         const y = height / 2 - k * node.y;
 
         const transform = d3.zoomIdentity.translate(x, y).scale(k);
-        g.attr("transform", `translate(${x},${y}) scale(${k})`);
+        g     
+        .call(zoom.transform, transform)
+        .attr("transform", `translate(${x},${y}) scale(${k})`)
     }
 
     function applyZoom(node) {
@@ -276,38 +280,26 @@ function createHierarchy(data: Node[]): WritableNode | null {
         const x = halfWidth / 2 - k * node.x;
         const y = height / 2 - k * node.y;
 
-        updateCircles(nodes);
-        updateText(nodes);
+    
+        const selectedDepth = selectedNode ? selectedNode.depth : 0;
+        let duration = Math.abs(node.depth - selectedDepth) * 10 + 750 // fix
+        
 
-
+        
+        
         const transform = d3.zoomIdentity.translate(x, y).scale(k);
             g.transition()
-            .duration(750)
-            .ease(d3.easeCubicInOut) 
-            .call(zoom.transform, transform);
-
-
-
-
-
-
-
-
-
-    // Update visibility for the entire hierarchy
-   
-// Log the filtered nodes and the current node for debugging
-       
-
-        // Update the visual elements using the filtered nodes hierarchy
+            .duration(duration)
   
-    
+            .call(zoom.transform, transform)
+            .attr("transform", `translate(${x},${y}) scale(${k})`)
+        
     }
 
 
 
     function zoomed(event) {
-        console.log("adss");
+    
         
     // Get the transform
         const transform = event.transform;
@@ -335,6 +327,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 element.style('display', 'none');
             }
         });
+
     }
 
 
@@ -350,7 +343,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
     .on("zoom", (event) => {
         g.attr("transform", event.transform);
-        console.log("asdasd");
+      
+        console.log(event.transform.k);
         
         zoomed(event)
   
@@ -454,7 +448,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
         shrinkChildrenAndRepack(root);
         updateCircles(nodes);
         updateText(nodes);
-        centerOnNode(selectedNode)
+        applyZoom(selectedNode)
     
     }
 
@@ -600,8 +594,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
     let previousDataHash = "";
 
-    function updateCircles(nodesTemp: d3.HierarchyCircularNode<WritableNode>) {
-        let maxPriority = d3.max(nodesTemp.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
+    function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
+        let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
 
         let gradientCache = new Map();
 
@@ -632,7 +626,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
         // Call updateTreeColors only if the data has changed
         if (currentDataHash !== previousDataHash) {
-            updateTreeColors(nodesTemp);
+            updateTreeColors(nodes);
             previousDataHash = currentDataHash;
         }
 
@@ -661,17 +655,17 @@ function createHierarchy(data: Node[]): WritableNode | null {
             feMerge.append("feMergeNode").attr("in", "SourceGraphic");
         }
 
-        console.log(nodesTemp.depth);
+        console.log(nodes.depth);
         
         // Filter nodes to render only up to 3 levels deep
 
 
         
-        const filteredNodes = nodesTemp.descendants().filter(d => d.depth - nodesTemp.depth <= 4);
+       
 
         // Add stops to each gradient
         const gradients = defs.selectAll("radialGradient")
-            .data(filteredNodes.filter(d => d.data.totalPriority !== 0), d => d.data.id)
+            .data(nodes.descendants().filter(d => d.data.totalPriority !== 0), d => d.data.id)
             .join(
                 enter => enter.append("radialGradient").attr("id", d => `gradient-${d.data.id}`),
                 update => update,
@@ -696,8 +690,11 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 .attr("stop-color", stop => stop.color);
         });
 
+
+        const filteredNodes = nodes.descendants().filter(d => d.depth <= nodes.depth + 4);
+        
         g.selectAll("circle")
-            .data(filteredNodes, d => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
+        .data(filteredNodes, d => (d as d3.HierarchyCircularNode<WritableNode>).data.id)
             .join(
                 enter => enter.append("circle"),
                 update => update,
@@ -761,16 +758,18 @@ function createHierarchy(data: Node[]): WritableNode | null {
     function handleCircleClick(d: d3.HierarchyCircularNode<WritableNode>) {
         if (selectedNode && d.data.id === selectedNode.data.id) {
             // Reset selection and zoom out
+            applyZoom(nodes);
             selectedNode = nodes;
           
             selectedNodeId.set(nodes.data.id);
-            applyZoom(nodes);
+          
         } else {
             // Update the selected node and current depth for a new selection
+            applyZoom(d);
             selectedNode = d;
             
             selectedNodeId.set(d.data.id);
-            applyZoom(d);
+           
         }
 
         selectedNodeStore.set(convertToNodeType(selectedNode));
@@ -781,15 +780,17 @@ function createHierarchy(data: Node[]): WritableNode | null {
     function handleCircleClickInternal(d: d3.HierarchyCircularNode<WritableNode>) {
         if (!d.children || d.children.length === 0) {
             if (selectedNode && d.data.id === selectedNode.data.id) {
+                applyZoom(nodes);
                 selectedNode = nodes;
           
                 selectedNodeId.set(nodes.data.id);
-                applyZoom(nodes);
+               
             } else {
+                applyZoom(nodes);
                 selectedNode = d;
         
                 selectedNodeId.set(d.data.id);
-                applyZoom(nodes);
+               
             }
 
             selectedNodeStore.set(convertToNodeType(selectedNode));
@@ -803,16 +804,18 @@ function createHierarchy(data: Node[]): WritableNode | null {
     function handleCircleClickFarNode(d: d3.HierarchyCircularNode<WritableNode>) {
         if (selectedNode && d.data.id === selectedNode.data.id) {
             // Reset selection and zoom out
+            applyZoom(nodes);
             const parent = nodes.find(node => node.depth === 0 && !node.parent) || null;
             selectedNode = parent;
        
             selectedNodeId.set(parent.data.id);
-            applyZoom(nodes);
+          
         } else {
+            applyZoom(d.parent);
             selectedNode = d.parent;
      
             selectedNodeId.set(d.parent?.data.id);
-            applyZoom(d.parent);
+       
         }
 
         selectedNodeStore.set(convertToNodeType(selectedNode));
