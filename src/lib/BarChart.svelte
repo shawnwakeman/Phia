@@ -1021,8 +1021,7 @@ function wrap(text, width) {
         width: 100%;
         margin: 0 auto;
         min-width: 150px;
-       
-        border: 2px solid #c2c5cc; /* Added border with a width of 2px */
+        background: radial-gradient(ellipse at left top, #0e1525 0%, #02040b 80%);      border: 2px solid #c2c5cc; /* Added border with a width of 2px */
         
     }
 
