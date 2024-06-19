@@ -438,12 +438,12 @@ function createHierarchy(data: Node[]): WritableNode | null {
         .append("pattern")
         .attr("id", "dot-pattern")
         .attr("patternUnits", "userSpaceOnUse")
-        .attr("width", 80)
-        .attr("height", 80)
+        .attr("width", 100)
+        .attr("height", 100)
         .append("circle")
         .attr("cx", 20)
         .attr("cy", 20)
-        .attr("r", 4)
+        .attr("r", 2)
         .attr("fill", "#c2c2c1");
 
 
@@ -1021,7 +1021,7 @@ function wrap(text, width) {
         width: 100%;
         margin: 0 auto;
         min-width: 150px;
-        background: radial-gradient(ellipse at left top, #0e1525 0%, #02040b 80%);      border: 2px solid #c2c5cc; /* Added border with a width of 2px */
+        background: radial-gradient(circle at 90% top, hsl(222, 45%, 10%) 0%, hsla(230, 25%, 4%, 0.774) 50%);      border: 2px solid #c2c5cc; /* Added border with a width of 2px */
         
     }
 
