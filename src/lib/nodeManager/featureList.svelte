@@ -156,6 +156,8 @@
       editingFeatureName = ''; // Reset editingFeatureName
       editingFeatureIndex = null;
     }
+
+    
 </script>
   <style>
     .feature-list {
@@ -227,53 +229,107 @@
     }
 
 
+
+    .feature-container {
+        padding: 30px;
+        margin: 30px;
+        padding-top: 600px;
+
+
+ 
+        background-image: radial-gradient(circle at 17% 20%, rgba(255, 255, 255, 0.199) 0%, rgba(0,0,0,0.27) 105%),
+        url('/noise.svg');
+        
+        border-radius: 32px; 
+/* From https://css.glass */
+      
+ 
+     
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+   
+        box-shadow: 10px 10px 30px 0 rgba(0,0,0,0.50), inset 11px 13px 41px 0 rgba(0,0,0,0.50);
+        color: white;
+  /* Border */
+
+}
+
+    .feature-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 32px; 
+        border: 2px solid transparent;
+        background: linear-gradient(140deg,#ffffff,#909090) border-box;
+        -webkit-mask:
+            linear-gradient(#fff 0 0) padding-box, 
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: destination-out;
+        mask-composite: exclude;
+        pointer-events: none;  /* Ignore all pointer events */
+                
+        
+        }
+
+
+
     
   </style>
+
+
 <div class="feature-container">
-    <div>
-        <input
-          type="text"
-          bind:value={newFeatureName}
-          placeholder="Enter new feature"
-          on:keydown={handleKeydown}
-        />
-        <button on:click={addFeature}>Add Feature</button>
-      </div>
-      
-      {#if $features.length > 0}
-        <ul class="feature-list">
-            {#each $features as feature, index (feature.id)}
-                <li
-                class="feature-item"
-                on:mouseenter={() => handleMouseEnter(index)}
-                on:mouseleave={() => handleMouseLeave(index)}
-                >
-                {#if feature.isEditing}
-                    <input
-                    type="text"
-                    class="editing-input"
-                    bind:value={editingFeatureName}
-                    on:keydown={(event) => {
-                        if (event.key === 'Enter') {
-                        saveEditedFeature(index, feature.id);
-                        }
-                    }}
-                    />
-                    <button on:click={() => saveEditedFeature(index, feature.id)}>Save</button>
-                {:else}
-                    {feature.name}
-                    {#if feature.isHovered}
-                    <button class="edit-button" on:click={() => startEditingFeature(index)}>
-                        Edit
-                    </button>
-                    <button class="delete-button" on:click={() => deleteFeature(index, feature.id)}>
-                        Delete
-                    </button>
+
+        
+<!--    
+    <div class="content"> 
+        <div>
+            <input
+              type="text"
+              bind:value={newFeatureName}
+              placeholder="Enter new feature"
+              on:keydown={handleKeydown}
+            />
+            <button on:click={addFeature}>Add Feature</button>
+          </div>
+          
+          {#if $features.length > 0}
+            <ul class="feature-list">
+                {#each $features as feature, index (feature.id)}
+                    <li
+                    class="feature-item"
+                    on:mouseenter={() => handleMouseEnter(index)}
+                    on:mouseleave={() => handleMouseLeave(index)}
+                    >
+                    {#if feature.isEditing}
+                        <input
+                        type="text"
+                        class="editing-input"
+                        bind:value={editingFeatureName}
+                        on:keydown={(event) => {
+                            if (event.key === 'Enter') {
+                            saveEditedFeature(index, feature.id);
+                            }
+                        }}
+                        />
+                        <button on:click={() => saveEditedFeature(index, feature.id)}>Save</button>
+                    {:else}
+                        {feature.name}
+                        {#if feature.isHovered}
+                        <button class="edit-button" on:click={() => startEditingFeature(index)}>
+                            Edit
+                        </button>
+                        <button class="delete-button" on:click={() => deleteFeature(index, feature.id)}>
+                            Delete
+                        </button>
+                        {/if}
                     {/if}
-                {/if}
-                </li>
-            {/each}
-        </ul>
-      {/if}
+                    </li>
+                {/each}
+            </ul>
+          {/if}
+    </div> -->
+      
 </div>
-  
