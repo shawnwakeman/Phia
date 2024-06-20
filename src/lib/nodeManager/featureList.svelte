@@ -233,10 +233,10 @@
     .feature-container {
         padding: 30px;
         margin: 60px;
-        padding-top: 600px;
+        /* padding-top: 600px; */
 
-        background: hsl(227, 36%, 9%, 0.5);
-        background-image: radial-gradient(circle at 89% 12%, rgba(14,21,37,0.64) 0%, rgba(2,4,11,0.64) 122%), url('/noise.svg'); 
+        background: hsl(227, 36%, 0%, 0.5);
+        background-image: radial-gradient(circle at 89% 12%, #0e1525a3 0%, hsla(227, 69%, 3%, 0.64) 122%), url('/noise.svg'); 
             
 
         border-radius: 24px; 
@@ -244,9 +244,11 @@
       
  
      
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        box-shadow: -14px 27px 30px 0 rgba(0, 0, 0, 0.37);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        box-shadow:  -14px 14px 32px hsla(223, 33%, 4%, 0.753);
+        
+
 
   /* Border */
 
@@ -261,7 +263,7 @@
         bottom: 0;
         border-radius: 24px; 
         border: 1px solid transparent;
-        background: linear-gradient(210deg,#ffffff,hsl(240, 20%, 5%)) border-box;
+        background: linear-gradient(210deg,#ffffff,hsl(240, 20%, 10%)) border-box;
         -webkit-mask:
             linear-gradient(#fff 0 0) padding-box, 
             linear-gradient(#fff 0 0);
@@ -281,7 +283,7 @@
 <div class="feature-container">
 
         
-<!--    
+   
     <div class="content"> 
         <div>
             <input
@@ -328,6 +330,6 @@
                 {/each}
             </ul>
           {/if}
-    </div> -->
+    </div>
       
 </div>
