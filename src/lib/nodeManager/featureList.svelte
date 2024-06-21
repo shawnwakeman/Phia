@@ -232,21 +232,19 @@
 
     .feature-container {
         padding: 30px;
-        margin: 60px;
+        margin: 3vw;
         /* padding-top: 600px; */
 
-        background: hsl(227, 36%, 0%, 0.5);
-        background-image: radial-gradient(circle at 89% 12%, #0e1525a3 0%, hsla(227, 69%, 3%, 0.64) 122%), url('/noise.svg'); 
+        background: hsl(227, 36%, 5%, 0.65);
+        background-image: radial-gradient(circle at 89% 12%, hsla(223, 49%, 9%, 0.639) 0%, hsla(227, 69%, 3%, 0.64) 122%), url('/noise.svg'); 
             
 
         border-radius: 24px; 
-/* From https://css.glass */
-      
- 
      
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        box-shadow:  -14px 14px 32px hsla(223, 33%, 4%, 0.753);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        box-shadow:  -10px 10px 24px hsla(223, 33%, 4%, 0.753);
+        color: white;
         
 
 
@@ -263,7 +261,7 @@
         bottom: 0;
         border-radius: 24px; 
         border: 1px solid transparent;
-        background: linear-gradient(210deg,#ffffff,hsl(240, 20%, 10%)) border-box;
+        background: linear-gradient(210deg,hsl(0, 0%, 100%),hsl(222, 12%, 22%)) border-box;
         -webkit-mask:
             linear-gradient(#fff 0 0) padding-box, 
             linear-gradient(#fff 0 0);

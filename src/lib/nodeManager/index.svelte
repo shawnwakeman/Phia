@@ -112,6 +112,7 @@
         max-height: 100vh; 
         overflow-y: auto; /* Enables vertical scrolling */
         pointer-events: auto;
+        
     }
 
     

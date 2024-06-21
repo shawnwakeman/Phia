@@ -28,7 +28,7 @@ export const currentSelectedIssue = writable<Issue | null>()
 
 export const addedIssue = writable<boolean>(false)
 
-export const sidebarWidthStore = writable<number[]>([50]);
+export const sidebarWidthStore = writable<number[]>([]);
 
 // stores.js
 export const showModal = writable(false);

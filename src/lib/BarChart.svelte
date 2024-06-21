@@ -179,12 +179,18 @@ function createHierarchy(data: Node[]): WritableNode | null {
         function updateDimensions(value, viewBoxResize = false) {
             callCount++;
             console.log(callCount);
+            console.log(value);
             
-            
-            if (value[0] > 15) {
+            value = value + 3.3
+            if (value < 1) {
+                console.log("sd");
+                
+                value = 100
+            }
+            if (value > 15) {
                 const parentRect = parentDiv.getBoundingClientRect();
                 const parentWidth = parentRect.width;
-                halfWidth = (value[0] / 100) * parentRect.width;
+                halfWidth = (value / 100) * parentRect.width;
                 const parentHeight = parentRect.height * 1.5;
                 const aspectRatio = parentWidth / parentHeight;
                 const innerWidth = Math.min(aspectRatio * parentHeight, parentWidth);
@@ -989,7 +995,7 @@ function wrap(text, width) {
 
 
 
-    updateDimensions([50], true)
+    updateDimensions(46.5, true)
 
 
     svg.on("wheel.zoom dblclick.zoom mousedown.zoom mousemove.zoom mouseup.zoom touchstart.zoom touchmove.zoom touchend.zoom", null);

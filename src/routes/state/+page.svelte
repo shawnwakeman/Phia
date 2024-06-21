@@ -35,10 +35,10 @@
         updateSelectedNodeStore();
     });
 
-    let sidebarWidth = [50];
+    let sidebarWidth = 46.85;
     $: sidebarWidthStore.set(sidebarWidth);
     function setSidebarWidth(width) {
-        sidebarWidth[0] = width;
+        sidebarWidth = width;
     }
 
     let tabs = [{ id: "table", name: "table" }, { id: "kaban", name: "kaban" }, { id: "treemap", name: "Tree Map" }];
@@ -65,17 +65,17 @@
 
         <div class="container">
             <button on:click={() => setSidebarWidth(0)}>0/100</button>
-            <button on:click={() => setSidebarWidth(50)}>50/50</button>
+            <button on:click={() => setSidebarWidth(46.5)}>50/50</button>
             <button on:click={() => setSidebarWidth(100)}>100/0</button>
         </div>
 
         <div class="wrapper" id="state-wrapper">
             <div class="splitpanes-container">
-                <Splitpanes theme="my-theme">
-                    <Pane bind:size={sidebarWidth[0]} class="centered-content">
+                <Splitpanes theme="my-theme" dblClickSplitter={false}>
+                    <Pane bind:size={sidebarWidth} class="centered-content" >
                         <div class="passthrough-box"></div>
                     </Pane>
-                    <Pane class="centered-content node-manager-pane">
+                    <Pane class="centered-content node-manager-pane" >
                         <NodeManager />
                     </Pane>
                 </Splitpanes>
@@ -129,15 +129,11 @@
         pointer-events: none;
     }
 
-    /* .node-manager-pane {
-        
-    } */
 
 
     .bar-chart-underlay {
         position: absolute;
         width: 100%;
-
         top: 0;
         right: 0;
     }
@@ -170,10 +166,12 @@
         left: 0;
         top: 0;
         transition: opacity 0.4s;
-        background-color: rgba(255, 0, 0, 0.3);
-        opacity: 0;
+        padding-top: px;
+        opacity: 0.8;
+        opacity: 1;
         z-index: 3;
     }
+    
 
     :global(.splitpanes.my-theme .splitpanes__splitter:hover:before) {
         opacity: 1;
@@ -184,8 +182,8 @@
     }
 
     :global(.my-theme.splitpanes--vertical > .splitpanes__splitter:before) {
-        left: -30px;
-        right: -30px;
+        left: 2.5vw;
+        right: -3.5vw;
         height: 100%;
         cursor: col-resize;
     }
