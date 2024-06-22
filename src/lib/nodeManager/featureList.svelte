@@ -235,8 +235,8 @@
         margin: 3vw;
         /* padding-top: 600px; */
 
-        background: hsl(227, 36%, 5%, 0.65);
-        background-image: radial-gradient(circle at 89% 12%, hsla(223, 49%, 9%, 0.639) 0%, hsla(227, 69%, 3%, 0.64) 122%), url('/noise.svg'); 
+        background: hsl(227, 36%, 5%, 0.5);
+        background-image: radial-gradient(circle at 89% 12%, hsla(223, 45%, 10%, 0.639) 0%, hsla(227, 69%, 3%, 0.64) 122%), url('/noise.svg'); 
             
 
         border-radius: 24px; 
