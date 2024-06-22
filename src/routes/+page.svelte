@@ -35,6 +35,6 @@
 <main class="main">
     <Sidebar/>
 
-    <div class="content font-default">shawn</div>
+    <div class="content">shawn</div>
       
 </main>

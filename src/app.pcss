@@ -129,12 +129,9 @@
 @layer base {
   * {
     @apply border-border;
+    @apply font-default;
   }
-    h1 {
-    @apply text-green-500; /* This should make <p> tags green */
-    @apply text-xl;
-    @apply font-bold;
-  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings:
@@ -144,15 +141,4 @@
 
 
 
-}
-
-@layer utilities {
-  .bg-white {
-    background-color: var(--novel-white) !important;
-  }
-}
-
-/* Specific class override */
-.bg-white {
-  background-color: var(--novel-white) !important;
 }

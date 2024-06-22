@@ -77,21 +77,19 @@ export async function fetchNestedIssues(nodeId: number) {
 // Execute the function to fetch the data
 
 
+
+
+
   
-export async function addNode(name: string, value: number, parent_id: number | null) {
+export async function addNode(name: string, value: number, parent_id: number | null, state: string) {
     console.log(name, parent_id);
 
-    
     let parentTargetStates;
-    
 
-
-
-    
     const { data, error } = await supabase
         .from('nodes')
         .insert([
-            {  name: name, value: value, parent_id: parent_id, project_id: projectID, state: "Open", initial_state: "Open" }
+            {  name: name, value: value, parent_id: parent_id, project_id: projectID, state: state, initial_state: "Open"}
         ])
         .select();
 
@@ -103,14 +101,12 @@ export async function addNode(name: string, value: number, parent_id: number | n
     if (data) {
         console.log('Added node:', data);
         
-        const addedNode = data[0]; // Assuming only one node is inserted
-        const nodeId = addedNode.id; // Extracting the ID of the added node
+        const addedNode = data[0];
+        const nodeId = addedNode.id;
     
-        // Update the nodesDataStore with the new data
         nodesDataStore.update(currentNodes => {
           return [...currentNodes, addedNode];
         });
-
 
         if (parent_id) {
             console.log(targetStatesStore);
@@ -118,10 +114,7 @@ export async function addNode(name: string, value: number, parent_id: number | n
             targetStatesStore.subscribe((states) => {
                 parentTargetStates = states.filter(state => state.node_id === parent_id);
             })();
-            
     
-    
-            
             if (!parentTargetStates || parentTargetStates.length === 0) {
                 console.warn('No target states found for the parent node.');
                 
@@ -145,28 +138,21 @@ export async function addNode(name: string, value: number, parent_id: number | n
                     return;
                 }
         
-                // Update the store with the new target states
                 targetStatesStore.update((currentStates) => [
                     ...currentStates,
                     ...insertedData
                 ]);
             }
-    
-            
-            
         }
-    
-    
-        return { success: true, id: nodeId }; // Return success and the ID of the added node
+
+        return { success: true, id: nodeId };
     } else {
         console.error('No data returned from the database');
-        // Optionally, update the store to indicate that no data was returned
     }
 
     console.log('Added node:', data);
     return { success: true, data: data };
 }
-
 //  these need to be updated to refecte changes in nodestore
   
 export async function updateNodeByID(nodeId: number, updatedValues: {
@@ -710,3 +696,6 @@ export async function loadSnapshots(projectID: number) {
     console.log('Loaded snapshots:', data);
     return { success: true, data: data };
 }
+
+
+

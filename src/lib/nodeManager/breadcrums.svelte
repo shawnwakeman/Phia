@@ -50,41 +50,16 @@
     }
 </script>
 
-<nav>
+<nav class="flex flex-wrap items-center space-x-2 p-2">
     {#each breadcrumbList as node, index}
-        <button on:click={index !== breadcrumbList.length - 1 ? () => navigateTo(node.id) : null}>
+        <button 
+            on:click={index !== breadcrumbList.length - 1 ? () => navigateTo(node.id) : null}
+            class="bg-gray-700 cursor-pointer p-1 text-sm rounded-md transition duration-200 hover:bg-blue-500 hover:text-white {node.id === $selectedNodeId ? 'text-blue-500' : 'text-slate-300'}"
+        >
             {node.name}
         </button>
         {#if index !== breadcrumbList.length - 1}
-            <span>/ </span> 
+            <span class="text-gray-500 mx-1">/</span>
         {/if}
     {/each}
 </nav>
-
-<style>
-    nav {
-        display: flex; /* Use flexbox for horizontal layout */
-        align-items: center; /* Center items vertically */
-        padding: 0;
-        margin: 0;
-    }
-
-    nav button {
-        background: none; /* Removes default button styling */
-        border: none; /* Removes border */
-        color: #007BFF; /* Example color: blue */
-        cursor: pointer; /* Indicates the button is clickable */
-        padding: 5px 10px; /* Padding around the text */
-        font-size: 16px; /* Set font size */
-        outline: none; /* Removes focus outline */
-    }
-
-    nav button:hover {
-        text-decoration: underline; /* Adds underline on hover */
-    }
-
-    nav span {
-        margin: 0 5px; /* Margin around slashes for spacing */
-        color: #666; /* Example color for the slashes */
-    }
-</style>

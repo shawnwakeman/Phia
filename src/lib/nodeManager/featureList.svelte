@@ -5,12 +5,11 @@
     import { selectedNodeId } from '../../stores';
     import { addNode, updateNodeNameByID, deleteNodeById } from '$lib/supabaseClient';
 
-
     interface Feature {
-      id: number;
-      name: string;
-      isHovered: boolean;
-      isEditing: boolean;
+        id: number;
+        name: string;
+        isHovered: boolean;
+        isEditing: boolean;
     }
 
     function nodeToFeature(node: Node): Feature {
@@ -21,11 +20,10 @@
             isEditing: false   // Default to false
         };
     }
-    
-  
+
+    let showInputBox = false;
+
     const features = writable<Feature[]>([]);
-
-
 
     selectedNodeId.subscribe($selectedNodeId => {
         const allNodes: Node[] = get(nodesDataStore);
@@ -34,131 +32,132 @@
         const selectedFeatures = allNodes
             .filter(node => node.parent_id === $selectedNodeId)
             .map(nodeToFeature);
- 
-        features.set(selectedFeatures);  // Update the features store
-        });
 
+        features.set(selectedFeatures);  // Update the features store
+    });
 
     let newFeatureName = '';
-    let editingFeatureName = ''; // New variable for edit operation
+    let newFeatureValue = 0;
+    let newFeatureState = '';
 
+    let editingFeatureName = ''; // New variable for edit operation
     let hoveredFeatureIndex: number | null = null;
     let editingFeatureIndex: number | null = null;
 
-
     async function addFeature() {
-        if (newFeatureName.trim() === '') return;
+        if (newFeatureName.trim() === '' || newFeatureState.trim() === '' || isNaN(newFeatureValue)) return;
 
-            // Call addNode function and wait for its result
-            const result = await addNode(newFeatureName, 2.25, $selectedNodeId);
-            console.log(result);
-            
-            // Check if the node was successfully added
-            if (result.success && result.id !== undefined) {
-                // If successful, update the features store with the new node
-                features.update(currentFeatures => {
-                return [...currentFeatures, { id: result.id, name: newFeatureName + " ", isHovered: false, isEditing: false }];
-                });
-            }
-
-            // Reset newFeatureName after adding
-            newFeatureName = '';
+        // Call addNode function and wait for its result
+        const result = await addNode(newFeatureName, newFeatureValue, $selectedNodeId, newFeatureState);
+        console.log(result);
+        
+        // Check if the node was successfully added
+        if (result.success && result.id !== undefined) {
+            // If successful, update the features store with the new node
+            features.update(currentFeatures => {
+                return [...currentFeatures, { id: result.id, name: newFeatureName, isHovered: false, isEditing: false }];
+            });
         }
+
+        // Reset inputs after adding
+        newFeatureName = '';
+        newFeatureValue = 0;
+        newFeatureState = '';
+    }
 
     function handleKeydown(event: KeyboardEvent) {
-      if (event.key === 'Enter' && editingFeatureIndex === null) {
-        addFeature();
-      } else if (event.key === 'Backspace' && newFeatureName.trim() === '' && editingFeatureIndex === null) {
-        removeLastFeature();
-      }
-    }
-  
-    function removeLastFeature() {
-      features.update(currentFeatures => {
-        if (currentFeatures.length > 0) {
-          const lastFeature = currentFeatures[currentFeatures.length - 1];
-          deleteNodeById(lastFeature.id)
-          newFeatureName = lastFeature.name;
-          return currentFeatures.slice(0, -1);
+        if (event.key === 'Enter' && editingFeatureIndex === null) {
+            addFeature();
+        } else if (event.key === 'Backspace' && newFeatureName.trim() === '' && editingFeatureIndex === null) {
+            removeLastFeature();
         }
-        return currentFeatures;
-      });
     }
-  
-    function handleMouseEnter(index: number) {
-      features.update(currentFeatures => {
-        return currentFeatures.map((feature, i) => {
-          if (i === index) {
-            return { ...feature, isHovered: true };
-          }
-          return feature;
-        });
-      });
-      hoveredFeatureIndex = index;
-    }
-  
-    function handleMouseLeave(index: number) {
-      features.update(currentFeatures => {
-        return currentFeatures.map((feature, i) => {
-          if (i === index) {
-            return { ...feature, isHovered: false };
-          }
-          return feature;
-        });
-      });
-      hoveredFeatureIndex = null;
-    }
-  
-    function deleteFeature(index: number, id: number) {
-      if (index !== editingFeatureIndex) {
-        console.log(id);
-        deleteNodeById(id)
+
+    function removeLastFeature() {
         features.update(currentFeatures => {
-          return currentFeatures.filter((_, i) => i !== index);
+            if (currentFeatures.length > 0) {
+                const lastFeature = currentFeatures[currentFeatures.length - 1];
+                deleteNodeById(lastFeature.id);
+                newFeatureName = lastFeature.name;
+                return currentFeatures.slice(0, -1);
+            }
+            return currentFeatures;
+        });
+    }
+
+    function handleMouseEnter(index: number) {
+        features.update(currentFeatures => {
+            return currentFeatures.map((feature, i) => {
+                if (i === index) {
+                    return { ...feature, isHovered: true };
+                }
+                return feature;
+            });
+        });
+        hoveredFeatureIndex = index;
+    }
+
+    function handleMouseLeave(index: number) {
+        features.update(currentFeatures => {
+            return currentFeatures.map((feature, i) => {
+                if (i === index) {
+                    return { ...feature, isHovered: false };
+                }
+                return feature;
+            });
         });
         hoveredFeatureIndex = null;
-      }
-
-      console.log($nodesDataStore);
     }
-  
-    function startEditingFeature(index: number) {
-      editingFeatureName = $features[index].name; // Use editingFeatureName
-      editingFeatureIndex = index;
-      features.update(currentFeatures => {
-        return currentFeatures.map((feature, i) => {
-          if (i === index) {
-            return { ...feature, isEditing: true };
-          }
-          return { ...feature, isEditing: false };
-        });
-      });
 
-      setTimeout(() => {
-        const editingInput = document.querySelector('.editing-input');
-        if (editingInput instanceof HTMLInputElement) {
-            editingInput.focus();
+    function deleteFeature(index: number, id: number) {
+        if (index !== editingFeatureIndex) {
+            console.log(id);
+            deleteNodeById(id);
+            features.update(currentFeatures => {
+                return currentFeatures.filter((_, i) => i !== index);
+            });
+            hoveredFeatureIndex = null;
         }
-    }, 0);
-    }
-  
-    function saveEditedFeature(index: number, id: number) {
-        console.log(id)
-        updateNodeNameByID(id, editingFeatureName)
-      features.update(currentFeatures => {
-        return currentFeatures.map((feature, i) => {
-          if (i === index) {
-            return { ...feature, name: editingFeatureName, isEditing: false }; // Use editingFeatureName
-          }
-          return feature;
-        });
-      });
-      editingFeatureName = ''; // Reset editingFeatureName
-      editingFeatureIndex = null;
+
+        console.log($nodesDataStore);
     }
 
-    
+    function startEditingFeature(index: number) {
+        editingFeatureName = $features[index].name; // Use editingFeatureName
+        editingFeatureIndex = index;
+        features.update(currentFeatures => {
+            return currentFeatures.map((feature, i) => {
+                if (i === index) {
+                    return { ...feature, isEditing: true };
+                }
+                return { ...feature, isEditing: false };
+            });
+        });
+
+        setTimeout(() => {
+            const editingInput = document.querySelector('.editing-input');
+            if (editingInput instanceof HTMLInputElement) {
+                editingInput.focus();
+            }
+        }, 0);
+    }
+
+    function saveEditedFeature(index: number, id: number) {
+        console.log(id);
+        updateNodeNameByID(id, editingFeatureName);
+        features.update(currentFeatures => {
+            return currentFeatures.map((feature, i) => {
+                if (i === index) {
+                    return { ...feature, name: editingFeatureName, isEditing: false }; // Use editingFeatureName
+                }
+                return feature;
+            });
+        });
+        editingFeatureName = ''; // Reset editingFeatureName
+        editingFeatureIndex = null;
+    }
 </script>
+
   <style>
     .feature-list {
       margin: 20px 0;
@@ -232,7 +231,10 @@
 
     .feature-container {
         padding: 30px;
-        margin: 3vw;
+                margin-right: 3vw;
+        margin-left: 3vw;
+        margin-top: 2vw; 
+        margin-bottom: 2vw;
         /* padding-top: 600px; */
 
         background: hsl(227, 36%, 5%, 0.5);
@@ -248,9 +250,8 @@
         
 
 
-  /* Border */
 
-}
+    }
 
     .feature-container::before {
         content: "";
@@ -270,7 +271,37 @@
         pointer-events: none;  /* Ignore all pointer events */
                 
         
-        }
+    }
+
+
+    .feature-container .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.feature-container .header h2 {
+  margin: 0;
+}
+
+.feature-container .header .buttons {
+ 
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  
+}
+
+.feature-container .input-container {
+  margin-top: 10px;
+}
+
+.feature-container .input-container input {
+  padding: 5px;
+  margin-right: 5px;
+}
+
 
 
 
@@ -279,55 +310,62 @@
 
 
 <div class="feature-container">
-
-        
+    <div class="header">
+        <h2>Sub Nodes</h2>
+        <div class="buttons">
+            <button on:click={() => showInputBox = !showInputBox}>{showInputBox ? 'X' : '+'}</button>
+            <button on:click={() => showInputBox = !showInputBox}>...</button>
+        </div>
    
-    <div class="content"> 
-        <div>
-            <input
-              type="text"
-              bind:value={newFeatureName}
-              placeholder="Enter new feature"
-              on:keydown={handleKeydown}
-            />
-            <button on:click={addFeature}>Add Feature</button>
-          </div>
-          
-          {#if $features.length > 0}
-            <ul class="feature-list">
-                {#each $features as feature, index (feature.id)}
-                    <li
-                    class="feature-item"
-                    on:mouseenter={() => handleMouseEnter(index)}
-                    on:mouseleave={() => handleMouseLeave(index)}
-                    >
-                    {#if feature.isEditing}
-                        <input
-                        type="text"
-                        class="editing-input"
-                        bind:value={editingFeatureName}
-                        on:keydown={(event) => {
-                            if (event.key === 'Enter') {
-                            saveEditedFeature(index, feature.id);
-                            }
-                        }}
-                        />
-                        <button on:click={() => saveEditedFeature(index, feature.id)}>Save</button>
-                    {:else}
-                        {feature.name}
-                        {#if feature.isHovered}
-                        <button class="edit-button" on:click={() => startEditingFeature(index)}>
-                            Edit
-                        </button>
-                        <button class="delete-button" on:click={() => deleteFeature(index, feature.id)}>
-                            Delete
-                        </button>
-                        {/if}
-                    {/if}
-                    </li>
-                {/each}
-            </ul>
-          {/if}
+        
     </div>
-      
-</div>
+    
+    {#if showInputBox}
+      <div class="input-container">
+        <input
+          type="text"
+          bind:value={newFeatureName}
+          placeholder="Enter new feature"
+          on:keydown={handleKeydown}
+        />
+        <button on:click={addFeature}>Add Feature</button>
+      </div>
+    {/if}
+  
+    {#if $features.length > 0}
+      <ul class="feature-list">
+        {#each $features as feature, index (feature.id)}
+          <li
+            class="feature-item"
+            on:mouseenter={() => handleMouseEnter(index)}
+            on:mouseleave={() => handleMouseLeave(index)}
+          >
+            {#if feature.isEditing}
+              <input
+                type="text"
+                class="editing-input"
+                bind:value={editingFeatureName}
+                on:keydown={(event) => {
+                  if (event.key === 'Enter') {
+                    saveEditedFeature(index, feature.id);
+                  }
+                }}
+              />
+              <button on:click={() => saveEditedFeature(index, feature.id)}>Save</button>
+            {:else}
+              {feature.name}
+              {#if feature.isHovered}
+                <button class="edit-button" on:click={() => startEditingFeature(index)}>
+                  Edit
+                </button>
+                <button class="delete-button" on:click={() => deleteFeature(index, feature.id)}>
+                  Delete
+                </button>
+              {/if}
+            {/if}
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </div>
+  
