@@ -42,6 +42,10 @@
 <button on:click={fetchSnapshots}>Load Snapshots</button>
 
 <!-- Display list of snapshots -->
+ <h1>asdasdasdas</h1>
+ <h1>asdasdasdas</h1>
+ <h1>asdasdasdas</h1>
+ <h1>asdasdasdas</h1>
 <ul>
     {#each snapshots as snapshot}
         <li>

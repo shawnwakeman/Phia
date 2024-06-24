@@ -2,10 +2,15 @@
     import Sidebar from '$lib/Sidebar.svelte';
     import * as d3 from 'd3';
     import type { PageData } from './$types';
-    
+    import { signInWithGithub, getUserData } from '$lib/supabaseClient';
+    import { onMount } from 'svelte';
     export let data: PageData;
 
-    
+    onMount(async () => {
+        console.log(data);
+        
+        
+    });
 </script>
 
 <style>
@@ -36,5 +41,6 @@
     <Sidebar/>
 
     <div class="content">shawn</div>
+      <button on:click={signInWithGithub}>shawn</button>
       
 </main>

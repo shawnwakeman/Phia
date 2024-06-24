@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "vite dev", 
+    "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
@@ -51,7 +51,8 @@
     "@editorjs/underline": "^1.1.0",
     "@hocuspocus/provider": "^2.11.3",
     "@sotaproject/strikethrough": "^1.0.1",
-    "@supabase/supabase-js": "^2.39.7",
+    "@supabase/ssr": "^0.3.0",
+    "@supabase/supabase-js": "^2.43.5",
     "@sveltejs/adapter-node": "^5.0.1",
     "@tiptap/core": "^2.3.0",
     "@tiptap/extension-bubble-menu": "^2.3.0",

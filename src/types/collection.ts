@@ -6,7 +6,7 @@ export type Issue = Database["public"]["Tables"]["issues"]["Row"];
 
 export type Config = Database["public"]["Tables"]["configurations"]["Row"];
 
-export type User = Database["public"]["Tables"]["users"]["Row"];
+
 
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
 

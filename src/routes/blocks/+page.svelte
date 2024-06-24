@@ -14,6 +14,10 @@
     
     import Timeline from '$lib/Blocks/Viewer/Timeline.svelte';
     import SidePanel from '$lib/Blocks/Viewer/SidePanel.svelte'
+
+    import List from '$lib/Issues/List/index.svelte'
+    import NodeManager from '$lib/nodeManager/index.svelte';
+    import BarChart from "$lib/BarChart.svelte";
     export let data: { nodes: Node[], issues: Issue[], rootNode: Node, snapshotsList: Blocks[], targetStates: TargetStates[]};
 
 
@@ -65,12 +69,10 @@
         
     });
 
-    let sidebarWidth = [50];
+    let sidebarWidth = 46.85;
     $: sidebarWidthStore.set(sidebarWidth);
     function setSidebarWidth(width) {
-        sidebarWidth[0] = width;
-
-        
+        sidebarWidth = width;
     }
 
     let tabs = [{id: "current", name: "current"}, {id: "create", name: "create"}, {id: "past", name: "past"}]
@@ -147,12 +149,105 @@
       overflow: hidden;
     }
 
+    .main-thing {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
 
     .content {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+    }
+
+
+    .wrapper {
+    
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+
+    }
+
+    
+    .container {
+        display: flex;
+        justify-content: space-around;
+        max-width: 200px;
+    }
+
+    .passthrough-box {
+        pointer-events: none;
+    }
+
+
+
+    .bar-chart-underlay {
+        position: absolute;
+        width: 100%;
+        top: 0;
+        right: 0;
+    }
+
+    .splitpanes-container {
+        pointer-events: none;
+        position: relative;
+        flex: 1;
+        z-index: 2; /* Ensure Splitpanes is above BarChart but below container */
+    }
+
+
+
+
+
+    :global(.splitpanes.my-theme .splitpanes__pane) {
+        background-color: #a0414100;
+       
+    }
+
+    :global(.splitpanes.my-theme .splitpanes__splitter) {
+        background-color: #cccccc00;
+        position: relative;
+        pointer-events: auto;
+    }
+
+    :global(.splitpanes.my-theme .splitpanes__splitter:before) {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        transition: opacity 0.4s;
+        padding-top: px;
+        opacity: 0.8;
+        opacity: 1;
+        z-index: 3;
+    }
+    
+
+    :global(.splitpanes.my-theme .splitpanes__splitter:hover:before) {
+        opacity: 1;
+    }
+
+    :global(.splitpanes.my-theme .splitpanes__splitter.splitpanes__splitter__active) {
+        z-index: 3; /* Fix an issue of overlap fighting with a near hovered splitter */
+    }
+
+    :global(.my-theme.splitpanes--vertical > .splitpanes__splitter:before) {
+        left: 2.5vw;
+        right: -3.5vw;
+        height: 100%;
+        cursor: col-resize;
+    }
+
+    :global(.my-theme.splitpanes--horizontal > .splitpanes__splitter:before) {
+        top: -30px;
+        bottom: -30px;
+        width: 100%;
+        cursor: row-resize;
     }
 
 
@@ -177,46 +272,59 @@
         section to set the required data for the stuff
         <div class="container">
             <button on:click={() => setSidebarWidth(0)}>0/100</button>
-            <button on:click={() => setSidebarWidth(50)}>50/50</button>
+            <button on:click={() => setSidebarWidth(46.5)}>50/50</button>
             <button on:click={() => setSidebarWidth(100)}>100/0</button>
         </div>
 
-        <div class="main">
+        
+
+        <div>
+            {#each issuestabs as tab}
+                <button on:click={() => setCurrentViewIssues(tab.id)}>{tab.name} </button>
+                
+            {/each}
+        </div>
+
+        <SidePanel/>
+        <div class="main-thing">
             <Timeline/>
             {#if currentViewID === 'current'}
 
 
-            <Splitpanes>
-                <Pane bind:size={sidebarWidth[0]} class="centered-content">
-                    <div>
-                        {#each issuestabs as tab}
-                            <button on:click={() => setCurrentViewIssues(tab.id)}>{tab.name} </button>
-                            
-                        {/each}
+            <div class="content">
+
+                <!-- <Button on:click={toggleMode} variant="outline" size="icon">
+                    <h1>one</h1>
+                    <span class="sr-only">Toggle theme</span>
+                </Button> -->
+        
+
+                {#if currentViewIDIssues === 'state'}
+
+                    <div class="wrapper" id="state-wrapper">
+                        <div class="splitpanes-container">
+                            <Splitpanes theme="my-theme" dblClickSplitter={false}>
+                                <Pane bind:size={sidebarWidth} class="centered-content" >
+                                    <div class="passthrough-box"></div>
+                                </Pane>
+                                <Pane class="centered-content node-manager-pane" >
+                                    <NodeManager />
+                                </Pane>
+                            </Splitpanes>
+                        </div>
+                
+                
+                        <div class="bar-chart-underlay">
+                            <BarChart />
+                        </div>
                     </div>
 
-                    {#if currentViewIDIssues === 'state'}
-                    <div class="viz-wrapper">
-                        <div class="viz-wrapper horizontal-container">
-                            <OldStateViewer/>
-                            
-                            <p>things that are going to change for the statesasdasdasdasdasdasdasdasdasdasdsadasdasdasd</p>
-                        </div>
-                        <div class="horizontal-divider"></div>
-                        <BlockStateView />
-                        <StateManager/>
-                      </div>
-                    {:else if currentViewIDIssues === 'issues'}
-                        things that are going to chnage for the states
-                        like to get a picture of whats changeing
-                        <Kaban />
-                    {/if}
-
-                </Pane>
-                <Pane class="centered-content">
-                    <SidePanel/>
-                </Pane>
-              </Splitpanes>
+                {:else if currentViewIDIssues === 'issues'}
+                    <List/>
+                {/if}
+        
+                
+            </div>
 
 
         {:else if currentViewID === 'viewer'}

@@ -3,10 +3,10 @@
 
 
     import { onMount } from 'svelte';
-    import type { Node, Issue } from "../types/collection"
+    import type { Node, Issue, Blocks } from "../types/collection"
     import * as d3 from 'd3';
     import { selectedNodeStore } from "../stores";
-    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore } from "../stores";
+    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore, targetStatesStore } from "../stores";
     import { get } from 'svelte/store';
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
     import { canJoin } from '@tiptap/pm/transform';
@@ -33,10 +33,11 @@
         });
 
 
-        
+    let blocks: Blocks | null
     let nodes: d3.HierarchyCircularNode<WritableNode>;    
     let originalNodes: d3.HierarchyCircularNode<WritableNode>;
     let lastNode: WritableNode; 
+    let selectedNode: d3.HierarchyCircularNode<WritableNode> | null = nodes;
     function getNestedIssuesTotalPriority(nodeId: number, nodes: Node[], issues: Issue[]): number {
 
 
@@ -169,6 +170,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
     let data: WritableNode | null;
     let isFirstLoad = true; 
+    let isFirstLoad2 = true; 
     let width: number = 100;
     let halfWidth = 100;
     let height: number = 100;
@@ -227,6 +229,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
            
         });
 
+
    
         nodesDataStore.subscribe((value) => {
             data = createHierarchy(value)
@@ -242,6 +245,19 @@ function createHierarchy(data: Node[]): WritableNode | null {
         }); 
 
 
+        targetStatesStore.subscribe(value => {
+            if (!isFirstLoad2) {
+                if (selectedNode) {
+                    updateVisuals();
+                }
+                
+                
+            }
+            isFirstLoad2 = false;
+        });
+
+
+
         navigateNodeStore.subscribe(value => {
             if (value) {
                 if (nodes && !isFirstLoad) {
@@ -250,6 +266,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 }
             }
         });
+
+
 
     
     function centerOnNode(node) {
@@ -466,7 +484,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
     }
 
 
-    let selectedNode: d3.HierarchyCircularNode<WritableNode> | null = nodes;
+   
 
 
     function updateVisuals() {
@@ -635,12 +653,60 @@ function createHierarchy(data: Node[]): WritableNode | null {
         return rgb.toString();
     }
 
+    function darkerAndDesaturatedColor(color: string, factor = 0.55, saturationFactor = 0.3) {
+    const hsl = d3.hsl(color);
+    if (!hsl) return color;
+    hsl.l = Math.max(0, hsl.l * factor); // darken
+    hsl.s = hsl.s * saturationFactor; // reduce saturation
+    return hsl.toString();
+}
+
+
 
     function hashData(data: any): string {
         return JSON.stringify(data);
     }
 
     let previousDataHash = "";
+
+    function getMatchingTargetState(nodeId: number): {
+        id: number;
+        node_id: number;
+        project_id: number;
+        snapshot_id: number;
+        target_state: string;
+    } | undefined {
+        return $targetStatesStore.find(state => state.node_id === nodeId && state.snapshot_id === 15);
+    }
+
+    function createTargetStateMap(targetStates) {
+        const targetStateMap = new Map();
+        targetStates.forEach(state => {
+            if (state.snapshot_id === 15) {
+                targetStateMap.set(state.node_id, true);
+            }
+        });
+        return targetStateMap;
+    }
+
+    const targetStateMap = createTargetStateMap($targetStatesStore);
+
+
+    function hasMatchingTargetStateOrChildren(node, targetStateMap) {
+        if (targetStateMap.has(node.data.id)) {
+            return true;
+        }
+        if (node.children) {
+            for (const child of node.children) {
+                if (hasMatchingTargetStateOrChildren(child, targetStateMap)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
 
     function updateCircles(nodes: d3.HierarchyCircularNode<WritableNode>) {
         let maxPriority = d3.max(nodes.descendants(), d => d.data.totalPriority) || 1; // Find maximum totalPriority for normalization
@@ -729,7 +795,14 @@ function createHierarchy(data: Node[]): WritableNode | null {
  
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .attr("r", d => d.r * 0.975)
-            .attr("fill", d => d.data.totalPriority === 0 ? d.data.fillColor : `url(#gradient-${d.data.id})`)
+            .attr("fill", d => {
+                const hasTargetState = hasMatchingTargetStateOrChildren(d, targetStateMap);
+                if (!hasTargetState) {
+                    return darkerAndDesaturatedColor(d.data.fillColor);
+                }
+
+                return d.data.totalPriority === 0 ? d.data.fillColor : `url(#gradient-${d.data.id})`;
+            })
             .attr("stroke-width", d => {
                 if (d.depth === 0) { // Assuming depth 0 means it's the parent node
                     return 10; // Set the stroke width for the parent separately (example: 2)
@@ -741,7 +814,16 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
                 return (radiusContribution + depthContribution) / 2;
             })
-            .attr("stroke", d => d.data.totalPriority === 0 ? darkerColor(d.data.fillColor) : '#654ea3')
+            .attr("stroke", d => {
+                const hasTargetState = getMatchingTargetState(d.data.id);
+                    if (hasTargetState) {
+                        console.log(hasTargetState.target_state);
+                        
+                        return getColorByStatus(hasTargetState.target_state);
+                    } else {
+                        return d.data.totalPriority === 0 ? darkerColor(d.data.fillColor) : '#654ea3'
+                    }
+            })
             .attr("class", d => {
                 let classes = "circle";
                 if (d.data.id === currentSelectedNodeId) {
@@ -750,9 +832,12 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 if (d.parent?.data.id === $selectedNodeStore?.id) {
                     classes += " hoverable";
                 }
+                if (d.data.totalPriority !==0) {
+                    classes += " drop";
+                }
                 return classes;
             })
-            .attr("filter", d => d.depth === 0 ? "url(#drop-shadow)" : null)
+            
             .on("click", (event, d) => {
                 if (d.children != null || d.depth == 1) {
                     handleCircleClick(d);
@@ -874,46 +959,72 @@ function createHierarchy(data: Node[]): WritableNode | null {
         isSelectedLeafNode(d)
     );
 
-    const texts = g.selectAll("text.text-node")
-        .data(filteredNodes, d => d.data.id)
-        .join(
-            enter => {
-                const enterTexts = enter.append("text")
-                    .attr("class", "text-node font-default font-medium")
-                    .attr("text-anchor", "middle")
-                    .attr("alignment-baseline", "middle")
-                    .text(d => d.data.name)
-                    .on("click", handleCircleClick);
+    const texts = g.selectAll("g.text-group")
+    .data(filteredNodes, d => d.data.id)
+    .join(
+        enter => {
+            const enterGroups = enter.append("g")
+                .attr("class", "text-group")
+                .attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`);
 
-                // Only wrap text if the radius is large enough
-                enterTexts.filter(d => d.r > 10)
-                    .call(wrap, 10);
+            const enterTexts = enterGroups.append("text")
+                .attr("class", "text-node font-default font-medium")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline", "middle")
+                .text(d => d.data.name)
+                .on("click", handleCircleClick);
 
-                // Reduce text quality for small nodes
-                enterTexts.filter(d => d.r <= 10)
-                    .attr("class", "text-node font-default font-small");
+            // Only wrap text if the radius is large enough
+            enterTexts.filter(d => d.r > 10)
+                .call(wrap, 10);
 
-                return enterTexts;
-            },
-            update => {
-                update.text(d => d.data.name)  // Ensure the text is updated
-                    .attr("class", d => d.r > 10 ? "text-node font-default font-medium" : "text-node font-default font-small")
-                    .filter(d => d.r > 10)
-                    .call(wrap, 10);
+            // Reduce text quality for small nodes
+            enterTexts.filter(d => d.r <= 10)
+                .attr("class", "text-node font-default font-small");
 
-                return update;
-            },
-            exit => exit.remove()
-        );
+            // Add target state text if it exists
+            enterGroups.append("text")
+                .attr("class", "text-node font-default font-small")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline", "middle")
+                .style("font-size", "0.6em") // Smaller font size
+                .attr("dy", "1.2em") // Offset to position below the main text
+                .text(d => {
+                    const hasTargetState = getMatchingTargetState(d.data.id);
+                    return hasTargetState ? `${d.data.state} -> ${hasTargetState.target_state}` : "";
+                });
 
-    // Only update and transform visible texts
-    texts.filter(d => d.r > 1) // skip nodes that are too small
-        .attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`);
+            return enterGroups;
+        },
+        update => {
+            update.select("text")
+                .text(d => d.data.name)  // Ensure the text is updated
+                .attr("class", d => d.r > 10 ? "text-node font-default font-medium" : "text-node font-default font-small")
+                .filter(d => d.r > 10)
+                .call(wrap, 10);
 
-    // Optionally reduce update frequency with requestAnimationFrame
-    requestAnimationFrame(() => {
-        texts.attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`);
-    });
+            // Update target state text if it exists
+            update.select("text + text")
+                .text(d => {
+                    const hasTargetState = getMatchingTargetState(d.data.id);
+                    return hasTargetState ? `${d.data.state} -> ${hasTargetState.target_state}`  : "";
+                });
+
+            update.attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`);
+
+            return update;
+        },
+        exit => exit.remove()
+    );
+
+// Only update and transform visible texts
+g.selectAll("g.text-group").filter(d => d.r > 1) // skip nodes that are too small
+    .attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`);
+
+// Optionally reduce update frequency with requestAnimationFrame
+requestAnimationFrame(() => {
+    g.selectAll("g.text-group").attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r * 0.02})`);
+});
 }
 
 
@@ -1020,8 +1131,11 @@ function wrap(text, width) {
     :global(.circle-selected) {
         stroke: rgb(0, 255, 255);
         transition: fill 0.3s ease, stroke-width 0.3s ease;
-
+        filter: drop-shadow(0 0 0.75rem rgb(20, 90, 220));
+        
     }
+
+
 
     #circle-packing {
         width: 100%;
@@ -1037,7 +1151,8 @@ function wrap(text, width) {
     }
 
     :global(.circle) {
-       
+        background: radial-gradient(circle at 90% top, hsl(222, 45%, 7%) 0%, hsla(230, 25%, 4%, 0.774) 50%);      border: 2px solid #c2c5cc; /* Added border with a width of 2px */
+
     }
 
     :global(.hoverable:hover) {

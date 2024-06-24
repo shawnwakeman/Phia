@@ -5,14 +5,56 @@ import type { Issue, Config } from '../types/collection'
 import { issuesDataStore, nodesDataStore, addedIssue, targetStatesStore } from "../stores";
 import { get } from 'svelte/store';
 import { type JSONContent } from '@tiptap/core';
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
+import { createBrowserClient, createServerClient } from '@supabase/ssr'
+
 const projectID = 1
-export const supabase = createClient<Database>(
-    supabaseUrl,
-    supabaseAnonKey
+
+
+export const supabase = createBrowserClient<Database>(
+    PUBLIC_SUPABASE_URL,
+    PUBLIC_SUPABASE_ANON_KEY
 )
 
+
+
+export async function signInWithGithub() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+            redirectTo: 'http://localhost:5173/',
+        },
+    });
+
+    if (error) {
+        console.error('Error during sign-in:', error);
+        return;
+    }
+
+    // Wait for the OAuth redirect to complete
+    console.log('Redirecting to GitHub for sign-in...');
+}
+
+
+
+
+
+// Function to get the user's data
+export async function getUserData() {
+    const { data, error } = await supabase.auth.getUser();
+
+    if (error) {
+        console.error('Error fetching user data:', error);
+        return null;
+    }
+    console.error(data.user);
+    return data.user;
+}
+  
+async function signOut() {
+    const { error } = await supabase.auth.signOut()
+  }
+  
 
 
 interface RpcParams {
@@ -23,7 +65,7 @@ interface RpcParams {
 
 
 // This function adds a new configuration or updates an existing one based on the configKey
-export async function addOrUpdateConfig(configKey: string, configValue: any) {
+ async function addOrUpdateConfig(configKey: string, configValue: any) {
     const { data, error } = await supabase
         .from('configurations')
         .upsert({
@@ -84,7 +126,7 @@ export async function fetchNestedIssues(nodeId: number) {
 export async function addNode(name: string, value: number, parent_id: number | null, state: string) {
     console.log(name, parent_id);
 
-    let parentTargetStates;
+
 
     const { data, error } = await supabase
         .from('nodes')
@@ -108,42 +150,7 @@ export async function addNode(name: string, value: number, parent_id: number | n
           return [...currentNodes, addedNode];
         });
 
-        if (parent_id) {
-            console.log(targetStatesStore);
-            
-            targetStatesStore.subscribe((states) => {
-                parentTargetStates = states.filter(state => state.node_id === parent_id);
-            })();
-    
-            if (!parentTargetStates || parentTargetStates.length === 0) {
-                console.warn('No target states found for the parent node.');
-                
-            } else {
-                console.log(parentTargetStates);
-                
-                const newTargetStates = parentTargetStates.map((state) => ({
-                    node_id: addedNode.id,
-                    snapshot_id: state.snapshot_id,
-                    project_id: state.project_id,
-                    target_state: state.target_state
-                  }));
-                  
-                const { data: insertedData, error: insertError } = await supabase
-                    .from('node_target_states')
-                    .insert(newTargetStates)
-                    .select();
-                
-                if (insertError) {
-                    console.error('Error inserting new target states:', insertError);
-                    return;
-                }
-        
-                targetStatesStore.update((currentStates) => [
-                    ...currentStates,
-                    ...insertedData
-                ]);
-            }
-        }
+
 
         return { success: true, id: nodeId };
     } else {
@@ -249,9 +256,9 @@ export async function updateNodeAndChildrenState(nodeId: number, newState: strin
     return { success: true, data };
 }
 
-export async function updateNodeAndChildrenTargetState(nodeId: number, newState: string) {
+export async function updateNodeAndChildrenTargetState(nodeId: number, newState: string, removeState: boolean = false) {
     console.log("Called updateNodeAndChildrenState");
-    
+
     let nodes;
     const unsubscribe = nodesDataStore.subscribe($nodes => { nodes = $nodes });
     unsubscribe(); // Unsubscribe immediately to prevent memory leaks
@@ -261,13 +268,15 @@ export async function updateNodeAndChildrenTargetState(nodeId: number, newState:
         return;
     }
 
-    let nodesToUpdate = new Set([nodeId]); // Start with the initial node
+    let nodesToUpdate = new Set<number>();
     let queue = [nodeId];
     while (queue.length > 0) {
         const currentId = queue.shift();
         const childNodes = allNodes.filter(node => node.parent_id === currentId);
+        if (currentId !== nodeId || childNodes.length === 0) {
+            nodesToUpdate.add(currentId);
+        }
         childNodes.forEach(child => {
-            nodesToUpdate.add(child.id);
             queue.push(child.id);
         });
     }
@@ -275,28 +284,66 @@ export async function updateNodeAndChildrenTargetState(nodeId: number, newState:
     // Convert the set of node IDs to an array for the update
     const nodeIdsToUpdate = Array.from(nodesToUpdate);
 
-    // Update the nodes in the datastore
-    nodesDataStore.update(currentNodes => {
-        return currentNodes.map(node => {
-            if (nodesToUpdate.has(node.id)) {
-                return { ...node, target_state: newState };
-            }
-            return node;
+    if (removeState) {
+        // Remove target states
+        targetStatesStore.update(currentTargetStates => {
+            return currentTargetStates.filter(state => !nodeIdsToUpdate.includes(state.node_id));
         });
-    });
 
-    const { data, error } = await supabase
-        .from('nodes')
-        .update({ target_state: newState })
-        .in('id', nodeIdsToUpdate);
+        // Prepare data for deletion
+        const deleteData = nodeIdsToUpdate.map(node_id => ({
+            node_id,
+            project_id: projectID,
+            snapshot_id: 15 // Default snapshot ID
+        }));
 
-    if (error) {
-        console.error('Error updating nodes in database:', error);
-        return { success: false, error: error.message };
+        // Delete the TargetStates in the database
+        const { data, error } = await supabase
+            .from('node_target_states')
+            .delete()
+            .match({ project_id: projectID, snapshot_id: 15 })
+            .in('node_id', nodeIdsToUpdate);
+
+        if (error) {
+            console.error('Error deleting target states in database:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log("Target states successfully deleted in database and store");
+        return { success: true, data };
+    } else {
+        // Generate temporary IDs for new target states
+        let tempId = -1;
+        const targetStatesUpdates = nodeIdsToUpdate.map(node_id => ({
+            id: tempId--, // Temporary negative ID
+            node_id,
+            project_id: projectID,
+            snapshot_id: 15, // Default snapshot ID
+            target_state: newState
+        }));
+
+        // Update the target states store before making the database call
+        targetStatesStore.update(currentTargetStates => {
+            const updatedStates = currentTargetStates.filter(state => !nodeIdsToUpdate.includes(state.node_id));
+            return [...updatedStates, ...targetStatesUpdates];
+        });
+
+        // Prepare data for upsert
+        const upsertData = targetStatesUpdates.map(({ id, ...rest }) => rest);
+
+        // Update the TargetStates in the database
+        const { data, error } = await supabase
+            .from('node_target_states')
+            .upsert(upsertData, { onConflict: ['node_id', 'project_id', 'snapshot_id'] });
+
+        if (error) {
+            console.error('Error updating target states in database:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log("Target states successfully updated in database and store");
+        return { success: true, data };
     }
-
-    console.log("Nodes successfully updated in database");
-    return { success: true, data };
 }
 
 

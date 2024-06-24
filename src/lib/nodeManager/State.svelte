@@ -1,6 +1,6 @@
 <script lang="ts">
     import { selectedNodeStore, nodesDataStore } from '../../stores';
-    import { updateNodeAndChildrenState, updateNodeByID } from '$lib/supabaseClient';
+    import { updateNodeAndChildrenState, updateNodeByID, updateNodeAndChildrenTargetState } from '$lib/supabaseClient';
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 
     let value, state, olddata;
@@ -23,6 +23,15 @@
 
     function specialFunction() {
         updateNodeAndChildrenState(olddata.id, state);
+    }
+
+    function handleTargetStates() {
+        if (state == "Remove") {
+            updateNodeAndChildrenTargetState(olddata.id, state, true);
+        } else {
+            updateNodeAndChildrenTargetState(olddata.id, state);
+        }
+    
     }
 </script>
 
@@ -98,6 +107,19 @@
                 <DropdownMenu.Item on:click={() => { state = "Planned"; specialFunction(); }}>Planned</DropdownMenu.Item>
                 <DropdownMenu.Item on:click={() => { state = "In Progress"; specialFunction(); }}>In Progress</DropdownMenu.Item>
                 <DropdownMenu.Item on:click={() => { state = "Completed"; specialFunction(); }}>Completed</DropdownMenu.Item>
+            </DropdownMenu.Group>
+        </DropdownMenu.Content>
+    </DropdownMenu.Root>
+
+    <DropdownMenu.Root>
+        <DropdownMenu.Trigger>Select Cycle</DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+            <DropdownMenu.Group>
+                <DropdownMenu.Item on:click={() => { state = "Open"; handleTargetStates(); }}>Open</DropdownMenu.Item>
+                <DropdownMenu.Item on:click={() => { state = "Planned"; handleTargetStates(); }}>Planned</DropdownMenu.Item>
+                <DropdownMenu.Item on:click={() => { state = "In Progress"; handleTargetStates(); }}>In Progress</DropdownMenu.Item>
+                <DropdownMenu.Item on:click={() => { state = "Completed"; handleTargetStates(); }}>Completed</DropdownMenu.Item>
+                <DropdownMenu.Item on:click={() => { state = "Remove"; handleTargetStates(); }}>remove</DropdownMenu.Item>
             </DropdownMenu.Group>
         </DropdownMenu.Content>
     </DropdownMenu.Root>
