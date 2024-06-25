@@ -62,9 +62,9 @@ export async function load() {
           
     return {
         nodes: nodes, // Use the local nodes variable which may have been updated
-		  issues: issues ?? [],
-      rootNode: selectedNode,
-    	targetStates: targetStates
+        issues: issues ?? [],
+        rootNode: selectedNode,
+        targetStates: targetStates
     };
 
 

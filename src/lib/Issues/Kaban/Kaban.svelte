@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy  } from 'svelte';
-  import { issuesDataStore, addedIssue, filteredIssuesDataStore } from "../../../stores";
+  import { issuesDataStore, addedIssue, filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../../stores";
 
   import { addIssue } from '$lib/supabaseClient';
   import { get } from 'svelte/store';
@@ -41,16 +41,10 @@
 
 
 
-  let issues = get(issuesDataStore);
+  let issues = get(filteredIssuesForSnapshot);
   let filteredIssues = issues;
 
-  let childRef;
 
-    function callUpdateBoard() {
-        if (childRef && childRef.updateBoard) {
-            childRef.updateBoard();
-        }
-    }
 
   let rows: BoardRow[] = [];
   let board: BoardRow[] = [];
@@ -64,13 +58,13 @@
   let hideNullRows = false;
   let hideNullColumns = false;
 
-  let notFirstLoad = false
+ 
   const unsubscribe = filteredIssuesDataStore.subscribe(value => {
-        if(notFirstLoad) {
+       
             filteredIssues = value;
             updateBoard()
-        }
-        notFirstLoad = true
+       
+      
     });
 
 
@@ -303,55 +297,55 @@ function customSort(a, b, field) {
 
   function addIssueMain() {
         addIssue(2);
-        callUpdateBoard();
+
         updateBoard();
     }
 
 
   function handleRowByChange(event) {
-    callUpdateBoard()
+   
     rowByField = event.detail;
     updateBoard();
   }
 
   function handleColumnByChange(event) {
-    callUpdateBoard()
+ 
     columnByField = event.detail;
     updateBoard();
   }
 
   function handleOrderByChange(event) {
-    callUpdateBoard()
+  
     orderByField = event.detail;
     updateBoard();
   }
 
   function handleHideEmptyRowsChange(event) {
-    callUpdateBoard()
+
     hideEmptyRows = event.detail;
     updateBoard();
   }
 
   function handleHideEmptyColumnsChange(event) {
-    callUpdateBoard()
+ 
     hideEmptyColumns = event.detail;
     updateBoard();
   }
 
   function handleHideNullRowsChange(event) { // Add this function
-    callUpdateBoard();
+
     hideNullRows = event.detail;
     updateBoard();
   }
 
   function handleHideNullColumnsChange(event) { // Add this function
-    callUpdateBoard();
+  
     hideNullColumns = event.detail;
     updateBoard();
   }
 
   function handleOrderDirectionChange(event) {
-    callUpdateBoard();
+  
     orderDirection = event.detail;
     updateBoard();
   }
@@ -693,7 +687,7 @@ function customSort(a, b, field) {
 
     <AddButton addIssueMain={addIssueMain}/>
 
-  <SearchAndFilter bind:this={childRef} />
+
   <!--  -->
 </div >
 

@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, onMount } from 'svelte';
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { writable, get } from 'svelte/store';
-    import { issuesDataStore, filteredIssuesDataStore } from "../../../stores";
+    import {filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../../stores";
+    
 
     const filterFields = [
         { label: 'State', value: 'state' },
@@ -39,6 +40,8 @@
     }
 
     function handleFilterOptionChange(field, option) {
+        
+        
         filters.update(currentFilters => {
             if (currentFilters[field]?.has(option)) {
                 currentFilters[field].delete(option);
@@ -66,21 +69,18 @@
     }
 
     function updateFilterOptions(field) {
-        const optionsCount = $issuesDataStore.reduce((acc, issue) => {
+        const optionsCount = get(filteredIssuesForSnapshot).reduce((acc, issue) => {
             const value = issue[field];
-            if (value === null || value === undefined) {
-                acc[`no ${field}`] = (acc[`no ${field}`] || 0) + 1;
-            } else {
-                acc[value] = (acc[value] || 0) + 1;
-            }
+            const key = value === null || value === undefined ? `no ${field}` : value.toString();
+            acc[key] = (acc[key] || 0) + 1;
             return acc;
         }, {});
 
         filterOptions.update(currentOptions => {
             currentOptions[field] = Object.entries(optionsCount).map(([option, count]) => ({
                 label: `${option} (${count})`,
-                value: option === `no ${field}` ? null : option,
-                checked: get(filters)[field]?.has(option === `no ${field}` ? null : option) ?? false
+                value: option === `no ${field}` ? null : isNaN(Number(option)) ? option : Number(option),
+                checked: get(filters)[field]?.has(option === `no ${field}` ? null : isNaN(Number(option)) ? option : Number(option)) ?? false
             }));
             return { ...currentOptions };
         });
@@ -91,17 +91,24 @@
 
         Object.entries(filters).forEach(([field, options]) => {
             const inclusion = filterInclusions[field] === 'is' || filterInclusions[field] === undefined;
-            filteredData = filteredData.filter(issue => inclusion ? options.has(issue[field]) : !options.has(issue[field]));
+            filteredData = filteredData.filter(issue => {
+                const value = issue[field];
+                return inclusion ? options.has(value) : !options.has(value);
+            });
         });
 
         return filteredData;
     }
 
+
     export function updateBoard() {
+
+        
         const currentFilters = get(filters);
         const currentFilterInclusions = get(filterInclusions);
-        const filteredIssues = filterIssues($issuesDataStore, currentFilters, currentFilterInclusions);
+        const filteredIssues = filterIssues($filteredIssuesForSnapshot, currentFilters, currentFilterInclusions);
         filteredIssuesDataStore.set(filteredIssues);
+        
     }
 
     function resetDisplayBehavior() {
@@ -114,6 +121,10 @@
             ? selectedOptions.map(option => option === null ? `no ${field}` : option).join(', ') 
             : 'No filter selected';
     }
+
+
+
+
 </script>
 
 <DropdownMenu.Root closeOnItemClick={false} onOutsideClick={resetDisplayBehavior}>

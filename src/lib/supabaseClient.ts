@@ -4,7 +4,7 @@ import type { Database } from '../types/database.types'
 import type { Issue, Config } from '../types/collection'
 import { issuesDataStore, nodesDataStore, addedIssue, targetStatesStore } from "../stores";
 import { get } from 'svelte/store';
-import { type JSONContent } from '@tiptap/core';
+
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
 import { createBrowserClient, createServerClient } from '@supabase/ssr'
 
@@ -256,32 +256,30 @@ export async function updateNodeAndChildrenState(nodeId: number, newState: strin
     return { success: true, data };
 }
 
-export async function updateNodeAndChildrenTargetState(nodeId: number, newState: string, removeState: boolean = false) {
+export async function updateNodeAndChildrenTargetState(nodeId: number, newState: string, snapshot: number, removeState: boolean = false) {
     console.log("Called updateNodeAndChildrenState");
 
     let nodes;
     const unsubscribe = nodesDataStore.subscribe($nodes => { nodes = $nodes });
     unsubscribe(); // Unsubscribe immediately to prevent memory leaks
-    const allNodes = nodes;
-    if (!allNodes) {
+
+    if (!nodes) {
         console.error('Nodes not found');
         return;
     }
 
     let nodesToUpdate = new Set<number>();
     let queue = [nodeId];
+    
     while (queue.length > 0) {
         const currentId = queue.shift();
-        const childNodes = allNodes.filter(node => node.parent_id === currentId);
-        if (currentId !== nodeId || childNodes.length === 0) {
+        if (currentId !== undefined) {
             nodesToUpdate.add(currentId);
+            const childNodes = nodes.filter(node => node.parent_id === currentId);
+            childNodes.forEach(child => queue.push(child.id));
         }
-        childNodes.forEach(child => {
-            queue.push(child.id);
-        });
     }
 
-    // Convert the set of node IDs to an array for the update
     const nodeIdsToUpdate = Array.from(nodesToUpdate);
 
     if (removeState) {
@@ -291,17 +289,12 @@ export async function updateNodeAndChildrenTargetState(nodeId: number, newState:
         });
 
         // Prepare data for deletion
-        const deleteData = nodeIdsToUpdate.map(node_id => ({
-            node_id,
-            project_id: projectID,
-            snapshot_id: 15 // Default snapshot ID
-        }));
 
         // Delete the TargetStates in the database
         const { data, error } = await supabase
             .from('node_target_states')
             .delete()
-            .match({ project_id: projectID, snapshot_id: 15 })
+            .match({ project_id: projectID, snapshot_id: snapshot })
             .in('node_id', nodeIdsToUpdate);
 
         if (error) {
@@ -318,7 +311,7 @@ export async function updateNodeAndChildrenTargetState(nodeId: number, newState:
             id: tempId--, // Temporary negative ID
             node_id,
             project_id: projectID,
-            snapshot_id: 15, // Default snapshot ID
+            snapshot_id: snapshot, // Default snapshot ID
             target_state: newState
         }));
 
@@ -345,8 +338,6 @@ export async function updateNodeAndChildrenTargetState(nodeId: number, newState:
         return { success: true, data };
     }
 }
-
-
 
 export async function updateNodeNameByID(nodeId: number, newName: string) {
     const { data, error } = await supabase
@@ -696,18 +687,26 @@ async function uploadFileToNodeFolder(nodeId: number, file) {
             // }
             
             
-export async function createSnapshot(projectID: number) {
+export async function createSnapshot(projectID: number, startDate: Date, end_date: Date) {
     // Call the RPC to create a snapshot and copy nodes
-    const { data: snapshotData, error: snapshotError } = await supabase
-        .rpc('copy_nodes_to_snapshot', { project_id_param: projectID });
+    const { data: newSnapshot, error: insertError } = await supabase
+        .from('snapshots')
+        .insert({
+            created_at: startDate.toISOString(),
+            end_date: end_date.toISOString(),
+            project_id: projectID,
+      
+      
+        })
+        .select()
+        .single();
 
-    if (snapshotError) {
-        console.error('Error creating snapshot:', snapshotError);
-        return { success: false, error: snapshotError.message };
+    if (insertError) {
+        console.error('Error creating new snapshot:', insertError);
+        throw new Error('Failed to create new snapshot');
     }
 
-    console.log('Created snapshot and copied nodes:', snapshotData);
-    return { success: true, data: snapshotData };
+    return newSnapshot;
 }
 
             

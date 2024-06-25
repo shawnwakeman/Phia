@@ -2,7 +2,7 @@
     import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId } from "../../stores";
     import { addIssue, updateIssue, deleteIssue } from "../supabaseClient";
     import type { Issue, Node } from "../../types/collection";
-    import DataTable from "$lib/Issues/DataTable/DataTable.svelte";
+
     let issues: Issue[] = [];
     let groupedIssues: { [key: string]: Issue[] } = {};
     let groupBy: 'priority' | 'state' = 'state'; // Default group by 'state'

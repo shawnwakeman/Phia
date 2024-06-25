@@ -1,6 +1,5 @@
 <script lang="ts">
     import Sidebar from '$lib/Sidebar.svelte';
-    import * as d3 from 'd3';
     import type { PageData } from './$types';
     import { signInWithGithub, getUserData } from '$lib/supabaseClient';
     import { onMount } from 'svelte';

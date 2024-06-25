@@ -1,22 +1,16 @@
 <script lang="ts">
     import { Pane, Splitpanes } from 'svelte-splitpanes';
     import BarChart from "$lib/BarChart.svelte";
-    import NodeCreator from "$lib/NodeCreator.svelte";
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
     import type { Node, Issue, TargetStates } from "../../types/collection";
     import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore, sidebarWidthStore, targetStatesStore } from "../../stores";
     import { get } from "svelte/store";
-    import { writable } from 'svelte/store';
     import { toggleMode } from "mode-watcher";
     import { Button } from "$lib/components/ui/button/index.js";
-    import DirectedGraph from '$lib/Notbook/DirectedGraph.svelte';
     import NodeManager from '$lib/nodeManager/index.svelte';
  
-    import Kaban from '$lib/Issues/Kaban/Kaban.svelte';
-    import Treemap from '$lib/Issues/Treemap.svelte';
     export let data: { nodes: Node[], issues: Issue[], rootNode: Node, targetStates: TargetStates[] };
     import Sidebar from "$lib/Sidebar.svelte";
-    import { active } from "d3";
 
     $: $selectedNodeId, updateSelectedNodeStore();
 
@@ -111,10 +105,11 @@
 
     .wrapper {
     
-        flex: 1;
         display: flex;
         flex-direction: column;
         position: relative;
+        max-height: 100vh; /* Prevents extending beyond the viewport height */
+        overflow: hidden; /* Prevent overflow */
 
     }
 
@@ -150,7 +145,7 @@
 
 
     :global(.splitpanes.my-theme .splitpanes__pane) {
-        background-color: #a0414100;
+
        
     }
 

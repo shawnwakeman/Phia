@@ -4,18 +4,17 @@
     import Treemap from '../../lib/Issues/Treemap.svelte'
     import Sidebar from '../../lib/Sidebar.svelte'
     import List from '$lib/Issues/List/index.svelte'
-    import type { PageData } from './$types';
+    import FilterControls from '$lib/Issues/Kaban/Filter.svelte'
     import type { Issue, Node } from "../../types/collection";
     import { addIssue, supabase, findRootNodes } from "../../lib/supabaseClient";
-    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore } from "../../stores";
-    import FilterControls from '$lib/Issues/Kaban/Filter.svelte'
+    import { selectedNodeStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../stores";
+    import { get, writable } from 'svelte/store';
     import { onMount } from 'svelte';
 
-    import { get } from 'svelte/store';
 
 
 
-    export let data: { nodes: Node[], issues: Issue[] };
+
 
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
@@ -32,68 +31,42 @@
 
 
 
-    let currentSelectedNode: Node | null = null
-    $: currentSelectedNode = $selectedNodeStore;
 
+    onMount(() => {
+        const issues = get(filteredIssuesForSnapshot);
+        filteredIssuesDataStore.set(issues);  // Set the initial filtered issues store value
+   
+    });
 
-    function createNewNode() {
-        
-        const rootNode = data.nodes.find(node => node.parent_id === null);
-        if (rootNode) {
-            console.log(rootNode);
-            
-            addIssue(rootNode.id);
-        }
-        
-
-    }
-
-
-
-    
-    function updateSelectedNodeStore() {
-        const selectedNode = data.nodes.find(node => node.id === $selectedNodeId);
-            selectedNodeStore.set(selectedNode || null);
-    }
-    
-
-    nodesDataStore.set(data.nodes)
-    issuesDataStore.set(data.issues);
-    
-
-
-    onMount(async () => {
-       
-        const issues = get(issuesDataStore);
+    const unsubscribe = filteredIssuesForSnapshot.subscribe(value => {
+        const issues = get(filteredIssuesForSnapshot);
         filteredIssuesDataStore.set(issues);  // Set the initial filtered issues store value
         
-        updateSelectedNodeStore()
-       
     });
+
+    
+
+
 
 
    
 
-    const flipDurationMs = 130;
 
 
 </script>
 
 
-<main class="main">
-    <Sidebar/>
+
     <div class="content">
         <h1>Issue Tracker</h1>
   
        
-        <h1>{$currentSelectedIssue?.id}</h1>
-        <h1>{currentSelectedNode?.id}</h1>
-        <FilterControls/>
 
-        <button on:click={() => createNewNode()}>add is broken</button> 
+        
+
  
          
-        
+        <FilterControls/>
         
         
         <button>search</button>
@@ -117,7 +90,7 @@
 
         
           </div>
-</main>
+
 <style> 
     #treemap {
       display: block;
@@ -126,11 +99,7 @@
       height: auto;
       background-color: #f0f0f0; /* Light grey background */
     }
-    .main {
-      display: flex;
-      height: 100vh;
-      overflow: auto;
-    }
+
 
     .content {
       flex: 1;
@@ -138,6 +107,7 @@
       flex-direction: column;
       overflow: hidden;
       user-select: none;  /* user */
+      margin-bottom: 200px;
     }
   
 

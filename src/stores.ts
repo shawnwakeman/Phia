@@ -1,5 +1,5 @@
 // src/stores.ts
-import { writable } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
 import type { Node, Issue, Blocks, TargetStates } from './types/collection'
 
 
@@ -42,8 +42,26 @@ export const blocksDataStore = writable<Blocks[]>([]);
 export const targetStatesStore = writable<TargetStates[]>();
 
 
-export const currentBlock = writable<Blocks>();
+export const currentBlock = writable<Blocks | null>();
 
 export const isDragging = writable(false);
 export let AddDrawerOpen  = writable(false);
 export const selectedIssues = writable<Issue[]>([]);// Store for selected issues
+
+
+export const filteredIssuesForSnapshot = derived(
+  [issuesDataStore, currentBlock],
+  ([$issuesDataStore, $currentBlock]) => {
+    if ($currentBlock && $currentBlock.snapshot_id) {
+      console.log($issuesDataStore);
+      
+      const filtered = $issuesDataStore.filter(issue => issue.cycle === $currentBlock.snapshot_id);
+      console.log('Filtered issues based on currentBlock.snapshot_id:', filtered, $currentBlock);
+      return filtered
+    } else {
+      console.log("nothing set");
+      
+      return $issuesDataStore;
+    }
+  }
+);

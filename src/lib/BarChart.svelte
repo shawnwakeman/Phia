@@ -6,10 +6,9 @@
     import type { Node, Issue, Blocks } from "../types/collection"
     import * as d3 from 'd3';
     import { selectedNodeStore } from "../stores";
-    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore, targetStatesStore } from "../stores";
+    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore, targetStatesStore, currentBlock } from "../stores";
     import { get } from 'svelte/store';
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
-    import { canJoin } from '@tiptap/pm/transform';
     const primcolor = "red"
     type WritableNode = {
     id: number
@@ -176,9 +175,11 @@ function createHierarchy(data: Node[]): WritableNode | null {
     let height: number = 100;
     let callCount = 0;
     onMount(async () => {
+
         const parentDiv = document.getElementById('state-wrapper');
-  
         function updateDimensions(value, viewBoxResize = false) {
+
+
             callCount++;
             console.log(callCount);
             console.log(value);
@@ -229,6 +230,25 @@ function createHierarchy(data: Node[]): WritableNode | null {
            
         });
 
+        currentBlock.subscribe(value => {
+            if (!isFirstLoad) {
+                updateVisuals();
+            }
+      
+        });
+
+
+        targetStatesStore.subscribe(value => {
+            if (!isFirstLoad) {
+                
+                updateVisuals();
+          
+                
+                
+            }
+    
+        });
+
 
    
         nodesDataStore.subscribe((value) => {
@@ -241,20 +261,12 @@ function createHierarchy(data: Node[]): WritableNode | null {
                     centerOnNode(selectedNode);
                 }
             }
+            console.log("asds");
+            
             isFirstLoad = false;
         }); 
 
 
-        targetStatesStore.subscribe(value => {
-            if (!isFirstLoad2) {
-                if (selectedNode) {
-                    updateVisuals();
-                }
-                
-                
-            }
-            isFirstLoad2 = false;
-        });
 
 
 
@@ -266,6 +278,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 }
             }
         });
+
+     
 
 
 
@@ -486,7 +500,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
    
 
-
+    let targetStateMap : Map<any, any>;
     function updateVisuals() {
         console.trace("update");
         
@@ -510,7 +524,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
         if (!isFirstLoad) { selectedNode = nodes.find(n => n.data.id === $selectedNodeId); }
         console.log(nodes, "nodes");
         
-
+        targetStateMap  = createTargetStateMap($targetStatesStore);
+        
         shrinkChildrenAndRepack(root);
         updateCircles(nodes);
         updateText(nodes);
@@ -676,20 +691,20 @@ function createHierarchy(data: Node[]): WritableNode | null {
         snapshot_id: number;
         target_state: string;
     } | undefined {
-        return $targetStatesStore.find(state => state.node_id === nodeId && state.snapshot_id === 15);
+        return $targetStatesStore.find(state => state.node_id === nodeId && state.snapshot_id === $currentBlock?.snapshot_id);
     }
 
     function createTargetStateMap(targetStates) {
         const targetStateMap = new Map();
         targetStates.forEach(state => {
-            if (state.snapshot_id === 15) {
+            if (state.snapshot_id === $currentBlock?.snapshot_id) {
                 targetStateMap.set(state.node_id, true);
             }
         });
         return targetStateMap;
     }
 
-    const targetStateMap = createTargetStateMap($targetStatesStore);
+
 
 
     function hasMatchingTargetStateOrChildren(node, targetStateMap) {
@@ -796,10 +811,14 @@ function createHierarchy(data: Node[]): WritableNode | null {
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .attr("r", d => d.r * 0.975)
             .attr("fill", d => {
-                const hasTargetState = hasMatchingTargetStateOrChildren(d, targetStateMap);
-                if (!hasTargetState) {
-                    return darkerAndDesaturatedColor(d.data.fillColor);
+                if ($currentBlock) {
+                    const hasTargetState = hasMatchingTargetStateOrChildren(d, targetStateMap);
+                    
+                    if (!hasTargetState) {
+                        return darkerAndDesaturatedColor(d.data.fillColor);
+                    }
                 }
+               
 
                 return d.data.totalPriority === 0 ? d.data.fillColor : `url(#gradient-${d.data.id})`;
             })
@@ -815,14 +834,19 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 return (radiusContribution + depthContribution) / 2;
             })
             .attr("stroke", d => {
-                const hasTargetState = getMatchingTargetState(d.data.id);
+                    const hasTargetState = getMatchingTargetState(d.data.id);
+                 
+                    
                     if (hasTargetState) {
                         console.log(hasTargetState.target_state);
                         
                         return getColorByStatus(hasTargetState.target_state);
                     } else {
+                        console.log(hasTargetState);
                         return d.data.totalPriority === 0 ? darkerColor(d.data.fillColor) : '#654ea3'
                     }
+                    
+                    
             })
             .attr("class", d => {
                 let classes = "circle";
@@ -831,9 +855,6 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 }
                 if (d.parent?.data.id === $selectedNodeStore?.id) {
                     classes += " hoverable";
-                }
-                if (d.data.totalPriority !==0) {
-                    classes += " drop";
                 }
                 return classes;
             })
@@ -983,7 +1004,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 .attr("class", "text-node font-default font-small");
 
             // Add target state text if it exists
-            enterGroups.append("text")
+            if ($currentBlock) {
+                enterGroups.append("text")
                 .attr("class", "text-node font-default font-small")
                 .attr("text-anchor", "middle")
                 .attr("alignment-baseline", "middle")
@@ -995,6 +1017,8 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 });
 
             return enterGroups;
+            }
+            
         },
         update => {
             update.select("text")

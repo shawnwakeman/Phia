@@ -55,19 +55,23 @@
 
     function findClosestEventIndex() {
         const currentDate = new Date();
-        let closestIndex = 0;
-        let minDiff = Infinity;
+        let closestIndex = -1;
+
         $blocksDataStore.forEach((block, index) => {
-            const blockDate = new Date(block.created_at);
-            const diff = Math.abs(blockDate - currentDate);
-            if (diff < minDiff) {
-                minDiff = diff;
-                closestIndex = index;
+            const startDate = new Date(block.created_at);
+            const endDate = new Date(block.end_date);
+
+            if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                if (currentDate >= startDate && currentDate <= endDate) {
+                    closestIndex = index;
+                }
+            } else {
+                console.error(`Invalid date in block: ${JSON.stringify(block)}`);
             }
         });
+
         return closestIndex;
     }
-
     onMount(() => {
         const closestIndex = findClosestEventIndex();
         const closestEventElement = timelineContainer.querySelectorAll('.event')[closestIndex];
@@ -155,14 +159,7 @@ function formatDate(dateString) {
         color: gray;
     }
 
-    .add-circle {
-        width: 20px;
-        height: 20px;
-        background-color: #00ff37;
-        border-radius: 50%;
-        margin-left: 10px; /* Adjust margin to the left */
-        position: relative;
-    }
+
 
     .highlight {
         border: 2px solid #f39c12; /* Highlight styling */
@@ -172,27 +169,22 @@ function formatDate(dateString) {
 
 </style>
 
-
 <div class="timeline-container" bind:this={timelineContainer}>
     <div class="timeline">
         {#each $blocksDataStore as block, index}
             <div class="event" style="margin-bottom: {index < $blocksDataStore.length - 1 ? dateDiffInDays(block.created_at, $blocksDataStore[index + 1].created_at) * 8 + 'px' : '0'};">
-                <div class="circle {selectedEventDate === block.created_at ? 'highlight' : ''}" on:click={() => selectEvent(block)}></div>
-                <div>
-                    <div class="name">{`Block ${block.snapshot_id}`}</div>
-                    <div class="date">{formatDate(block.created_at)}</div>
-                </div>
                 {#if index < $blocksDataStore.length - 1}
                     <div class="line" style="height: {dateDiffInDays(block.created_at, $blocksDataStore[index + 1].created_at) * 5 + 1000}px; top: -100px;"></div>
                 {:else}
                     <div class="line" style="height: 1000px; top: -100px;"></div>
                 {/if}
+                
+                <div class="circle {selectedEventDate === block.created_at ? 'highlight' : ''}" on:click={() => selectEvent(block)}></div>
+                <div>
+                    <div class="name">{`Block ${index + 1}`}</div>
+                    <div class="date">{formatDate(block.created_at)}</div>
+                </div>
             </div>
         {/each}
-        <div class="event" style="margin-top: 80px; cursor: pointer;" on:click={addEvent}>
-            <div class="line" style="height: 2000px; top: -100px;"></div>
-            <div class="add-circle"></div>
-            <div class="name">Add Block</div>
-        </div>
     </div>
 </div>

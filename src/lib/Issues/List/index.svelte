@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { get, writable } from 'svelte/store';
-    import { issuesDataStore, filteredIssuesDataStore } from "../../../stores";
+    import {filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../../stores";
     import IssueItem from './IssueItem.svelte';
     import FilterControls from '../Kaban/Filter.svelte';
     import ListDisplayOptions from './ListDisplayOptions.svelte';
@@ -120,18 +120,23 @@
 
     // Initialize the board on mount
     onMount(() => {
-        const issues = get(issuesDataStore);
-        filteredIssuesDataStore.set(issues);  // Set the initial filtered issues store value
+
         updateBoard();
     });
 
     // Subscribe to filteredIssuesDataStore
     const unsubscribe = filteredIssuesDataStore.subscribe(value => {
-        if(notFirstLoad) {
-            updateBoard();
-        }
-        notFirstLoad = true;
+
+        
+        updateBoard();
+   
+        
     });
+
+
+
+
+
 </script>
 
 <style>
@@ -140,7 +145,7 @@
     }
 </style>
 <AddButton/>
-<FilterControls/>
+
 
 <ListDisplayOptions
     bind:rowByField

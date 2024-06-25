@@ -1,13 +1,11 @@
 <script lang="ts">
 
     import type { Issue, Node, Blocks, TargetStates } from "../../types/collection";
-    import BlockStateView from '$lib/Blocks/BlockStateView.svelte'
-    import OldStateViewer from '$lib/Blocks/OldStateViewer.svelte'
+
     import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore, sidebarWidthStore, blocksDataStore, targetStatesStore, currentBlock} from "../../stores";
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
     import { get } from "svelte/store";
-    import Kaban from '$lib/Blocks/BlocksKanban.svelte'
-    import StateManager from '$lib/Blocks/StateManager.svelte'
+
     import { Pane, Splitpanes } from 'svelte-splitpanes';
 
     import Sidebar from "$lib/Sidebar.svelte";
@@ -15,7 +13,7 @@
     import Timeline from '$lib/Blocks/Viewer/Timeline.svelte';
     import SidePanel from '$lib/Blocks/Viewer/SidePanel.svelte'
 
-    import List from '$lib/Issues/List/index.svelte'
+    import List from '$lib/Issues/Issues.svelte'
     import NodeManager from '$lib/nodeManager/index.svelte';
     import BarChart from "$lib/BarChart.svelte";
     export let data: { nodes: Node[], issues: Issue[], rootNode: Node, snapshotsList: Blocks[], targetStates: TargetStates[]};
@@ -28,24 +26,29 @@
             selectedNodeStore.set(selectedNode || null);
     }
 
-    function findClosestSnapshot(snapshots: Blocks[]): Blocks | null {
+    function findCurrentSnapshot(snapshots: Blocks[]): Blocks | null {
         const currentDate = new Date();
-        let closestSnapshot: Blocks | null = null; // Initialize with null
-        let closestTimeDiff = Infinity;
+        let currentSnapshot: Blocks | null = null;
 
-        snapshots.forEach(snapshot => {
-            const snapshotDate = new Date(snapshot.created_at);
-            const timeDiff = snapshotDate.getTime() - currentDate.getTime();
+        snapshots.forEach((snapshot) => {
+            const startDate = new Date(snapshot.created_at);
+            const endDate = new Date(snapshot.end_date);
 
-            if (timeDiff > 0 && timeDiff < closestTimeDiff) {
-                closestTimeDiff = timeDiff;
-                closestSnapshot = snapshot;
+            if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                if (currentDate >= startDate && currentDate <= endDate) {
+                    currentSnapshot = snapshot;
+                }
+            } else {
+                console.error(`Invalid date in snapshot: ${JSON.stringify(snapshot)}`);
             }
         });
-        console.log(closestSnapshot);
-        
-        return closestSnapshot;
+
+        console.log(currentSnapshot);
+        return currentSnapshot;
     }
+
+
+
 
 
 
@@ -55,13 +58,14 @@
     selectedNodeStore.set(data.rootNode)
     blocksDataStore.set(data.snapshotsList)
     targetStatesStore.set(data.targetStates)
-    let closest = findClosestSnapshot(data.snapshotsList)
+    let closest = findCurrentSnapshot(data.snapshotsList)
     if (closest) {
         currentBlock.set(closest)
     }
     
     
     onMount(() => {
+        
         updateSelectedNodeStore();
     
 
@@ -75,20 +79,16 @@
         sidebarWidth = width;
     }
 
-    let tabs = [{id: "current", name: "current"}, {id: "create", name: "create"}, {id: "past", name: "past"}]
 
-    let currentViewID = "current"
-
-    let show = false;
 
     let issuestabs = [{id: "state", name: "state"}, {id: "issues", name: "issues"}]
     let currentViewIDIssues = "state"
     function setCurrentViewIssues(viewid: string) {
         currentViewIDIssues = viewid;
     }
-    function setCurrentView(viewid: string) {
-        currentViewID = viewid;
-}
+
+
+
 
 </script>
 
@@ -98,21 +98,7 @@
         flex-direction: column;
         align-items: center;
     }
-    .circle-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 20px; /* Space between circles and kanban boards */
-    }
-    .circle {
-        width: 45vw; /* Adjust the size as needed */
-        height: 45vw;
-        border-radius: 50%;
-        background-color: lightgray;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+
     .horizontal-divider {
         height: 10px;
         width: 100%;
@@ -145,13 +131,13 @@
 
     .main {
       display: flex;
-      height: 100vh;
+      max-height: 100vh;
       overflow: hidden;
     }
 
     .main-thing {
       display: flex;
-      height: 100vh;
+
       overflow: hidden;
     }
 
@@ -166,10 +152,11 @@
 
     .wrapper {
     
-        flex: 1;
         display: flex;
         flex-direction: column;
         position: relative;
+        max-height: 100vh; /* Prevents extending beyond the viewport height */
+        overflow: hidden; /* Prevent overflow */
 
     }
 
@@ -261,15 +248,12 @@
     
     <div class="content">
         
-        <div>
-            {#each tabs as tab}
-                <button on:click={() => setCurrentView(tab.id)}>{tab.name} </button>
-                
-            {/each}
-        </div>
+
+
+        <SidePanel/>
 
         
-        section to set the required data for the stuff
+        -----------------------------------------------------------------------------
         <div class="container">
             <button on:click={() => setSidebarWidth(0)}>0/100</button>
             <button on:click={() => setSidebarWidth(46.5)}>50/50</button>
@@ -285,10 +269,10 @@
             {/each}
         </div>
 
-        <SidePanel/>
+      
         <div class="main-thing">
             <Timeline/>
-            {#if currentViewID === 'current'}
+   
 
 
             <div class="content">
@@ -327,9 +311,7 @@
             </div>
 
 
-        {:else if currentViewID === 'viewer'}
-            
-        {/if}
+
         </div>
         
         
