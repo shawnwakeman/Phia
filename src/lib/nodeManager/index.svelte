@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import BulletList from './featureList.svelte';
     import { selectedNodeId, selectedNodeStore, nodesDataStore} from "../../stores";
-    import { Editor } from "@wakemanshawn/novel-svelte-shawnwakeman";
+    import { Editor } from "$lib/dist";
     import { fetchSummary, saveSummary } from '$lib/supabaseClient'
     import { Editor as EditorType } from '@tiptap/core';
     import Breadcrums from './breadcrums.svelte';
