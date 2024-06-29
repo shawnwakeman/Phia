@@ -5,8 +5,9 @@ import { CheckSquare, Code, Heading1, Heading2, Heading3, List, ListOrdered, Mes
 import CommandList from './CommandList.svelte';
 // import { toast } from 'sonner';
 // import va from '@vercel/analytics';
-// import { startImageUpload } from '@/ui/editor/plugins/upload-images';
+// import { startFileUpload } from '@/ui/editor/plugins/upload-images';
 import { Magic } from '../../icons/index.js';
+
 const Command = Extension.create({
     name: 'slash-command',
     addOptions() {
@@ -143,7 +144,7 @@ const getSuggestionItems = ({ query }) => {
         // 			if (input.files?.length) {
         // 				const file = input.files[0];
         // 				const pos = editor.view.state.selection.from;
-        // 				// startImageUpload(file, editor.view, pos);
+        // 				// startFileUpload(file, editor.view, pos);
         // 			}
         // 		};
         // 		input.click();

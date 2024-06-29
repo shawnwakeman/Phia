@@ -27,6 +27,8 @@
 
     onMount(() => {
         updateSelectedNodeStore();
+
+        
     });
 
     let sidebarWidth = 46.85;
@@ -101,6 +103,7 @@
         flex-direction: column;
         position: relative;
         overflow: hidden; /* Prevent content from overflowing */
+
     }
 
     .wrapper {
@@ -128,9 +131,10 @@
 
     .bar-chart-underlay {
         position: absolute;
-        width: 100%;
         top: 0;
-        right: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
     }
 
     .splitpanes-container {

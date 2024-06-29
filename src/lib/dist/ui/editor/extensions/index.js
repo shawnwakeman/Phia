@@ -11,9 +11,10 @@ import TextStyle from '@tiptap/extension-text-style';
 import TiptapUnderline from '@tiptap/extension-underline';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
-import UploadImagesPlugin from '../plugins/upload-images.js';
+import UploadFilesPlugin  from '../plugins/upload-images.js';
 import SlashCommand from './slash-command.js';
 import UpdatedImage from './updated-image.js';
+import FileNode from './FileNode.js';
 export const defaultExtensions = [
     StarterKit.configure({
         bulletList: {
@@ -82,7 +83,7 @@ export const defaultExtensions = [
     }),
     TiptapImage.extend({
         addProseMirrorPlugins() {
-            return [UploadImagesPlugin()];
+            return [UploadFilesPlugin ()];
         }
     }).configure({
         allowBase64: true,
@@ -108,6 +109,7 @@ export const defaultExtensions = [
     TiptapUnderline,
     TextStyle,
     Color,
+    FileNode,
     Highlight.configure({
         multicolor: true
     }),
@@ -125,5 +127,8 @@ export const defaultExtensions = [
     Markdown.configure({
         html: false,
         transformCopiedText: true
-    })
+    }),
+    
+
+
 ];

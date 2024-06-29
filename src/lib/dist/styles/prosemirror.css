@@ -28,11 +28,43 @@
 		filter: brightness(90%);
 	}
 
-	&.ProseMirror-selectednode {
-		outline: 3px solid #6cf75a;
-		filter: brightness(90%);
-	}
+
 }
+
+
+
+  
+/* .image-node {
+	width: fit-content;
+	background-color: rgb(234, 0, 255);
+	margin-left: auto;
+	margin-right: auto;
+} */
+
+/* For selected nodes */
+.ProseMirror-selectednode {
+    outline: 3px solid #6cf75a; /* Adjust color and style as needed */
+    filter: brightness(90%);
+}
+
+/* Ensure selected nodes have a specific style */
+&.ProseMirror-selectednode {
+    outline: 3px solid #6cf75a;
+    filter: brightness(90%);
+}
+
+/* Add focus style for drag selection */
+.ProseMirror-focusednode {
+    outline: 3px solid #6cf75a; /* Adjust color and style as needed */
+    filter: brightness(90%);
+}
+
+/* Add style for mouse drag selection */
+.ProseMirror-draggingnode {
+    outline: 3px solid #6cf75a; /* Adjust color and style as needed */
+    filter: brightness(90%);
+}
+
 
 .img-placeholder {
 	position: relative;
@@ -51,6 +83,10 @@
 		animation: spinning 0.6s linear infinite;
 	}
 }
+
+
+
+
 
 @keyframes spinning {
 	to {

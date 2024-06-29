@@ -1,4 +1,4 @@
-import { startImageUpload } from './plugins/upload-images.js';
+import { startFileUpload } from './plugins/upload-images.js';
 export const defaultEditorProps = {
     attributes: {
         class: `prose-lg prose-stone dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full`
@@ -19,7 +19,7 @@ export const defaultEditorProps = {
             event.preventDefault();
             const file = event.clipboardData.files[0];
             const pos = view.state.selection.from;
-            startImageUpload(file, view, pos);
+            startFileUpload(file, view, pos);
             return true;
         }
         return false;
@@ -32,8 +32,9 @@ export const defaultEditorProps = {
                 left: event.clientX,
                 top: event.clientY
             });
+            
             // here we deduct 1 from the pos or else the image will create an extra node
-            startImageUpload(file, view, coordinates?.pos || 0 - 1);
+            startFileUpload(file, view, coordinates?.pos || 0 - 2);
             return true;
         }
         return false;
