@@ -76,6 +76,8 @@ function findPlaceholder(state, id) {
 }
 
 
+
+
 export function startFileUpload(file, view, pos) {
     if (file.size / 1024 / 1024 > 20) {
       addToast({ data: { text: 'File size too big (max 20MB).', type: 'error' } });
@@ -113,7 +115,8 @@ export function startFileUpload(file, view, pos) {
     view.dispatch(transaction);
       
     }).catch(error => {
-      addToast({ data: { text: 'Error uploading file. Please try again.', type: 'error' } });
+        addToast({ data: { text: 'Error uploading file. Please try again.', type: 'error' } });
+        console.log(error);
       const pos = findPlaceholder(view.state, id);
       if (pos !== null) {
         const transaction = view.state.tr

@@ -30,6 +30,13 @@
 
 
 }
+img.selected {
+    outline: 2px solid blue; /* Example style for the selected state */
+}
+
+.file-container.selected {
+    outline: 2px solid blue; /* Example style for the selected state */
+}
 
 
 
@@ -40,6 +47,11 @@
 	margin-left: auto;
 	margin-right: auto;
 } */
+
+.has-focus {
+    border-radius: 3px;
+    box-shadow: 0 0 0 2px #6cf75a;
+  }
 
 /* For selected nodes */
 .ProseMirror-selectednode {

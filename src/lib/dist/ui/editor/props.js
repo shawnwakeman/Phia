@@ -15,28 +15,52 @@ export const defaultEditorProps = {
         }
     },
     handlePaste: (view, event) => {
-        if (event.clipboardData && event.clipboardData.files && event.clipboardData.files[0]) {
+        if (event.clipboardData && event.clipboardData.files && event.clipboardData.files.length > 0) {
             event.preventDefault();
-            const file = event.clipboardData.files[0];
-            const pos = view.state.selection.from;
-            startFileUpload(file, view, pos);
+            const files = Array.from(event.clipboardData.files);
+            let pos = view.state.selection.from;
+
+            ensureSpaceForFiles(view, pos, files.length);
+    
+            files.forEach((file, index) => {
+                startFileUpload(file, view, pos + index); // Adjust the position increment if needed
+            });
+    
             return true;
         }
         return false;
     },
+    
+    
     handleDrop: (view, event, _slice, moved) => {
-        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
             event.preventDefault();
-            const file = event.dataTransfer.files[0];
+            const files = Array.from(event.dataTransfer.files);
+    
             const coordinates = view.posAtCoords({
                 left: event.clientX,
                 top: event.clientY
             });
-            
-            // here we deduct 1 from the pos or else the image will create an extra node
-            startFileUpload(file, view, coordinates?.pos || 0 - 2);
+            let pos = coordinates?.pos || 0;
+
+
+            ensureSpaceForFiles(view, pos, files.length);
+    
+            files.forEach((file, index) => {
+                startFileUpload(file, view, pos + index); // Adjust the position increment if needed
+            });
+    
             return true;
         }
         return false;
     }
+    
 };
+
+
+function ensureSpaceForFiles(view, pos, numFiles) {
+    const { tr } = view.state;
+    const extraLines = "\n".repeat(numFiles); // Adjust the multiplier as needed
+    tr.insertText(extraLines, pos);
+    view.dispatch(tr);
+}
