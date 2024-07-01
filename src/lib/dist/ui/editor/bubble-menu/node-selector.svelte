@@ -68,7 +68,7 @@ $:
       name: "Code",
       icon: Code,
       command: () => editor.chain().focus().toggleCodeBlock().run(),
-      isActive: editor.isActive("codeBlock")
+      isActive: editor.isActive("codeBlockLowlight")
     }
   ];
 $:

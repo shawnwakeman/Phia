@@ -5,7 +5,7 @@ import { CheckSquare, Code, Heading1, Heading2, Heading3, List, ListOrdered, Mes
 import CommandList from './CommandList.svelte';
 // import { toast } from 'sonner';
 // import va from '@vercel/analytics';
-// import { startFileUpload } from '@/ui/editor/plugins/upload-images';
+import { startFileUpload } from '../plugins/upload-images.js';
 import { Magic } from '../../icons/index.js';
 
 const Command = Extension.create({
@@ -128,28 +128,74 @@ const getSuggestionItems = ({ query }) => {
             searchTerms: ['codeblock'],
             icon: Code,
             command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
-        }
-        // {
-        // 	title: 'Image',
-        // 	description: 'Upload an image from your computer.',
-        // 	searchTerms: ['photo', 'picture', 'media'],
-        // 	// icon: <ImageIcon size={18} />,
-        // 	command: ({ editor, range }: CommandProps) => {
-        // 		editor.chain().focus().deleteRange(range).run();
-        // 		// upload image
-        // 		const input = document.createElement('input');
-        // 		input.type = 'file';
-        // 		input.accept = 'image/*';
-        // 		input.onchange = async () => {
-        // 			if (input.files?.length) {
-        // 				const file = input.files[0];
-        // 				const pos = editor.view.state.selection.from;
-        // 				// startFileUpload(file, editor.view, pos);
-        // 			}
-        // 		};
-        // 		input.click();
-        // 	}
-        // }
+        },
+      
+        {
+        	title: 'Image',
+        	description: 'Upload an image from your computer.',
+        	searchTerms: ['photo', 'picture', 'media'],
+        	icon: Code,
+        	command: ({ editor, range }) => {
+        		editor.chain().focus().deleteRange(range).run();
+        		// upload image
+        		const input = document.createElement('input');
+        		input.type = 'file';
+        		input.accept = 'image/*';
+        		input.onchange = async () => {
+        			if (input.files?.length) {
+        				const file = input.files[0];
+        				const pos = editor.view.state.selection.from;
+        				startFileUpload(file, editor.view, pos);
+        			}
+        		};
+        		input.click();
+        	}
+        },
+        {
+        	title: 'File',
+        	description: 'Upload an image from your computer.',
+        	searchTerms: ['photo', 'picture', 'media'],
+        	icon: Code,
+        	command: ({ editor, range }) => {
+        		editor.chain().focus().deleteRange(range).run();
+        		// upload image
+        		const input = document.createElement('input');
+        		input.type = 'file';
+        		input.accept = '*/*';
+        		input.onchange = async () => {
+        			if (input.files?.length) {
+        				const file = input.files[0];
+        				const pos = editor.view.state.selection.from;
+        				startFileUpload(file, editor.view, pos);
+        			}
+        		};
+        		input.click();
+        	}
+        },
+        {
+            title: 'Collapsable',
+            description: 'Capture a code snippet.',
+            searchTerms: ['collapsable'],
+            icon: Code,
+            command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setDetails().run()
+        },
+        {
+            title: 'Divider',
+            description: 'Capture a code snippet.',
+            searchTerms: ['divider'],
+            icon: Code,
+            command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setHorizontalRule().run()
+        },
+        {
+            title: 'Table',
+            description: 'Capture a code snippet.',
+            searchTerms: ['table'],
+            icon: Code,
+            command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+        },
+
+
+
     ].filter((item) => {
         if (typeof query === 'string' && query.length > 0) {
             const search = query.toLowerCase();
