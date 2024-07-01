@@ -20,38 +20,6 @@
 
 
     
-    async function loadTest() {
-        const summary = await fetchSummary(currentNodeId);
-        if (summary) {
-            currentContent = JSON.stringify(summary);
-            localStorage.setItem('novel__content', currentContent);
-            updateEditorContent(currentContent);
-        }
-    }
-
-    async function saveTest() {
-        await saveSummary(currentNodeId, JSON.parse(currentContent));
-    }
-
-    function updateEditorContent(content: string) {
-        if (editor) {
-            editor.commands.setContent(JSON.parse(content));
-        }
-    }
-
-    onMount(() => {
-        // Subscribe to nodeId changes
-        const unsubscribe = selectedNodeId.subscribe(async (value) => {
-            currentNodeId = value;
-            await loadTest();
-        });
-
-        return () => {
-            if (editor) editor.destroy();
-            if (unsubscribe) unsubscribe(); // Clean up the Supabase subscription
-        };
-    });
-
 
 
   </script>

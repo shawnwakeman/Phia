@@ -6,6 +6,7 @@ import { get } from 'svelte/store';
 
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
 import { createBrowserClient, createServerClient } from '@supabase/ssr'
+import type { UUID } from 'crypto';
 
 const projectID = 1
 
@@ -382,10 +383,10 @@ export async function saveSummary(nodeId: number, summaryContent: JSONContent = 
             content: [{ type: "text", text: "Summary" }]
         }
     ]
-}) {
+}, sessionId: UUID) {
     const { data, error } = await supabase
         .from('summaries')
-        .upsert({ node_id: nodeId, summary: summaryContent }, { onConflict: 'node_id' });
+        .upsert({ node_id: nodeId, summary: summaryContent, sessionID:  sessionId}, { onConflict: 'node_id' });
 
     if (error) {
         console.error('Error saving summary:', error);

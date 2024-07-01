@@ -17,6 +17,7 @@
     import { supabase, fetchSummary, saveSummary  } from "$lib/supabaseClient";
     import { selectedNodeStore } from '../../../../stores';
     import { get } from 'svelte/store';
+
     import { v4 as uuidv4 } from 'uuid';
 
     export let completionApi = "/api/generate";
@@ -35,8 +36,11 @@
   
     let unsubscribe; // To store the unsubscribe function for the Supabase channel
 
+
+
     
-    let lastUpdateTimestamp = new Date().toISOString();
+    
+    let sessionId = uuidv4()
   
     const { complete, completion, isLoading, stop } = useCompletion({
       id: "novel",
@@ -83,8 +87,8 @@
         content.set(json);
       }
       if (selectedNodeStore) {
-        lastUpdateTimestamp = Date.now();
-        await saveSummary($selectedNodeStore.id, editor2.getJSON());
+        
+        await saveSummary($selectedNodeStore.id, editor2.getJSON(), sessionId);
       }
       
       onDebouncedUpdate(editor2);
@@ -93,9 +97,11 @@
     onMount(() => {
       initializeEditor();
       // Subscribe to changes in the selectedNodeStore
-      selectedNodeStore.subscribe(value => {
+      selectedNodeStore.subscribe( async value => {
         const documentid = value.id;
         if (editor) {
+            const summary = await fetchSummary(value.id);
+            editor.commands.setContent(summary)
           updateEditorSubscription(documentid);
         }
       });
@@ -146,27 +152,27 @@
           filter: `node_id=eq.${documentid}`
         }, (payload) => {
           
-            console.log('Change received!', payload.commit_timestamp, lastUpdateTimestamp);
-
-            const changeTimestamp = new Date(payload.commit_timestamp);
-            const lastUpdate = new Date(lastUpdateTimestamp);
             
-            console.log(changeTimestamp, lastUpdate);
+            
+            
 
-            if (changeTimestamp > lastUpdate) {
+            if (payload.new.sessionID !== sessionId) {
                 console.log('Updating editor content');
                 editor.commands.setContent(payload.new.summary);
-                lastUpdateTimestamp = new Date().toISOString();
-            } else {
-                console.log('Change is not newer than our last update, ignoring');
             }
+
+              
+       
         })
     .subscribe();
+    
   
       unsubscribe = () => {
         channel.unsubscribe();
       };
     }
+
+    
   </script>
   
   <div>
