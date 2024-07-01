@@ -8,7 +8,7 @@
     import Breadcrums from './breadcrums.svelte';
     import Issues from '$lib/nodeManager/Issues.svelte';
     import State from './State.svelte';
-
+    import { v4 as uuidv4 } from 'uuid';
     import TitleInfo from './TitleInfo.svelte';
     import DesignDoc from './designDoc.svelte';
     import List from '$lib/Issues/List/index.svelte'
@@ -17,6 +17,9 @@
     let currentContent: string = '';
     let currentNodeId: number;
 
+
+
+    
     async function loadTest() {
         const summary = await fetchSummary(currentNodeId);
         if (summary) {
@@ -44,7 +47,8 @@
         });
 
         return () => {
-            unsubscribe();
+            if (editor) editor.destroy();
+            if (unsubscribe) unsubscribe(); // Clean up the Supabase subscription
         };
     });
 
@@ -73,9 +77,8 @@
             }}
             onDebouncedUpdate={async () => {
                 saveStatus = 'Saving...';
-                currentContent = localStorage.getItem('novel__content');
-                console.log('Content saved!', currentContent);
-                await saveTest();
+                
+        
                 setTimeout(() => {
                     saveStatus = 'Saved';
                 }, 500);

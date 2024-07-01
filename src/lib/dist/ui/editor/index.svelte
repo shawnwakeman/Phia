@@ -14,10 +14,11 @@
     import { defaultEditorProps } from "./props.js";
     import Toasts, { addToast } from "../toasts.svelte";
     import EditorBubbleMenu from "./bubble-menu/index.svelte";
-    import { supabase } from "$lib/supabaseClient";
+    import { supabase, fetchSummary, saveSummary  } from "$lib/supabaseClient";
     import { selectedNodeStore } from '../../../../stores';
     import { get } from 'svelte/store';
-  
+    import { v4 as uuidv4 } from 'uuid';
+
     export let completionApi = "/api/generate";
     let className = "relative min-h-[500px] w-full max-w-screen-lg border-stone-200 bg-white p-12 pb-24 sm:pb-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg";
     export { className as class };
@@ -33,6 +34,9 @@
     let element;
   
     let unsubscribe; // To store the unsubscribe function for the Supabase channel
+
+    
+    let lastUpdateTimestamp = new Date().toISOString();
   
     const { complete, completion, isLoading, stop } = useCompletion({
       id: "novel",
@@ -78,6 +82,11 @@
         const json = editor2.getJSON();
         content.set(json);
       }
+      if (selectedNodeStore) {
+        lastUpdateTimestamp = Date.now();
+        await saveSummary($selectedNodeStore.id, editor2.getJSON());
+      }
+      
       onDebouncedUpdate(editor2);
     }, debounceDuration);
   
@@ -119,11 +128,7 @@
           }
   
           // Update Supabase with new content
-          const content = e.editor.getJSON();
-          supabase
-            .from('summaries')
-            .update({ summary: content })
-            .eq('node_id', get(selectedNodeStore).id); // Ensure it updates the correct document
+        
         },
         autofocus: "end",
       });
@@ -140,14 +145,23 @@
           table: 'summaries',
           filter: `node_id=eq.${documentid}`
         }, (payload) => {
-          console.log('Change received!', payload);
-  
-          // Update the editor content if the change comes from a different session
-            console.log(payload.new.summary);
-            editor.commands.setContent(payload.new.summary);
-         
+          
+            console.log('Change received!', payload.commit_timestamp, lastUpdateTimestamp);
+
+            const changeTimestamp = new Date(payload.commit_timestamp);
+            const lastUpdate = new Date(lastUpdateTimestamp);
+            
+            console.log(changeTimestamp, lastUpdate);
+
+            if (changeTimestamp > lastUpdate) {
+                console.log('Updating editor content');
+                editor.commands.setContent(payload.new.summary);
+                lastUpdateTimestamp = new Date().toISOString();
+            } else {
+                console.log('Change is not newer than our last update, ignoring');
+            }
         })
-        .subscribe();
+    .subscribe();
   
       unsubscribe = () => {
         channel.unsubscribe();
