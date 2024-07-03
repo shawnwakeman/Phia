@@ -14,11 +14,13 @@
     import { defaultEditorProps } from "./props.js";
     import Toasts, { addToast } from "../toasts.svelte";
     import EditorBubbleMenu from "./bubble-menu/index.svelte";
-    import { supabase, fetchSummary, saveSummary  } from "$lib/supabaseClient";
+    import { supabase, fetchSummary, saveSummary, saveSummaryChanges  } from "$lib/supabaseClient";
     import { selectedNodeStore } from '../../../../stores';
     import { get } from 'svelte/store';
-
+    import { create, diff, patch } from 'jsondiffpatch';
     import { v4 as uuidv4 } from 'uuid';
+
+    
 
     export let completionApi = "/api/generate";
     let className = "relative min-h-[500px] w-full max-w-screen-lg border-stone-200 bg-white p-12 pb-24 sm:pb-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg";
@@ -38,8 +40,8 @@
 
 
 
-    
-    
+    const diffpatcher = create();
+    let lastSentState = null;
     let sessionId = uuidv4()
   
     const { complete, completion, isLoading, stop } = useCompletion({
@@ -87,8 +89,9 @@
         content.set(json);
       }
       if (selectedNodeStore) {
-        
+        console.log("aksjdhasjkhdlkajshdkjashdkjhaslkdjh");
         await saveSummary($selectedNodeStore.id, editor2.getJSON(), sessionId);
+        
       }
       
       onDebouncedUpdate(editor2);
@@ -102,7 +105,7 @@
         if (editor) {
             const summary = await fetchSummary(value.id);
             editor.commands.setContent(summary)
-          updateEditorSubscription(documentid);
+            updateEditorSubscription(documentid);
         }
       });
       return () => {
@@ -122,13 +125,22 @@
           ...defaultEditorProps,
           ...editorProps
         },
-        onUpdate: (e) => {
+        onUpdate: async  (e) => {
+            console.log("adsdasd");
           const selection = e.editor.state.selection;
           const lastTwo = getPrevText(e.editor, { chars: 2 });
           if (lastTwo === "++" && !$isLoading) {
             e.editor.commands.deleteRange({ from: selection.from - 2, to: selection.from });
             complete(getPrevText(e.editor, { chars: 5e3 }));
           } else {
+
+            const currentState = editor.getJSON();
+            const changes = diff(lastSentState, currentState);
+            if (changes) {
+                await saveSummaryChanges($selectedNodeStore.id, changes, sessionId);
+                lastSentState = currentState;
+            }
+      
             onUpdate(e.editor);
             debouncedUpdates(e);
           }
@@ -157,8 +169,11 @@
             
 
             if (payload.new.sessionID !== sessionId) {
-                console.log('Updating editor content');
-                editor.commands.setContent(payload.new.summary);
+                console.log('Applying changes to editor content');
+                const currentContent = editor.getJSON();
+                const updatedContent = patch(currentContent, payload.new.changes);
+                editor.commands.setContent(updatedContent);
+                console.log(editor.content);
             }
 
               
@@ -172,7 +187,7 @@
       };
     }
 
-    
+
   </script>
   
   <div>

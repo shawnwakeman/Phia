@@ -20,7 +20,7 @@
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
 
-    let currentViewID = "table"
+    let currentViewID = "treemap"
 
     let show = false;
     let sidebarWidth: string = "50%"
@@ -82,62 +82,79 @@
 
 <main class="main">
     <Sidebar/>
-    <div class="content">
-        <h1>Issue Tracker</h1>
+    <div class="content-issues">
+        <div class="non-view">         
+            <h1>Issue Tracker</h1>
   
        
-        <h1>{$currentSelectedIssue?.id}</h1>
-        <h1>{currentSelectedNode?.id}</h1>
-        <FilterControls/>
-
-        <button on:click={() => createNewNode()}>add is broken</button> 
- 
-         
-        
-        
-        
-        <button>search</button>
-        <h1>root . bread . etc</h1>
-        
-        <div>
-            {#each tabs as tab}
-                <button on:click={() => setCurrentView(tab.id)}>{tab.name}</button>
-            {/each}
+            <h1>{$currentSelectedIssue?.id}</h1>
+            <h1>{currentSelectedNode?.id}</h1>
+            <FilterControls/>
+    
+            <button on:click={() => createNewNode()}>add is broken</button> 
+     
+             
+            
+            
+            
+            <button>search</button>
+            <h1>root . bread . etc</h1>
+            
+            <div>
+                {#each tabs as tab}
+                    <button on:click={() => setCurrentView(tab.id)}>{tab.name}</button>
+                {/each}
+            </div>
+            
         </div>
-        {#if currentViewID === 'table'}
+
+        <div class="data">
+            {#if currentViewID === 'table'}
         
         
             <List/>
-        
-        {:else if currentViewID === 'kaban'}
-          <Kaban/>
-        {:else if currentViewID === 'treemap'}
-            <Treemap/>
-        {/if}
+            
+            {:else if currentViewID === 'kaban'}
+            <Kaban/>
+            {:else if currentViewID === 'treemap'}
+                <Treemap/>
+            {/if}
+        </div>
 
         
-          </div>
+
+        
+    </div>
 </main>
 <style> 
-    #treemap {
-      display: block;
-      margin: auto;
-      max-width: 60%;
-      height: auto;
-      background-color: #f0f0f0; /* Light grey background */
+
+    html, body {
+        height: 100%;
+        margin: 0;
     }
+
+
     .main {
       display: flex;
+      
       height: 100vh;
+  
       overflow: auto;
     }
 
-    .content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      user-select: none;  /* user */
+    .content-issues {
+  
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    .data {
+        display: flex;
+        flex: 1;
+        overflow: auto;
     }
   
 

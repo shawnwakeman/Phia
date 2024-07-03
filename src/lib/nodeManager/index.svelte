@@ -74,8 +74,8 @@
 
     <BulletList />
     <div class="feature-container">
-
-        <List/>
+        <Issues/>
+        <!-- <List/> -->
     </div>
 
     

@@ -372,6 +372,7 @@ export async function updateNodeNameByID(nodeId: number, newName: string) {
     }
 }
 
+let totalDataTransferred = 0;
 
 
 export async function saveSummary(nodeId: number, summaryContent: JSONContent = {
@@ -384,6 +385,8 @@ export async function saveSummary(nodeId: number, summaryContent: JSONContent = 
         }
     ]
 }, sessionId: UUID) {
+
+    
     const { data, error } = await supabase
         .from('summaries')
         .upsert({ node_id: nodeId, summary: summaryContent, sessionID:  sessionId}, { onConflict: 'node_id' });
@@ -394,6 +397,23 @@ export async function saveSummary(nodeId: number, summaryContent: JSONContent = 
         console.log('Summary saved:', data);
     }
 }
+
+export async function saveSummaryChanges(nodeId: number, changes: any, sessionId: UUID) {
+    const { data, error } = await supabase
+      .from('summaries')
+      .upsert({
+        node_id: nodeId,
+        changes: changes,
+        sessionID: sessionId
+      }, { onConflict: 'node_id' });
+  
+    if (error) {
+      console.error('Error saving summary changes:', error);
+    } else {
+      console.log('Summary changes saved:', data);
+    }
+  }
+
 
 
 export async function fetchSummary(nodeId: number) {

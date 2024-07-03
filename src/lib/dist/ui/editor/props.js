@@ -51,8 +51,20 @@ export const defaultEditorProps = {
             });
     
             return true;
+        } else {
+            // Insert a hard break before pasting
+            setTimeout(() => {
+                // After the paste is complete, insert a hard break
+                view.dispatch(view.state.tr.insert(
+                    view.state.selection.to, 
+                    view.state.schema.nodes.hard_break.create()
+                ));
+            }, 0);
+            
+            // Allow the default paste behavior to occur after inserting the hard break
+            return false;
         }
-        return false;
+  
     }
     
 };
