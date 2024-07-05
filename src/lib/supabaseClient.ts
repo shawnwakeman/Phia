@@ -384,11 +384,11 @@ export async function saveSummary(nodeId: number, summaryContent: JSONContent = 
             content: [{ type: "text", text: "Summary" }]
         }
     ]
-}, sessionId: UUID) {
+}, sessionId: UUID, table: string) {
 
     
     const { data, error } = await supabase
-        .from('summaries')
+        .from(table)
         .upsert({ node_id: nodeId, summary: summaryContent, sessionID:  sessionId}, { onConflict: 'node_id' });
 
     if (error) {
@@ -398,9 +398,9 @@ export async function saveSummary(nodeId: number, summaryContent: JSONContent = 
     }
 }
 
-export async function saveSummaryChanges(nodeId: number, changes: any, sessionId: UUID) {
+export async function saveSummaryChanges(nodeId: number, changes: any, sessionId: UUID, table: string ) {
     const { data, error } = await supabase
-      .from('summaries')
+      .from(table)
       .upsert({
         node_id: nodeId,
         changes: changes,
@@ -416,7 +416,7 @@ export async function saveSummaryChanges(nodeId: number, changes: any, sessionId
 
 
 
-export async function fetchSummary(nodeId: number) {
+export async function fetchSummary(nodeId: number, table: string) {
 
     const defaultSummary = {
         type: "doc",
@@ -429,7 +429,7 @@ export async function fetchSummary(nodeId: number) {
         ]
     };
     const { data, error } = await supabase
-        .from('summaries')
+        .from(table)
         .select('summary')
         .eq('node_id', nodeId)
         .single();
@@ -487,29 +487,29 @@ export async function findRootNodes() {
 
 
 
-export async function addIssue(parent_id: number | null) {
+export async function addIssue(parent_id, name, description, state, priority, cycle, tags, due_date, creator, assignee) {
     if (!parent_id) {
         console.error('Parent ID is null');
         return;
     }
 
-    console.log(projectID);
-
     const currentTimestamp = new Date().toISOString();
 
     // Create a temporary issue object with a temporary ID
     const tempIssue = {
-        id: Date.now(), // Temporary ID (you can use any unique identifier)
-        description: '',
+        description,
         node_id: parent_id,
         project_id: projectID,
-        priority: 'High',
-        state: null,
-        name: '',
-        creator_id: 1,
+        priority,
+        state,
+        name,
+        cycle,
+        tags,
+        due_date,
+        creator_id: creator, // Replace with actual creator ID
+        assignee: assignee,
         completed_at: null,
-        due_date: null,
-        created_at: currentTimestamp
+        created_at: currentTimestamp,
     };
 
     // Update the store immediately with the temporary issue
@@ -519,16 +519,20 @@ export async function addIssue(parent_id: number | null) {
     const { data, error } = await supabase
         .from('issues')
         .insert([{
-            description: '',
+            description,
             node_id: parent_id,
             project_id: projectID,
-            priority: 'High',
-            state: null,
-            name: '',
-            creator_id: 1,
+            priority,
+            state,
+            name,
+            cycle,
+            tags,
+            due_date,
+            creator_id: creator, // Replace with actual creator ID
+            assignee: assignee,
             completed_at: null,
-            due_date: null,
-            created_at: currentTimestamp
+            created_at: currentTimestamp,
+       
         }])
         .select();
 

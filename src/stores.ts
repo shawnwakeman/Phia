@@ -66,3 +66,8 @@ export const filteredIssuesForSnapshot = derived(
   }
 );
 
+
+          
+export const selectionAnchor = writable<Issue | null>(null);
+
+export const createdIssueEditor = writable<boolean>(false)

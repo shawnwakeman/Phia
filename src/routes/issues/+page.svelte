@@ -7,8 +7,9 @@
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
     import { addIssue, supabase, findRootNodes } from "../../lib/supabaseClient";
-    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore } from "../../stores";
+    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore, selectedIssues  } from "../../stores";
     import FilterControls from '$lib/Issues/Kaban/Filter.svelte'
+    import SelectionBar from '$lib/Issues/selectionBar.svelte'
     import { onMount } from 'svelte';
 
     import { get } from 'svelte/store';
@@ -108,7 +109,7 @@
             
         </div>
 
-        <div class="data">
+        <!-- <div class="data"> -->
             {#if currentViewID === 'table'}
         
         
@@ -119,12 +120,18 @@
             {:else if currentViewID === 'treemap'}
                 <Treemap/>
             {/if}
-        </div>
+        <!-- </div> -->
 
         
 
         
     </div>
+
+    <div class:bottom-bar-visible={$selectedIssues.length > 0} class="bottom-bar">
+        <SelectionBar/>
+    </div>
+
+
 </main>
 <style> 
 
@@ -151,11 +158,45 @@
         user-select: none;
     }
 
-    .data {
+    .bottom-bar {
+        position: fixed;
+        bottom: -60px; /* Initially hidden below the viewport */
+        left: 35%; /* Centered horizontally (30% of screen width, 35% left + 30% width = 65%, so centered) */
+        width: 30%;
+        height: 50px; /* Reduced height */
+        background-color: #333;
+        color: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center; /* Center content vertically */
+        padding: 0.5em;
+        border-radius: 10px; /* Optional: rounded corners */
+        transition: bottom 0.3s ease-in-out;
+    }
+
+    .bottom-bar-visible {
+        bottom: 20px; /* Slide up into view with a gap from the bottom */
+    }
+
+    .bottom-bar button {
+        background: #444;
+        color: white;
+        border: none;
+        padding: 0.3em 0.6em; /* Adjusted padding for smaller buttons */
+        cursor: pointer;
+        border-radius: 5px; /* Optional: rounded buttons */
+    }
+
+    .bottom-bar button:hover {
+        background: #555;
+    }
+
+
+    /* .data {
         display: flex;
         flex: 1;
         overflow: auto;
-    }
+    } */
   
 
   </style>

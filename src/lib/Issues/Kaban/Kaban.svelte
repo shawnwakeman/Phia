@@ -180,23 +180,36 @@
     }));
   }
 
+  let nullRow: BoardRow | undefined;
+  let nullColumnAdded = false;
+
   issues.forEach(issue => {
     let row = rowByField === 'none' ? board[0] : board.find(r => r.name === issue[rowByField]);
     if (!row) {
-      row = {
-        id: board.length,
-        name: `no ${rowByField}`,
-        columns: Configs[columnByField].map((colConfig, colIndex) => ({
-          id: colIndex,
-          name: colConfig.name,
+      if (!nullRow) {
+        nullRow = {
+          id: board.length,
+          name: `no ${rowByField}`,
+          columns: Configs[columnByField].map((colConfig, colIndex) => ({
+            id: colIndex,
+            name: colConfig.name,
+            items: [],
+            no: colIndex,
+            columnBy: colConfig.name,
+          })),
+          no: board.length,
+          rowBy: `no ${rowByField}`,
+        };
+        nullRow.columns.push({
+          id: nullRow.columns.length,
+          name: `no ${columnByField}`,
           items: [],
-          no: colIndex,
-          columnBy: colConfig.name,
-        })),
-        no: board.length,
-        rowBy: `no ${rowByField}`,
-      };
-      board.push(row);
+          no: nullRow.columns.length,
+          columnBy: `no ${columnByField}`,
+        });
+        board.push(nullRow);
+      }
+      row = nullRow;
     }
 
     let column = row.columns.find(col => col.name === issue[columnByField]);
@@ -258,7 +271,8 @@
       rowBy: `no ${rowByField}`,
     });
   }
-
+  console.log(board);
+  
   board.forEach(row => {
       row.columns.forEach(column => {
         column.items.sort((a, b) => {
@@ -685,7 +699,7 @@ function customSort(a, b, field) {
     on:hideNullColumnsChange={handleHideNullColumnsChange}
   />
 
-    <AddButton addIssueMain={addIssueMain}/>
+    <AddButton/>
 
 
   <!--  -->
@@ -696,7 +710,7 @@ function customSort(a, b, field) {
     <div class="column-titles">
         {#each names as column}
             <div class="column-title">
-                <AddButton addIssueMain={addIssueMain}/>
+                <AddButton/>
                 {column.name}
             </div>
       

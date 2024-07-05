@@ -8,9 +8,15 @@
     export let item;
     export let flipDurationMs;
     export let board;
+    
   
     let drawerOpen = writable(false);
-    $: selected = get(selectedIssues);
+    
+    let selected = [];
+
+    selectedIssues.subscribe(value => {
+        selected = value;
+    });
 
 
     function handleClick(event) {

@@ -15,7 +15,7 @@
     import Toasts, { addToast } from "../toasts.svelte";
     import EditorBubbleMenu from "./bubble-menu/index.svelte";
     import { supabase, fetchSummary, saveSummary, saveSummaryChanges  } from "$lib/supabaseClient";
-    import { selectedNodeStore, currentSelectedIssue } from '../../../../stores';
+    import { currentSelectedIssue } from '../../../../stores';
     import { get } from 'svelte/store';
     import { create, diff, patch } from 'jsondiffpatch';
     import { v4 as uuidv4 } from 'uuid';
@@ -69,7 +69,7 @@
     $: if (editor && !hydrated) {
       const value = disableLocalStorage ? defaultValue : $content;
       if (value) {
-        // editor.commands.setContent(value);
+        editor.commands.setContent(value);
       }
       hydrated = true;
     }
@@ -89,9 +89,9 @@
         const json = editor2.getJSON();
         content.set(json);
       }
-      if (selectedNodeStore) {
+      if (currentSelectedIssue) {
         console.log("aksjdhasjkhdlkajshdkjashdkjhaslkdjh");
-        await saveSummary($selectedNodeStore.id, editor2.getJSON(), sessionId, "summaries");
+        await saveSummary($currentSelectedIssue.id, editor2.getJSON(), sessionId, "summaries_issues");
         
       }
       
@@ -100,27 +100,23 @@
 
     let prevoiusId = 0
     onMount(() => {
-    
       initializeEditor();
-      // Subscribe to changes in the selectedNodeStore
+      // Subscribe to changes in the currentSelectedIssue
 
-        console.log("ASdsda");
-      selectedNodeStore.subscribe( async value => {
+
+      currentSelectedIssue.subscribe( async value => {
+        console.log(value);
         const documentid = value.id;
         if (editor) {
-            if (prevoiusId !== 0) {
-                await saveSummary(prevoiusId, editor.getJSON(), sessionId, "summaries");
-            }
-         
-            const summary = await fetchSummary(value.id, "summaries");
+
+            const summary = await fetchSummary(value.id, "summaries_issues");
             editor.commands.setContent(summary)
             updateEditorSubscription(documentid);
             prevoiusId = value.id
         }
       });
       return () => {
-        if (editor) editor.destroy();
-        if (unsubscribe) unsubscribe(); // Clean up the Supabase subscription
+       
       };
     });
   
@@ -147,7 +143,7 @@
             const currentState = editor.getJSON();
             const changes = diff(lastSentState, currentState);
             if (changes) {
-                await saveSummaryChanges($selectedNodeStore.id, changes, sessionId, "summaries");
+                await saveSummaryChanges($currentSelectedIssue.id, changes, sessionId, "summaries_issues");
                 lastSentState = currentState;
             }
       
@@ -170,7 +166,7 @@
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
-          table: 'summaries',
+          table: 'summaries_issues',
           filter: `node_id=eq.${documentid}`
         }, (payload) => {
           

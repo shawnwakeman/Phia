@@ -61,7 +61,7 @@ export const defaultExtensions = [
                 class: 'border-l-4 border-stone-700'
             }
         },
-
+        codeBlock: false,
 
         code: {
             HTMLAttributes: {

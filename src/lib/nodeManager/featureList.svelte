@@ -45,10 +45,12 @@
     let editingFeatureIndex: number | null = null;
 
     async function addFeature() {
-        if (newFeatureName.trim() === '' || newFeatureState.trim() === '' || isNaN(newFeatureValue)) return;
+        console.log("asdsda");
+        
+      
 
         // Call addNode function and wait for its result
-        const result = await addNode(newFeatureName, newFeatureValue, $selectedNodeId, newFeatureState);
+        const result = await addNode(newFeatureName, 1, $selectedNodeId, newFeatureState);
         console.log(result);
         
         // Check if the node was successfully added
