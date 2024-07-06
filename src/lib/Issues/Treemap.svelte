@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { Node, Issue } from "../../types/collection";
-    import { selectedNodeStore, nodesDataStore, issuesDataStore, currentSelectedIssue, selectedIssues,filteredIssuesDataStore } from "../../stores";
+    import { selectedNodeStore, nodesDataStore, issuesDataStore, currentSelectedIssue, selectedIssues,filteredIssuesDataStore, filterStoreTM } from "../../stores";
     import { get } from "svelte/store";
     import * as d3 from 'd3';
     import IssueItem from './List/IssueItem.svelte';
@@ -197,38 +197,21 @@ const gatherAllIssues = (node) => {
     return issues;
 };
 
-let rowByField = 'state';
-    let orderByField = 'id';
-    let orderDirection = 'asc';
-    let hideEmptyRows = false;
-    let hideNullRows = false;
-    let notFirstLoad = false;
+    let filters = {
+        rowByField: 'state',
+        orderByField: 'id',
+        orderDirection: 'asc',
+        hideEmptyRows: false,
+        hideNullRows: false,
+    };
 
-    function handleRowByChange(event) {
-        rowByField = event.detail;
-        console.log("asddassda");
-        
-    }
-
-    function handleOrderByChange(event) {
-        orderByField = event.detail;
-      ;
-    }
-
-    function handleOrderDirectionChange(event) {
-        orderDirection = event.detail;
-       
-    }
-
-    function handleHideEmptyRowsChange(event) {
-        hideEmptyRows = event.detail;
-  ;
-    }
-
-    function handleHideNullRowsChange(event) {
-        hideNullRows = event.detail;
+    const unsubscribe = filterStoreTM.subscribe(value => {
+        filters = value;
+        // Call the required code whenever the filters are updated
+        console.log('Filters updated:', filters);
+        // Your code to handle filter changes
+    });
    
-    }
 
     onMount(() => {
 
@@ -363,8 +346,8 @@ let rowByField = 'state';
             .attr("fill", d => d.data.value !== undefined ? color2(d.data.state) : color(d.depth))
             .attr("width", d => d.x1 - d.x0)
             .attr("height", d => d.y1 - d.y0)
-            .attr("rx", 5)
-            .attr("ry", 5)
+            .attr("rx", 8)
+            .attr("ry", 8)
             .attr("stroke", d => {
                 if (isIssueSelected(d.data)) {
                     return "red"
@@ -473,24 +456,17 @@ let rowByField = 'state';
 
     updateDimensions()
 
+    return () => {
+        unsubscribe();
+    }
+
   });
 
 
 
   </script>
 
-  <Options    
-  bind:rowByField
-  bind:orderByField
-  bind:orderDirection
-  bind:hideEmptyRows
-  bind:hideNullRows
-  on:rowByChange={handleRowByChange}
-  on:orderByChange={handleOrderByChange}
-  on:orderDirectionChange={handleOrderDirectionChange}
-  on:hideEmptyRowsChange={handleHideEmptyRowsChange}
-  on:hideNullRowsChange={handleHideNullRowsChange}
-/>
+
 <div class="data">
     <div class="treemap-container">
         <svg id="treemap"></svg>
@@ -534,12 +510,16 @@ let rowByField = 'state';
   #treemap {
     width: 100%;
     height: 100%;
-
+    border-radius: 8px;
   }
 
   .treemap-container {
     flex: 1; /* Take up remaining space */
-    padding: 20px;
+    
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 12px;
+  
   }
 
 

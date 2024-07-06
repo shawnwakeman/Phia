@@ -23,7 +23,7 @@
     
 
     export let completionApi = "/api/generate";
-    let className = "relative max-w-screen-lg border-stone-200 bg-white p-5 pb-24 sm:pb-12 px-4 sm:rounded-lg sm:border sm:shadow-lg flex-grow overflow-auto";
+    let className = "relative max-w-screen-lg border-stone-200 bg-white p-5 pb-24 sm:pb-12 px-4 sm:rounded-lg sm:border sm:shadow-lg flex-grow overflow-auto max-h-[600px]";
     export { className as class };
     export let defaultValue = defaultEditorContent;
     export let extensions = [];
@@ -102,8 +102,14 @@
     function initializeEditor() {
       editor = new Editor({
         element,
-
+        onTransaction: () => {
+          editor = editor;
+        },
         extensions: [...defaultExtensions, ...extensions],
+        editorProps: {
+          ...defaultEditorProps,
+          ...editorProps
+        },
         
         // autofocus: "start",
       });

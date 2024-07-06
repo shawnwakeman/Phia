@@ -1,12 +1,14 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
-    import { addIssue } from '$lib/supabaseClient';
+    import { addIssue, saveSummary } from '$lib/supabaseClient';
     import * as Dialog from "$lib/components/ui/dialog";
     import Editor from "$lib/dist/ui/editor/indexForIssueView.svelte";
     import { Editor as EditorType } from '@tiptap/core';
     import { onDestroy, onMount } from 'svelte';
     import { writable } from 'svelte/store';
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+    import { fade } from "svelte/transition";
+    import { DiamondPlus    } from 'lucide-svelte';
     let isExpanded = writable(false);
 
     function toggleExpand() {
@@ -19,9 +21,8 @@
 
     let parent_id = 2;
     let name = "";
-    let description = "";
-    let state = "";
-    let priority = "";
+    let state = "state";
+    let priority = "Priority";
     let cycle;
     let tags = "";
     let due_date;
@@ -48,6 +49,10 @@
         }
     }
 
+    function handleIssue() {
+        addIssue(2, name, editor?.getJSON(), state, priority, null, null, null, null, null)
+    }
+
     function closeModal() {
         dialogOpen = false
 
@@ -61,9 +66,15 @@
 
 <Dialog.Root bind:open={dialogOpen}>
     <Dialog.Trigger>
-        <button>+ Add Issue</button>
+        <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0" on:click={() => setCurrentView("table")}>
+            <DiamondPlus  class="w-4 h-4 text-current group-hover:text-highlight-color" />
+        </Button>
     </Dialog.Trigger>
-    <Dialog.Content on:close={closeModal}  class="bg-transparent border-none">
+    <Dialog.Content on:close={closeModal}  
+        transition={fade}
+       
+
+    >
 
         <style>
             [data-melt-dialog-close] {
@@ -101,10 +112,10 @@
             <Dialog.Description >
            
                 <div class="input-container">
-                    <input id="issue-title" type="text" placeholder="Issue Title" />
+                    <input id="issue-title" type="text" placeholder="Issue Title" bind:value={name}/>
                 </div>
 
-                <div class:expanded={$isExpanded} class="flex flex-col">
+                <div class="flex flex-col max-h-[50vh]" class:expanded={$isExpanded} >
                 <Editor bind:editor> </Editor>
                 </div>
 
@@ -112,31 +123,40 @@
                 <div style="margin-top: 10px;">
                     <div style="display: flex; justify-content: left; margin-bottom: 10px;" class="input-container">
                         <DropdownMenu.Root>
-                            <DropdownMenu.Trigger>Status</DropdownMenu.Trigger>
+                            <DropdownMenu.Trigger>parent</DropdownMenu.Trigger>
                             <DropdownMenu.Content>
-                              <DropdownMenu.Group>
                                 <DropdownMenu.Label>My Account</DropdownMenu.Label>
                                 <DropdownMenu.Separator />
-                                <DropdownMenu.Item>Profile</DropdownMenu.Item>
-                                <DropdownMenu.Item>Billing</DropdownMenu.Item>
-                                <DropdownMenu.Item>Team</DropdownMenu.Item>
-                                <DropdownMenu.Item>Subscription</DropdownMenu.Item>
-                              </DropdownMenu.Group>
+                               
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Root>
+                        <DropdownMenu.Root>
+                            <DropdownMenu.Trigger>{state}</DropdownMenu.Trigger>
+                            <DropdownMenu.Content>
+                                <DropdownMenu.Label>My Account</DropdownMenu.Label>
+                                <DropdownMenu.Separator />
+                                <DropdownMenu.RadioGroup bind:value={state}>
+                                    <DropdownMenu.RadioItem value="open">Open</DropdownMenu.RadioItem>
+                                    <DropdownMenu.RadioItem value="doing">Doing</DropdownMenu.RadioItem>
+                                    <DropdownMenu.RadioItem value="done">Done</DropdownMenu.RadioItem>
+                                  </DropdownMenu.RadioGroup>
                             </DropdownMenu.Content>
                           </DropdownMenu.Root>
                           <DropdownMenu.Root>
-                            <DropdownMenu.Trigger>Priortiy</DropdownMenu.Trigger>
+                            <DropdownMenu.Trigger>{priority}</DropdownMenu.Trigger>
                             <DropdownMenu.Content>
-                              <DropdownMenu.Group>
                                 <DropdownMenu.Label>My Account</DropdownMenu.Label>
                                 <DropdownMenu.Separator />
-                                <DropdownMenu.Item>Profile</DropdownMenu.Item>
-                                <DropdownMenu.Item>Billing</DropdownMenu.Item>
-                                <DropdownMenu.Item>Team</DropdownMenu.Item>
-                                <DropdownMenu.Item>Subscription</DropdownMenu.Item>
-                              </DropdownMenu.Group>
+                                <DropdownMenu.RadioGroup bind:value={priority}>
+                                    <DropdownMenu.RadioItem value="Priority">No Priority</DropdownMenu.RadioItem>
+                                    <DropdownMenu.RadioItem value="urgent">Urgent</DropdownMenu.RadioItem>
+                                    <DropdownMenu.RadioItem value="high">High</DropdownMenu.RadioItem>
+                                    <DropdownMenu.RadioItem value="medium">Medium</DropdownMenu.RadioItem>
+                                    <DropdownMenu.RadioItem value="low">Low</DropdownMenu.RadioItem>
+                                  </DropdownMenu.RadioGroup>
                             </DropdownMenu.Content>
                           </DropdownMenu.Root>
+                         
                           <DropdownMenu.Root>
                             <DropdownMenu.Trigger>Assignee</DropdownMenu.Trigger>
                             <DropdownMenu.Content>
@@ -174,7 +194,7 @@
                         <label for="create-more" style="margin-right: 10px;">Create More</label>
                         <input id="create-more" type="checkbox" />
                     </div>
-                    <button style="margin-right: 10px;">Create Issue</button>
+                    <button on:click={handleIssue} class="margin-right: 10px;">Create Issue</button>
                 </div>
               
             </Dialog.Footer>
@@ -183,8 +203,8 @@
 
 <style>
     .expanded {
-        height: 65vh; /* Adjust the expanded height as needed */
-
+        height: 68vh;
+        max-height: 85vh;
     }
 
     .custom-width {

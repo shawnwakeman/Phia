@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy  } from 'svelte';
-  import { issuesDataStore, addedIssue, filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../../stores";
+  import { issuesDataStore, addedIssue, filteredIssuesDataStore, filteredIssuesForSnapshot, filterStoreKanBan } from "../../../stores";
 
   import { addIssue } from '$lib/supabaseClient';
   import { get } from 'svelte/store';
@@ -44,19 +44,39 @@
   let issues = get(filteredIssuesForSnapshot);
   let filteredIssues = issues;
 
-
-
   let rows: BoardRow[] = [];
   let board: BoardRow[] = [];
   let names: BoardColumn[] = [];
-  let rowByField = 'priority';
-  let columnByField = 'state';
-  let orderByField = 'id';
-  let orderDirection = 'asc'; 
-  let hideEmptyRows = false;
-  let hideEmptyColumns = false;
-  let hideNullRows = false;
-  let hideNullColumns = false;
+
+
+  let filters = {
+    rowByField: 'priority',
+    columnByField: 'state',
+    orderByField: 'id',
+    orderDirection: 'asc',
+    hideEmptyRows: false,
+    hideEmptyColumns: false,
+    hideNullRows: false,
+    hideNullColumns: false,
+  };
+
+  let hydrated = false
+
+
+  const unsubscribefilter = filterStoreKanBan.subscribe(value => {
+    if (hydrated) {
+        filters = value;
+    // Call the required code whenever the filters are updated
+        console.log('Filters updated:', filters);
+        updateBoard()
+ 
+    }
+       
+    // Your code to handle filter changes
+    hydrated = true
+  });
+
+  
 
  
   const unsubscribe = filteredIssuesDataStore.subscribe(value => {
@@ -71,8 +91,8 @@
     function updateBoard() {
         console.trace("asd");
         
-    const configRows = rowByField !== 'none' ? Configs[rowByField] : null;
-    const configColumns = Configs[columnByField];
+    const configRows = filters.rowByField !== 'none' ? Configs[filters.rowByField] : null;
+    const configColumns = Configs[filters.columnByField];
 
     if (configColumns) {
       if (configRows) {
@@ -102,7 +122,7 @@
       }
       board = transformIssuesToBoard(filteredIssues);
     } else {
-      console.warn(`No configuration found for field: ${columnByField}`);
+      console.warn(`No configuration found for field: ${filters.columnByField}`);
     }
 
     applyHideEmptyRowsAndColumns();
@@ -110,11 +130,11 @@
   }
 
   function applyHideEmptyRowsAndColumns() {
-    if (hideEmptyRows) {
+    if (filters.hideEmptyRows) {
       board = board.filter(row => row.columns.some(col => col.items.length > 0));
     }
 
-    if (hideEmptyColumns) {
+    if (filters.hideEmptyColumns) {
       let columnsToKeep = new Set<string>();
 
       board.forEach(row => {
@@ -130,13 +150,13 @@
       });
     }
 
-    if (hideNullRows) {
-      board = board.filter(row => row.name !== `no ${rowByField}`);
+    if (filters.hideNullRows) {
+      board = board.filter(row => row.name !== `no ${filters.rowByField}`);
     }
 
-    if (hideNullColumns) {
+    if (filters.hideNullColumns) {
       board.forEach(row => {
-        row.columns = row.columns.filter(col => col.name !== `no ${columnByField}`);
+        row.columns = row.columns.filter(col => col.name !== `no ${filters.columnByField}`);
       });
     }
   }
@@ -148,12 +168,12 @@
   function transformIssuesToBoard(issues: Issue[]): BoardRow[] {
   let board: BoardRow[];
 
-  if (rowByField === 'none') {
+  if (filters.rowByField === 'none') {
     board = [
       {
         id: 0,
         name: 'All Issues',
-        columns: Configs[columnByField].map((colConfig, colIndex) => ({
+        columns: Configs[filters.columnByField].map((colConfig, colIndex) => ({
           id: colIndex,
           name: colConfig.name,
           items: [],
@@ -184,13 +204,13 @@
   let nullColumnAdded = false;
 
   issues.forEach(issue => {
-    let row = rowByField === 'none' ? board[0] : board.find(r => r.name === issue[rowByField]);
+    let row = filters.rowByField === 'none' ? board[0] : board.find(r => r.name === issue[filters.rowByField]);
     if (!row) {
       if (!nullRow) {
         nullRow = {
           id: board.length,
-          name: `no ${rowByField}`,
-          columns: Configs[columnByField].map((colConfig, colIndex) => ({
+          name: `no ${filters.rowByField}`,
+          columns: Configs[filters.columnByField].map((colConfig, colIndex) => ({
             id: colIndex,
             name: colConfig.name,
             items: [],
@@ -198,54 +218,54 @@
             columnBy: colConfig.name,
           })),
           no: board.length,
-          rowBy: `no ${rowByField}`,
+          rowBy: `no ${filters.rowByField}`,
         };
         nullRow.columns.push({
           id: nullRow.columns.length,
-          name: `no ${columnByField}`,
+          name: `no ${filters.columnByField}`,
           items: [],
           no: nullRow.columns.length,
-          columnBy: `no ${columnByField}`,
+          columnBy: `no ${filters.columnByField}`,
         });
         board.push(nullRow);
       }
       row = nullRow;
     }
 
-    let column = row.columns.find(col => col.name === issue[columnByField]);
+    let column = row.columns.find(col => col.name === issue[filters.columnByField]);
     if (!column) {
-      column = row.columns.find(col => col.name === `no ${columnByField}`);
+      column = row.columns.find(col => col.name === `no ${filters.columnByField}`);
       if (!column) {
         column = {
           id: row.columns.length,
-          name: `no ${columnByField}`,
+          name: `no ${filters.columnByField}`,
           items: [],
           no: row.columns.length,
-          columnBy: `no ${columnByField}`,
+          columnBy: `no ${filters.columnByField}`,
         };
         row.columns.push(column);
       }
-      issue[columnByField] = null;
+      issue[filters.columnByField] = null;
     }
     column.items.push(issue);
   });
 
   // Ensure null columns are added to all rows
   board.forEach(row => {
-    if (!row.columns.find(col => col.name === `no ${columnByField}`)) {
+    if (!row.columns.find(col => col.name === `no ${filters.columnByField}`)) {
       row.columns.push({
         id: row.columns.length,
-        name: `no ${columnByField}`,
+        name: `no ${filters.columnByField}`,
         items: [],
         no: row.columns.length,
-        columnBy: `no ${columnByField}`,
+        columnBy: `no ${filters.columnByField}`,
       });
     }
   });
 
   // Ensure null row is added with null columns
-  if (rowByField !== 'none' && !board.find(row => row.name === `no ${rowByField}`)) {
-    const nullRowColumns = Configs[columnByField].map((colConfig, colIndex) => ({
+  if (filters.rowByField !== 'none' && !board.find(row => row.name === `no ${filters.rowByField}`)) {
+    const nullRowColumns = Configs[filters.columnByField].map((colConfig, colIndex) => ({
       id: colIndex,
       name: colConfig.name,
       items: [],
@@ -253,22 +273,22 @@
       columnBy: colConfig.name,
     }));
 
-    if (!nullRowColumns.find(col => col.name === `no ${columnByField}`)) {
+    if (!nullRowColumns.find(col => col.name === `no ${filters.columnByField}`)) {
       nullRowColumns.push({
         id: nullRowColumns.length,
-        name: `no ${columnByField}`,
+        name: `no ${filters.columnByField}`,
         items: [],
         no: nullRowColumns.length,
-        columnBy: `no ${columnByField}`,
+        columnBy: `no ${filters.columnByField}`,
       });
     }
 
     board.push({
       id: board.length,
-      name: `no ${rowByField}`,
+      name: `no ${filters.rowByField}`,
       columns: nullRowColumns,
       no: board.length,
-      rowBy: `no ${rowByField}`,
+      rowBy: `no ${filters.rowByField}`,
     });
   }
   console.log(board);
@@ -276,8 +296,8 @@
   board.forEach(row => {
       row.columns.forEach(column => {
         column.items.sort((a, b) => {
-          const sortResult = customSort(a, b, orderByField);
-          return orderDirection === 'asc' ? sortResult : -sortResult;
+          const sortResult = customSort(a, b, filters.orderByField);
+          return filters.orderDirection === 'asc' ? sortResult : -sortResult;
         });
       });
     });
@@ -316,53 +336,7 @@ function customSort(a, b, field) {
     }
 
 
-  function handleRowByChange(event) {
-   
-    rowByField = event.detail;
-    updateBoard();
-  }
-
-  function handleColumnByChange(event) {
- 
-    columnByField = event.detail;
-    updateBoard();
-  }
-
-  function handleOrderByChange(event) {
   
-    orderByField = event.detail;
-    updateBoard();
-  }
-
-  function handleHideEmptyRowsChange(event) {
-
-    hideEmptyRows = event.detail;
-    updateBoard();
-  }
-
-  function handleHideEmptyColumnsChange(event) {
- 
-    hideEmptyColumns = event.detail;
-    updateBoard();
-  }
-
-  function handleHideNullRowsChange(event) { // Add this function
-
-    hideNullRows = event.detail;
-    updateBoard();
-  }
-
-  function handleHideNullColumnsChange(event) { // Add this function
-  
-    hideNullColumns = event.detail;
-    updateBoard();
-  }
-
-  function handleOrderDirectionChange(event) {
-  
-    orderDirection = event.detail;
-    updateBoard();
-  }
 
 
   let boardContainer;
@@ -558,12 +532,12 @@ function customSort(a, b, field) {
     });
 
 
-    function applyHideEmptyRowsAndColumns2() {
-        if (hideEmptyRows) {
+    function applyhideEmptyRowsAndColumns2() {
+        if (filters.hideEmptyRows) {
             board = board.filter(row => row.columns.some(col => col.items.length > 0));
         }
 
-        if (hideEmptyColumns) {
+        if (filters.hideEmptyColumns) {
             let columnsToKeep = new Set<string>();
 
             board.forEach(row => {
@@ -680,26 +654,7 @@ function customSort(a, b, field) {
     <!-- <button on:click={() => addIssueMain()}>add is broken</button>  -->
 
 
-    <FilterControls
-    bind:rowByField={rowByField}
-    bind:columnByField={columnByField}
-    bind:orderByField={orderByField}
-    bind:orderDirection={orderDirection}
-    bind:hideEmptyRows={hideEmptyRows}
-    bind:hideEmptyColumns={hideEmptyColumns}
-    bind:hideNullRows={hideNullRows}
-    bind:hideNullColumns={hideNullColumns}
-    on:rowByChange={handleRowByChange}
-    on:columnByChange={handleColumnByChange}
-    on:orderByChange={handleOrderByChange}
-    on:orderDirectionChange={handleOrderDirectionChange} 
-    on:hideEmptyRowsChange={handleHideEmptyRowsChange}
-    on:hideEmptyColumnsChange={handleHideEmptyColumnsChange}
-    on:hideNullRowsChange={handleHideNullRowsChange}
-    on:hideNullColumnsChange={handleHideNullColumnsChange}
-  />
 
-    <AddButton/>
 
 
   <!--  -->
@@ -734,16 +689,16 @@ function customSort(a, b, field) {
             <span class="sr-only">Toggle</span>
           </Button>
         </Collapsible.Trigger>
-        <div class="row-title">{#if rowByField !== 'none'}{row.name}{/if}</div>
+        <div class="row-title">{#if filters.rowByField !== 'none'}{row.name}{/if}</div>
       </div>
       <Collapsible.Content>
         <Board
           items={row.columns}
           rowName={row.name}
-          rowByField={rowByField}
-          columnByField={columnByField}
-          orderBy={orderByField}
-          applyHideEmptyRowsAndColumns={applyHideEmptyRowsAndColumns2}
+          rowByField={filters.rowByField}
+          columnByField={filters.columnByField}
+          orderBy={filters.orderByField}
+          applyhideEmptyRowsAndColumns={applyhideEmptyRowsAndColumns2}
           board={board}
         />
       </Collapsible.Content>

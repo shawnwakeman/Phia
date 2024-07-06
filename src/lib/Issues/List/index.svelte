@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { get, writable } from 'svelte/store';
-    import {filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../../stores";
+    import {filteredIssuesDataStore, filteredIssuesForSnapshot, filterStoreList } from "../../../stores";
     import IssueItem from './IssueItem.svelte';
     import FilterControls from '../Kaban/Filter.svelte';
     import ListDisplayOptions from './ListDisplayOptions.svelte';
@@ -9,12 +9,32 @@
     import AddButton from '../Kaban/AddButton.svelte';
     
     let groupedIssues = [];
-    let rowByField = 'state';
-    let orderByField = 'id';
-    let orderDirection = 'asc';
-    let hideEmptyRows = false;
-    let hideNullRows = false;
-    let notFirstLoad = false;
+    
+
+    let filtersFormStore = {
+        rowByField: 'state',
+        orderByField: 'id',
+        orderDirection: 'asc',
+        hideEmptyRows: false,
+        hideNullRows: false,
+    };
+
+
+    let hydrated = false
+
+
+    const unsubscribefilter = filterStoreList.subscribe(value => {
+    if (hydrated) {
+        filtersFormStore = value;
+    // Call the required code whenever the filters are updated
+        console.log('Filters updated:', filtersFormStore);
+        updateBoard()
+
+    }
+        
+    // Your code to handle filter changes
+    hydrated = true
+    });
 
     let filters = [];
     let searchQuery = '';
@@ -64,11 +84,11 @@
 
         let result = Object.entries(grouped).map(([key, issues]) => ({ key, issues }));
 
-        if (hideEmptyRows) {
+        if (filtersFormStore.hideEmptyRows) {
             result = result.filter(group => group.issues.length > 0);
         }
 
-        if (hideNullRows) {
+        if (filtersFormStore.hideNullRows) {
             result = result.filter(group => group.key !== `No ${groupBy}`);
         }
         console.log(result);
@@ -87,35 +107,11 @@
     }
 
     // Handle display option changes
-    function handleRowByChange(event) {
-        rowByField = event.detail;
-        updateBoard();
-    }
-
-    function handleOrderByChange(event) {
-        orderByField = event.detail;
-        updateBoard();
-    }
-
-    function handleOrderDirectionChange(event) {
-        orderDirection = event.detail;
-        updateBoard();
-    }
-
-    function handleHideEmptyRowsChange(event) {
-        hideEmptyRows = event.detail;
-        updateBoard();
-    }
-
-    function handleHideNullRowsChange(event) {
-        hideNullRows = event.detail;
-        updateBoard();
-    }
-
+   
     // Update the board
     function updateBoard() {
         const filteredIssues = get(filteredIssuesDataStore);
-        groupedIssues = groupAndSortIssues(filteredIssues, rowByField, orderByField, orderDirection);
+        groupedIssues = groupAndSortIssues(filteredIssues, filtersFormStore.rowByField, filtersFormStore.orderByField, filtersFormStore.orderDirection);
     }
 
     // Initialize the board on mount
@@ -141,24 +137,13 @@
 
 <style>
     .list-container {
+        height: 100%;
         overflow-y: auto;
     }
 </style>
-<AddButton/>
 
 
-<ListDisplayOptions
-    bind:rowByField
-    bind:orderByField
-    bind:orderDirection
-    bind:hideEmptyRows
-    bind:hideNullRows
-    on:rowByChange={handleRowByChange}
-    on:orderByChange={handleOrderByChange}
-    on:orderDirectionChange={handleOrderDirectionChange}
-    on:hideEmptyRowsChange={handleHideEmptyRowsChange}
-    on:hideNullRowsChange={handleHideNullRowsChange}
-/>
+
 
 <div class="list-container">
     <h3>Issues List:</h3>

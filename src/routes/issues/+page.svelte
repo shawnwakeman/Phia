@@ -2,18 +2,22 @@
     import Kaban from '../../lib/Issues/Kaban/Kaban.svelte'
     import Card from '$lib/Issues/Kaban/Card.svelte'
     import Treemap from '../../lib/Issues/Treemap.svelte'
+    import TreemapOptions from '../../lib/Issues/TreemapDisplayOptions.svelte'
     import Sidebar from '../../lib/Sidebar.svelte'
     import List from '$lib/Issues/List/index.svelte'
+    import ListOptions from '$lib/Issues/List/ListDisplayOptions.svelte'
     import type { PageData } from './$types';
     import type { Issue, Node } from "../../types/collection";
     import { addIssue, supabase, findRootNodes } from "../../lib/supabaseClient";
-    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore, selectedIssues  } from "../../stores";
+    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore, selectedIssues   } from "../../stores";
     import FilterControls from '$lib/Issues/Kaban/Filter.svelte'
+    import KanbanOptions from '$lib/Issues/Kaban/FilterControls.svelte'
     import SelectionBar from '$lib/Issues/selectionBar.svelte'
     import { onMount } from 'svelte';
-
+    import { Rows3, SquareKanban, Network, Filter , SlidersHorizontal, DiamondPlus    } from 'lucide-svelte';
+    import { Button } from "$lib/components/ui/button/index.js";
     import { get } from 'svelte/store';
-
+    import AddButton from '$lib/Issues/Kaban/AddButton.svelte'
 
 
     export let data: { nodes: Node[], issues: Issue[] };
@@ -73,7 +77,12 @@
     });
 
 
-   
+    let rowByFieldTM = 'state';
+    let orderByFieldTM = 'id';
+    let orderDirectionTM = 'asc';
+    let hideEmptyRowsTM = false;
+    let hideNullRowsTM = false;
+    let notFirstLoadTM = false;
 
     const flipDurationMs = 130;
 
@@ -84,45 +93,71 @@
 <main class="main">
     <Sidebar/>
     <div class="content-issues">
-        <div class="non-view">         
-            <h1>Issue Tracker</h1>
-  
-       
-            <h1>{$currentSelectedIssue?.id}</h1>
-            <h1>{currentSelectedNode?.id}</h1>
-            <FilterControls/>
-    
-            <button on:click={() => createNewNode()}>add is broken</button> 
-     
-             
-            
-            
-            
-            <button>search</button>
-            <h1>root . bread . etc</h1>
-            
-            <div>
-                {#each tabs as tab}
-                    <button on:click={() => setCurrentView(tab.id)}>{tab.name}</button>
-                {/each}
-            </div>
-            
-        </div>
 
-        <!-- <div class="data"> -->
+            
+            <div class="layout">
+                <div class="left-section">
+
+                    <FilterControls/>
+
+             
+                    
+                </div>
+                <div class="middle-section">
+                    
+                    
+                 
+                    <AddButton/>
+                    {#if currentViewID === 'table'}
+                        <h1 class="font-default font-bold">List</h1>
+                        <ListOptions/>
+                    {:else if currentViewID === 'kaban'}
+                        <h1 class="font-default font-bold">Board</h1>
+                        <KanbanOptions/>
+                    {:else if currentViewID === 'treemap'}
+                        <h1 class="font-default font-bold">Treemap</h1>
+                        <TreemapOptions/>
+                    {/if}
+             
+                   
+                </div>
+                <div class="right-section">
+             
+                 
+                    
+                    <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0" on:click={() => setCurrentView("table")}>
+                        <Rows3 class="w-4 h-4 text-current group-hover:text-highlight-color" />
+                    </Button>
+                    <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0" on:click={() => setCurrentView("kaban")}>
+                        <SquareKanban class="w-4 h-4 text-current group-hover:text-highlight-color" />
+                    </Button>
+                    <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0" on:click={() => setCurrentView("treemap")}>
+                        <Network class="w-4 h-4 text-current group-hover:text-highlight-color" />
+                    </Button>
+
+                
+                </div>
+
+
+            </div>
+   
+        
+
+       
             {#if currentViewID === 'table'}
         
-        
-            <List/>
-            
+            <div class="internals-list">
+                <List/>
+            </div>
             {:else if currentViewID === 'kaban'}
+            <div class="internals-kanban">
             <Kaban/>
+             </div>
             {:else if currentViewID === 'treemap'}
                 <Treemap/>
             {/if}
-        <!-- </div> -->
-
-        
+      
+           
 
         
     </div>
@@ -146,7 +181,8 @@
       
       height: 100vh;
   
-      overflow: auto;
+      overflow: hidden;
+      background-color: #1f2937;
     }
 
     .content-issues {
@@ -154,7 +190,7 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-        overflow: hidden;
+        overflow: auto;
         user-select: none;
     }
 
@@ -190,13 +226,64 @@
     .bottom-bar button:hover {
         background: #555;
     }
+    .internals-kanban {
+        overflow: hidden;
+        background-color: rgb(13, 17, 22);
+        margin-left: 12px;
+        margin-right: 12px;
+        margin-bottom: 12px;
+        border-radius:   8px;
+    }
+    .internals-list {
+        overflow: hidden;
+        height: 100%;
+        background-color: rgb(13, 17, 22);
+        margin-left: 12px;
+        margin-right: 12px;
+        margin-bottom: 12px;
+        border-radius:   8px;
+    }
 
 
-    /* .data {
+    .layout {
         display: flex;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        padding-left: 25px;
+        padding-right: 25px;
+    }
+
+
+
+    .left-section {
         flex: 1;
-        overflow: auto;
-    } */
+        display: flex;
+        align-items: center; /* Centers content vertically */
+        
+    }
+
+
+
+    .middle-section {
+  
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .right-section {
+        flex: 1;
+        display: flex;
+   
+        align-items: center; /* Centers content vertically */
+        justify-content: right; /* Centers content horizontally */
+        text-align: center; /* Centers text horizontally within the flex container */
+    }
+
+
+
   
 
   </style>

@@ -133,6 +133,8 @@
       display: flex;
       max-height: 100vh;
       overflow: hidden;
+      background-color: #1f2937;
+      
     }
 
     .main-thing {
@@ -238,6 +240,49 @@
     }
 
 
+    
+
+    .layout {
+        display: flex;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        padding-left: 25px;
+        padding-right: 25px;
+    }
+
+
+
+    .left-section {
+        flex: 1;
+        display: flex;
+        align-items: center; /* Centers content vertically */
+        
+    }
+
+
+
+    .middle-section {
+  
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .right-section {
+        flex: 1;
+        display: flex;
+   
+        align-items: center; /* Centers content vertically */
+        justify-content: right; /* Centers content horizontally */
+        text-align: center; /* Centers text horizontally within the flex container */
+    }
+
+
+
+
+
   
 </style>
 
@@ -248,6 +293,39 @@
     
     <div class="content">
         
+        <div class="layout">
+            <div class="left-section">
+
+             asdasasd
+
+         
+                
+            </div>
+            <div class="middle-section">
+                
+                
+             
+            
+           
+        
+    
+                
+             
+                    <h1 class="font-default font-bold">Treemap</h1>
+  
+     
+         
+               
+            </div>
+            <div class="right-section">
+         
+             
+               asdasasdasd
+               saas
+
+            
+            </div>
+        </div>
 
 
         <SidePanel/>

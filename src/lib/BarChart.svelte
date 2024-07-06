@@ -1165,7 +1165,7 @@ function wrap(text, width) {
         width: 100%;
         margin: 0 auto;
         min-width: 150px;
-        background: radial-gradient(circle at 90% top, hsl(222, 45%, 7%) 0%, hsla(230, 25%, 4%, 0.774) 50%);      border: 2px solid #c2c5cc; /* Added border with a width of 2px */
+        background: radial-gradient(circle at 90% top, hsl(222, 45%, 7%) 0%, hsla(230, 25%, 4%, 0.774) 50%);     
         
     }
 
@@ -1174,10 +1174,7 @@ function wrap(text, width) {
         user-select: none;
     }
 
-    :global(.circle) {
-        background: radial-gradient(circle at 90% top, hsl(222, 45%, 7%) 0%, hsla(230, 25%, 4%, 0.774) 50%);      border: 2px solid #c2c5cc; /* Added border with a width of 2px */
 
-    }
 
     :global(.hoverable:hover) {
         stroke: rgb(240, 88, 0);

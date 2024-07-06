@@ -108,7 +108,10 @@
         console.log(value);
         const documentid = value.id;
         if (editor) {
-
+            if (prevoiusId !== 0) {
+                await saveSummary(prevoiusId, editor.getJSON(), sessionId, "summaries_issues");
+            }
+         
             const summary = await fetchSummary(value.id, "summaries_issues");
             editor.commands.setContent(summary)
             updateEditorSubscription(documentid);

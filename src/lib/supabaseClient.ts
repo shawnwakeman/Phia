@@ -497,7 +497,7 @@ export async function addIssue(parent_id, name, description, state, priority, cy
 
     // Create a temporary issue object with a temporary ID
     const tempIssue = {
-        description,
+        description: "need to remove",
         node_id: parent_id,
         project_id: projectID,
         priority,
@@ -519,7 +519,7 @@ export async function addIssue(parent_id, name, description, state, priority, cy
     const { data, error } = await supabase
         .from('issues')
         .insert([{
-            description,
+            description: "need to remove",
             node_id: parent_id,
             project_id: projectID,
             priority,
@@ -538,6 +538,8 @@ export async function addIssue(parent_id, name, description, state, priority, cy
 
     if (data) {
         console.log('Added issue:', data);
+
+        saveSummary(data[0].id, description, null, "summaries_issues")
 
         // Replace the temporary issue with the issue from the database
         issuesDataStore.update(currentIssues => {

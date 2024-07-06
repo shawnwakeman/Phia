@@ -3,8 +3,8 @@
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { writable, get } from 'svelte/store';
     import {filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../../stores";
-    
-
+    import { Filter, Trash2 } from 'lucide-svelte';
+    import { Button } from "$lib/components/ui/button/index.js";
     const filterFields = [
         { label: 'State', value: 'state' },
         { label: 'Priority', value: 'priority' },
@@ -117,8 +117,11 @@
 
     function getFilterDisplayText(field) {
         const selectedOptions = Array.from(get(filters)[field] || []);
-        return selectedOptions.length > 0 
-            ? selectedOptions.map(option => option === null ? `no ${field}` : option).join(', ') 
+ 
+        return selectedOptions.length > 1
+            ? 'multiple'
+            : selectedOptions.length === 1
+            ? selectedOptions[0] === null ? `no ${field}` : selectedOptions[0]
             : 'No filter selected';
     }
 
@@ -127,9 +130,12 @@
 
 </script>
 
+
 <DropdownMenu.Root closeOnItemClick={false} onOutsideClick={resetDisplayBehavior}>
     <DropdownMenu.Trigger>
-        {selectedFilterFieldValue ? 'Select Filter Option' : 'Select Filter Field'}
+        <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0">
+            <Filter class="w-4 h-4 text-current group-hover:text-highlight-color" />
+        </Button>
     </DropdownMenu.Trigger>
     <DropdownMenu.Content>
         {#if !selectedFilterFieldValue}
@@ -158,35 +164,68 @@
     </DropdownMenu.Content>
 </DropdownMenu.Root>
 
-<div>
-    <h3>Active Filters:</h3>
-    <ul>
-        {#each Object.entries($filters) as [field, options]}
-            <li>
-                {filterFields.find(f => f.value === field).label}
-                <button on:click={() => handleInclusionToggle(field)}>
-                    {$filterInclusions[field] || 'is'}
-                </button>
-                <DropdownMenu.Root closeOnItemClick={false} onOutsideClick={resetDisplayBehavior}>
-                    <DropdownMenu.Trigger>
-                        {getFilterDisplayText(field)}
-                    </DropdownMenu.Trigger>
-                    <DropdownMenu.Content>
-                        <DropdownMenu.Group>
-                            <DropdownMenu.Label>Change Option</DropdownMenu.Label>
-                            <DropdownMenu.Separator />
-                            {#each $filterOptions[field] as option}
-                                <DropdownMenu.CheckboxItem
-                                    checked={$filters[field]?.has(option.value) ?? false}
-                                    onCheckedChange={() => handleFilterOptionChange(field, option.value)}>
-                                    {option.label}
-                                </DropdownMenu.CheckboxItem>
-                            {/each}
-                        </DropdownMenu.Group>
-                    </DropdownMenu.Content>
-                </DropdownMenu.Root>
-                <button on:click={() => Array.from(options).forEach(option => removeFilter(field, option))}>Remove</button>
-            </li>
-        {/each}
-    </ul>
+
+<style>
+    .filters-container {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+
+    .filter-item {
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+        white-space: nowrap; /* Ensures the text does not wrap */
+    }
+
+    .filter-item > * {
+        margin-right: 5px;
+    }
+
+    .dropdown-content {
+        display: inline-block;
+    }
+
+    h3 {
+        margin-right: 10px;
+        white-space: nowrap; /* Ensures the text does not wrap */
+    }
+</style>
+
+<div class="filters-container">
+  
+    {#each Object.entries($filters) as [field, options]}
+        <div class="filter-item">
+            <span>{filterFields.find(f => f.value === field).label}</span>
+            <button on:click={() => handleInclusionToggle(field)}>
+                {$filterInclusions[field] || 'is'}
+            </button>
+            <DropdownMenu.Root closeOnItemClick={false} onOutsideClick={resetDisplayBehavior}>
+                <DropdownMenu.Trigger>
+                    {getFilterDisplayText(field)}
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content class="dropdown-content">
+                    <DropdownMenu.Group>
+                        <DropdownMenu.Label>Change Option</DropdownMenu.Label>
+                        <DropdownMenu.Separator />
+                        {#each $filterOptions[field] as option}
+                            <DropdownMenu.CheckboxItem
+                                checked={$filters[field]?.has(option.value) ?? false}
+                                onCheckedChange={() => handleFilterOptionChange(field, option.value)}>
+                                {option.label}
+                            </DropdownMenu.CheckboxItem>
+                        {/each}
+                    </DropdownMenu.Group>
+                </DropdownMenu.Content>
+            </DropdownMenu.Root>
+     
+            <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0" on:click={() => Array.from(options).forEach(option => removeFilter(field, option))}>
+                <Trash2 class="w-4 h-4 text-current group-hover:text-highlight-color" />
+            </Button>
+
+
+        </div>
+    {/each}
 </div>

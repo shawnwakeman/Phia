@@ -53,10 +53,41 @@
 
     <div class="content">
 
-        <!-- <Button on:click={toggleMode} variant="outline" size="icon">
-            <h1>one</h1>
-            <span class="sr-only">Toggle theme</span>
-        </Button> -->
+        <div class="layout">
+            <div class="left-section">
+
+             asdasasd
+
+         
+                
+            </div>
+            <div class="middle-section">
+                
+                
+             
+            
+                {#if currentViewID === 'table'}
+                    <h1 class="font-default font-bold">List</h1>
+                  
+                {:else if currentViewID === 'kaban'}
+                    <h1 class="font-default font-bold">Board</h1>
+                  
+                {:else if currentViewID === 'treemap'}
+                    <h1 class="font-default font-bold">Treemap</h1>
+               
+                {/if}
+         
+               
+            </div>
+            <div class="right-section">
+         
+             
+               asdasasdasd
+               saas
+
+            
+            </div>
+        </div>
 
 
         <div class="container">
@@ -91,7 +122,7 @@
 
     .main {
         display: flex;
-      
+        background-color: #1f2937;
         height: 100vh; /* Ensure the main container takes full viewport height */
         overflow: hidden; /* Prevent content from overflowing */
     }
@@ -113,7 +144,11 @@
         position: relative;
         max-height: 100vh; /* Prevents extending beyond the viewport height */
         overflow: hidden; /* Prevent overflow */
-
+        border-radius: 8px;
+        margin-left: 12px;
+        margin-right: 12px;
+        margin-bottom: 12px;
+        border-radius:   8px;
     }
 
     
@@ -143,6 +178,48 @@
         flex: 1;
         z-index: 2; /* Ensure Splitpanes is above BarChart but below container */
     }
+
+    
+
+    .layout {
+        display: flex;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        padding-left: 25px;
+        padding-right: 25px;
+    }
+
+
+
+    .left-section {
+        flex: 1;
+        display: flex;
+        align-items: center; /* Centers content vertically */
+        
+    }
+
+
+
+    .middle-section {
+  
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .right-section {
+        flex: 1;
+        display: flex;
+   
+        align-items: center; /* Centers content vertically */
+        justify-content: right; /* Centers content horizontally */
+        text-align: center; /* Centers text horizontally within the flex container */
+    }
+
+
+
 
 
 

@@ -71,3 +71,32 @@ export const filteredIssuesForSnapshot = derived(
 export const selectionAnchor = writable<Issue | null>(null);
 
 export const createdIssueEditor = writable<boolean>(false)
+
+export const filterStoreTM = writable({
+  rowByField: 'state',
+  orderByField: 'id',
+  orderDirection: 'asc',
+  hideEmptyRows: false,
+  hideNullRows: false,
+});
+
+export const filterStoreList= writable({
+  rowByField: 'state',
+  orderByField: 'id',
+  orderDirection: 'asc',
+  hideEmptyRows: false,
+  hideNullRows: false,
+});
+
+
+
+export const filterStoreKanBan = writable({
+  rowByField: 'state',
+  columnByField: 'state',
+  orderByField: 'id',
+  orderDirection: 'asc',
+  hideEmptyRows: false,
+  hideEmptyColumns: false,
+  hideNullRows: false,
+  hideNullColumns: false,
+});
