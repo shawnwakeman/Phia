@@ -25,7 +25,7 @@
 
     let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
 
-    let currentViewID = "treemap"
+    let currentViewID = "kaban"
 
     let show = false;
     let sidebarWidth: string = "50%"
@@ -95,7 +95,7 @@
     <div class="content-issues">
 
             
-            <div class="layout">
+            <div class="layout" id="layout-id">
                 <div class="left-section">
 
                     <FilterControls/>
@@ -154,7 +154,10 @@
             <Kaban/>
              </div>
             {:else if currentViewID === 'treemap'}
-                <Treemap/>
+                <div class="internals-treemap" id="treemap-id">
+                    <Treemap/>
+                </div>
+                
             {/if}
       
            
@@ -174,6 +177,9 @@
         height: 100%;
         margin: 0;
     }
+
+  
+
 
 
     .main {
@@ -228,7 +234,8 @@
     }
     .internals-kanban {
         overflow: hidden;
-        background-color: rgb(13, 17, 22);
+        height: 100%;
+        background: rgb(6, 6, 8);   
         margin-left: 12px;
         margin-right: 12px;
         margin-bottom: 12px;
@@ -237,12 +244,24 @@
     .internals-list {
         overflow: hidden;
         height: 100%;
-        background-color: rgb(13, 17, 22);
+         background: rgb(6, 6, 8);   
         margin-left: 12px;
         margin-right: 12px;
         margin-bottom: 12px;
         border-radius:   8px;
+
+     
+
     }
+
+    .internals-treemap {
+
+        overflow: hidden;
+
+    }
+    
+
+
 
 
     .layout {

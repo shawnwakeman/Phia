@@ -2,13 +2,14 @@
     import { flip } from 'svelte/animate';
     import { writable } from 'svelte/store';
     import * as ContextMenu from "$lib/components/ui/context-menu";
-    import { currentSelectedIssue, selectedIssues, selectionAnchor } from '../../../stores';
-    import * as Drawer from "$lib/components/ui/drawer";
+    import { currentSelectedIssue, selectedIssues, selectionAnchor, openContextMenuId   } from '../../../stores';
+    import * as Sheet from "$lib/components/ui/sheet";
     import { get } from 'svelte/store';
-  
+    import IssueView from '../issueView/IssueView.svelte';
+    import { Button } from "$lib/components/ui/button";
     export let issue;
     export let groupedIssues; // Assuming `groupedIssues` is passed as a prop to this component
-
+    import { onMount } from 'svelte';
     let drawerOpen = writable(false);
     let selected = [];
     let anchorIssue = null;
@@ -22,6 +23,8 @@
     const allIssues = groupedIssues.flatMap(group => group.issues);
 
     function clickHandler(event: MouseEvent, issue) {
+    
+        
         let currentSelection = get(selectedIssues);
         let anchor = get(selectionAnchor);
 
@@ -50,11 +53,13 @@
             selectionAnchor.set(null);
         } else {
             const target = event.target as HTMLElement;
-            if (target.classList.contains('issue-item')) {
-                currentSelectedIssue.set(issue);
-                selectedIssues.set([])
-                drawerOpen.set(true);
-            }
+
+            currentSelectedIssue.set(issue);
+            selectedIssues.set([])
+            drawerOpen.set(true);
+            console.log("triggerd");
+                
+      
         }
 
         console.log(get(selectedIssues));
@@ -71,18 +76,69 @@
 
         console.log(get(selectedIssues));
     }
+
+    function buttonClickHandler(buttonName) {
+        console.log(`${buttonName} clicked`);
+        // Your button click handler logic here
+    }
+
+
+    let isOpen = false;
+
+
+    function handleContextMenu(event, issue) {
+        event.preventDefault();
+        openContextMenuId.set(issue.id);
+    }
+
+    function handleOpenChange(open) {
+        if (!open) {
+            openContextMenuId.set(null);
+        }
+    }
+
+    onMount(() => {
+        openContextMenuId.subscribe((id) => {
+ 
+            
+            isOpen = (id === issue.id);
+        });
+    });
 </script>
 
-<ContextMenu.Root>
+
+<ContextMenu.Root open={isOpen} onOpenChange={handleOpenChange} closeOnOutsideClick={true} closeOnEscape={true}>
+
     <ContextMenu.Trigger>
 
 
-        <div class="issue-item" class:selected={selected.some(i => i.id === issue.id)} on:click={(event) => clickHandler(event, issue)}>
-            {#if selected.some(i => i.id === issue.id)}
+        <div class="issue-item" class:selected={selected.some(i => i.id === issue.id)} 
+            on:click={(event) => clickHandler(event, issue)}
+            on:contextmenu={(event) => handleContextMenu(event, issue)}
+            >
+            <!-- {#if selected.some(i => i.id === issue.id)}
+            <div class="checkbox-div">
                 <input type="checkbox" on:click|stopPropagation={() => toggleSelection(issue)} checked={true} />
-            {/if}
-            <h1 class="issue-name" on:click|stopPropagation={() => console.log("asd")}>{issue.name} - {issue.id}</h1>
+            </div>
+             
+            {/if} -->
+            <div class="issue-content">
+                <h1 class="issue-name">
+                    <span class="issue-id">#{issue.id}</span>
+                    <span class="separator">|</span>
+                    <span class="issue-name-text">{issue.name}</span>
+                </h1>
+                <div class="button-row" on:click|stopPropagation={() => buttonClickHandler('Button 1')}>
+                    <Button variant="outline">Button</Button>
+                    <Button variant="outline">Button</Button>
+                    <Button variant="outline">Button</Button>
+
+                </div>
+            </div>
         </div>
+        
+        
+        
     </ContextMenu.Trigger>
     <ContextMenu.Content>
         <ContextMenu.Item>Profile</ContextMenu.Item>
@@ -93,58 +149,83 @@
 </ContextMenu.Root>
 
 
-<Drawer.Root bind:open={$drawerOpen}>
-    <Drawer.Content>
-        <Drawer.Header>
-            <Drawer.Title>Issue Details</Drawer.Title>
-            <Drawer.Description>Details of the selected issue.</Drawer.Description>
-        </Drawer.Header>
-        <div>
-            <div><strong>Name:</strong> {issue.name}</div>
-            <div><strong>Description:</strong> {issue.description}</div>
-            <div><strong>Node ID:</strong> {issue.node_id}</div>
-            <div><strong>#</strong>{issue.project_specific_id}</div>
-            <div><strong>Cycle:</strong> {issue.cycle}</div>
-            <div><strong>Description:</strong> {issue.description}</div>
-            <div><strong>Created At:</strong> {issue.created_at}</div>
-            <div><strong>State:</strong> {issue.state}</div>
-            <div><strong>Priority:</strong> {issue.priority}</div>
-            <div><strong>Assignee:</strong> {issue.assignee}</div>
-            <div><strong>Tags:</strong> {issue.tags}</div>
-            <div><strong>Creator ID:</strong> {issue.creator_id}</div>
-            <div><strong>Completed At:</strong> {issue.completed_at}</div>
-            <div><strong>Due Date:</strong> {issue.due_date}</div>
-        </div>
-        <Drawer.Footer>
-            <button on:click={() => drawerOpen.set(false)}>Submit</button>
-            <Drawer.Close>Cancel</Drawer.Close>
-        </Drawer.Footer>
-    </Drawer.Content>
-</Drawer.Root>
+<Sheet.Root bind:open={$drawerOpen}>
+    <IssueView {drawerOpen} issue={issue}/>
+</Sheet.Root>
 
 <style>
-    .issue-item {
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 16px;
-        margin: 16px;
-        background-color: #f9f9f9;
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-    }
+.issue-item {
+    border: 2px solid #22262c;
+    border-radius: 8px;
+    padding: 8px;
+    margin-left: 24px;
+    margin-right: 16px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    background-color: hsl(218, 15%, 11%);
+    display: flex;
+    align-items: center; /* Align items to center */
+    cursor: pointer;
+    color: #adadad;
+    transition: background-color 0.3s ease;
+}
 
-    .selected {
-        background-color: red;
-    }
+.issue-item:hover {
+    background-color: #2b3038;
+    cursor: pointer;
+}
 
-    .issue-name {
-        font-size: 1.5em;
-        margin-left: 8px;
-        color: #333;
-    }
+.issue-item.selected {
+    background-color: rgb(34, 48, 87);
+}
 
-    .issue-item input[type="checkbox"] {
-        margin-right: 8px;
-    }
+.issue-item.selected:hover {
+    background-color: rgb(34, 48, 87); /* Same as selected background color to remove hover effect */
+}
+
+.issue-content {
+    display: flex;
+    flex-direction: row; /* Change to row for horizontal alignment */
+    align-items: center; /* Center items vertically */
+    width: 100%;
+    justify-content: space-between; /* Space out heading and buttons */
+}
+
+.issue-name {
+    font-size: 1.125em;
+    color: #7e7e7e;
+    flex: 1; /* Allow the heading to take available space */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 5px;
+}
+
+.issue-id {
+    color: #a2a8b3;
+    font-size: 0.9em;
+}
+
+.issue-name-text {
+    color: #a7a9ac;
+    font-weight: bold;
+}
+
+.separator {
+    color: #888;
+    font-size: 0.8em;
+}
+
+.button-row {
+    display: flex;
+    gap: 8px; /* Add some space between buttons */
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+
+
+
+
+
+
 </style>

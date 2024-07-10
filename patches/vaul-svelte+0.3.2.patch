@@ -1,0 +1,18 @@
+diff --git a/node_modules/vaul-svelte/dist/vaul/components/content.svelte b/node_modules/vaul-svelte/dist/vaul/components/content.svelte
+index 89e678c..50aee26 100644
+--- a/node_modules/vaul-svelte/dist/vaul/components/content.svelte
++++ b/node_modules/vaul-svelte/dist/vaul/components/content.svelte
+@@ -14,9 +14,10 @@ export let style = "";
+ <DialogPrimitive.Content
+ 	bind:el={$drawerRef}
+ 	style={$getContentStyle(style)}
+-	on:pointerdown={(e) => {
+-		onPress(e);
+-	}}
++
++
++   
++
+ 	on:pointerup={(e) => {
+ 		onRelease(e);
+ 	}}

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy  } from 'svelte';
   import { issuesDataStore, addedIssue, filteredIssuesDataStore, filteredIssuesForSnapshot, filterStoreKanBan } from "../../../stores";
-
+  import { slide } from "svelte/transition";
   import { addIssue } from '$lib/supabaseClient';
   import { get } from 'svelte/store';
   import Board from './Board.svelte';
@@ -12,12 +12,14 @@
   import { Button } from "$lib/components/ui/button";
   import * as Collapsible from "$lib/components/ui/collapsible";
     import AddButton from './AddButton.svelte';
-  
- 
+    import { ChevronsUpDown    } from 'lucide-svelte';
+    import { flip } from 'svelte/animate';
+    import autoAnimate from '@formkit/auto-animate';
   interface BoardColumn {
     id: number;
     name: string;
     items: Issue[];
+    count?: number; // Optional property
   }
 
   interface BoardRow {
@@ -47,7 +49,7 @@
   let rows: BoardRow[] = [];
   let board: BoardRow[] = [];
   let names: BoardColumn[] = [];
-
+  let columnCounts;
 
   let filters = {
     rowByField: 'priority',
@@ -126,7 +128,22 @@
     }
 
     applyHideEmptyRowsAndColumns();
-    names = board[0].columns;
+    const columnCountMap: { [key: string]: number } = {};
+
+    // Populate the map with counts
+    board.forEach(row => {
+    row.columns.forEach(column => {
+        if (columnCountMap[column.name]) {
+        columnCountMap[column.name] += column.items.length;
+        } else {
+        columnCountMap[column.name] = column.items.length;
+        }
+    });
+    });
+
+    // Convert the map to an array of { name, count } objects
+    columnCounts = Object.entries(columnCountMap).map(([name, count]) => ({ name, count }));
+
   }
 
   function applyHideEmptyRowsAndColumns() {
@@ -374,7 +391,6 @@ function customSort(a, b, field) {
     scrollLeft = boardContainer.scrollLeft;
     scrollTop = boardContainer.scrollTop;
     boardContainer.style.cursor = 'grabbing';
-    columnTitlesContainer.style.cursor = 'grabbing';
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('mouseleave', handleMouseLeave);
@@ -395,7 +411,6 @@ function customSort(a, b, field) {
     if (isPanning) {
       isPanning = false;
       boardContainer.style.cursor = 'grab';
-      columnTitlesContainer.style.cursor = 'grab';
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mouseleave', handleMouseLeave);
@@ -435,9 +450,8 @@ function customSort(a, b, field) {
 
     boardContainer.scrollLeft = newScrollLeft;
     boardContainer.scrollTop = newScrollTop;
-    columnTitlesContainer.scrollLeft = boardContainer.scrollLeft;
 
-    console.log('Mouse move event:', { x, y, walkX, walkY, scrollLeft: boardContainer.scrollLeft, scrollTop: boardContainer.scrollTop });
+
   });
 }
 
@@ -448,24 +462,31 @@ function customSort(a, b, field) {
     let scrollX = 0;
     let scrollY = 0;
 
+    const viewportHeight = window.innerHeight;
+
+    
+
     if (mouseX < rect.left + autoScrollThreshold) {
       scrollX = -autoScrollSpeed;
     } else if (mouseX > rect.right - autoScrollThreshold) {
       scrollX = autoScrollSpeed;
     }
-    if (mouseY < rect.top + autoScrollThreshold) {
+    if (mouseY < rect.top + autoScrollThreshold * 3) {
       scrollY = -autoScrollSpeed;
-    } else if (mouseY > rect.bottom + autoScrollThreshold) {
+    } else if (mouseY > viewportHeight - autoScrollThreshold) {
       scrollY = autoScrollSpeed;
     }
+
+
+    
 
     if (scrollX !== 0 || scrollY !== 0) {
       boardContainer.scrollLeft += scrollX;
       boardContainer.scrollTop += scrollY;
-      columnTitlesContainer.scrollLeft = boardContainer.scrollLeft;
+   
       console.log(`Auto-scrolling applied: scrollX=${scrollX}, scrollY=${scrollY}`);
     } else {
-      console.log("No auto-scrolling applied");
+
     }
   }
 
@@ -489,41 +510,25 @@ function customSort(a, b, field) {
     stopAutoScroll();
   }
 
-  function syncScroll() {
-  columnTitlesContainer.scrollLeft = boardContainer.scrollLeft;
-    }
 
-    let resizeObserver;
-    function adjustRowContainerWidth() {
-    const boardWidth = boardContainer.scrollWidth;
-    document.querySelectorAll('.row-container').forEach(container => {
-      container.style.width = `${boardWidth}px`;
-    });
-  }
 
   onMount(() => {
     updateBoard();
 
-    resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        adjustRowContainerWidth();
-      }
-    });
 
-    resizeObserver.observe(boardContainer);
  
 
     boardContainer.addEventListener('mousedown', handleMouseDown);
-    boardContainer.addEventListener('scroll', syncScroll);
+ 
     window.addEventListener('mousemove', handleGlobalMouseMove);
 
 
 
     return () => {
         boardContainer.removeEventListener('mousedown', handleMouseDown);
-        boardContainer.removeEventListener('scroll', syncScroll);
+  
         window.removeEventListener('mousemove', handleGlobalMouseMove);
-        window.removeEventListener('resize', adjustRowContainerWidth);
+     
     };
   });
 
@@ -532,7 +537,7 @@ function customSort(a, b, field) {
     });
 
 
-    function applyhideEmptyRowsAndColumns2() {
+    function applyHideEmptyRowsAndColumns2() {
         if (filters.hideEmptyRows) {
             board = board.filter(row => row.columns.some(col => col.items.length > 0));
         }
@@ -577,7 +582,6 @@ function customSort(a, b, field) {
     width: 100%;
     height: 100%;
     cursor: grab;
-    border: 1px solid #333333;
     user-select: none;  /* user */
     
   }
@@ -585,50 +589,104 @@ function customSort(a, b, field) {
     cursor: grabbing;
   }
   .column-titles-container {
-  overflow-x: hidden; /* Allow horizontal scrolling */
-  overflow-y: hidden; /* Prevent vertical scrolling */
-  white-space: nowrap; /* Prevent line breaks */
-  user-select: none;  /* user */
-}
 
-    .column-titles {
-        display: inline-flex; /* Change to inline-flex to allow horizontal scrolling */
-        justify-content: flex-start;
-        margin-bottom: 2em;
-        padding: 2.05em;
+       
+        user-select: none;  /* user */
+        position: sticky;
+        position: -webkit-sticky; /* Safari */
         position: sticky;
         top: 0;
+   
+        padding-top: 1em;
+        background: rgb(6, 6, 8);   
         z-index: 10;
-        border-radius: 8px; /* Rounded corners for the column titles */
+        height: 7.5%;
+        width: max-content;
+    }
+
+    .column-titles {
+        display: flex; /* Change to inline-flex to allow horizontal scrolling */
+        justify-content: flex-start;
+        padding-left: 2.05em;
+        padding-right: 2.05em;
+ 
+        position: sticky;
+        top: 0;
+    
+
     }
 
 
   .column-title {
 
     width: 370px;
-    padding: 1em; /* Increased padding inside each column title */
-    border-radius: 8px; /* Rounded corners for each column title */
-    background-color: #ffffff; /* Background color for each column title */
+   
+
+
     margin-right: 2em; /* Increased margin between column titles */
     display: flex; /* Use flexbox for centering content */
-    align-items: center; /* Vertically center content */
-    justify-content: center; /* Horizontally center content */
+    align-items: left; /* Vertically center content */
+    justify-content: left; /* Horizontally center content */
     text-align: center; /* Center text */
-    border: 1px solid #cccccc; /* Add a border to the column titles */
+
   }
+
+
   
-      .row-title {
+    .row-title {
+        width: 370px;
+      
+
+
+        margin-right: 2em; /* Increased margin between column titles */
+        display: flex; /* Use flexbox for centering content */
+        align-items: left; /* Vertically center content */
+        justify-content: left; /* Horizontally center content */
+        text-align: center; /* Center text */
+        background-color: #333333;
+  }
+  .row-container {
+
+    user-select: none;  /* user */
+        position: sticky;
+        position: relative; /* Ensure the parent div is relatively positioned */
+        position: -webkit-sticky; /* Safari */
+        position: sticky;
+        top: 7.5%;
+   
+
+        background: rgb(46, 46, 173);   
+        z-index: 5;
+        width: max-content;
+
+}
+
+  .row-content {
+    flex: 1;
+    display: flex;
+
+  }
+
+  .toggle-button {
+    margin-right: 1em;
+  }
+
+  .internals {
+  height: 7.5%;
+
+  }
+
+  .header-row {
     position: sticky;
     left: 0;
     background-color: #ffffff; /* Match the background color with the column titles */
     z-index: 9; /* Ensure it stays behind the column titles but above the board */
-    padding: 1em;
-    border-right: 1px solid #cccccc; /* Add a right border to separate from the board */
+
   }
-  .row-container {
+
+  .header-container {
     display: flex;
     align-items: center;
-    padding: 1em;
     background-color: #ffffff;
     border-bottom: 1px solid #cccccc;
     position: sticky; /* Make the whole container sticky */
@@ -637,71 +695,105 @@ function customSort(a, b, field) {
     width: 100%; /* Ensure the row container stretches with content */
     min-width: 100%; /* Ensure the row container stretches with content */
 }
-  .row-content {
-    flex: 1;
-    display: flex;
-    min-width: 100%; /* Ensure the content stretches the full width */
-  }
 
-  .toggle-button {
-    margin-right: 1em;
-  }
+.row-container,
+.collapsible-content {
+    transition: all 0.3s ease;
+}
+
+
 
 </style>
 
-<div class="main-container" >
-
-    <!-- <button on:click={() => addIssueMain()}>add is broken</button>  -->
 
 
 
 
 
-  <!--  -->
-</div >
+ <div 
+    bind:this={boardContainer} 
+    class="board-container" 
+    on:mousedown={handleMouseDown} 
+    on:mouseup={handleMouseUp} 
+    on:mouseleave={handleMouseLeave} 
+    on:mousemove={handleMouseMove}
+    role="application"
+    >
 
 
-<div class="column-titles-container" bind:this={columnTitlesContainer}>
-    <div class="column-titles">
-        {#each names as column}
-            <div class="column-title">
-                <AddButton/>
-                {column.name}
-            </div>
-      
-        {/each}
-    </div>
-  </div>
 
-
-  <div bind:this={boardContainer} class="board-container" 
-  on:mousedown={handleMouseDown} 
-  on:mouseup={handleMouseUp} 
-  on:mouseleave={handleMouseLeave} 
-  on:mousemove={handleMouseMove}>
-
-  {#each board as row (row.id)}
-    <Collapsible.Root open={true}>
-      <div class="row-container">
-        <Collapsible.Trigger asChild let:builder>
-          <Button builders={[builder]} variant="ghost" size="sm" class="toggle-button">
-            Toggle
-            <span class="sr-only">Toggle</span>
-          </Button>
-        </Collapsible.Trigger>
-        <div class="row-title">{#if filters.rowByField !== 'none'}{row.name}{/if}</div>
+    <div class="column-titles-container">
+        <div class="column-titles">
+            {#each columnCounts as column}
+                <div class="column-title">
+                    <div class="font-default  text-slate-300">
+                        <h1>
+                            <span class="key font-semibold text-lg "> {column.name}</span> 
+                            <span class="issues-count ml-1">{column.count}</span>              
+                        </h1>          
+                    </div>
+                </div>
+            {/each}
+        </div>
       </div>
-      <Collapsible.Content>
-        <Board
-          items={row.columns}
-          rowName={row.name}
-          rowByField={filters.rowByField}
-          columnByField={filters.columnByField}
-          orderBy={filters.orderByField}
-          applyhideEmptyRowsAndColumns={applyhideEmptyRowsAndColumns2}
-          board={board}
-        />
-      </Collapsible.Content>
-    </Collapsible.Root>
-  {/each}
+
+      <ul use:autoAnimate> <!-- 👀 thats it folks! -->
+        {#each board as row (row.id)}
+     
+        <Collapsible.Root open={true}>
+
+            <div class="row-container">
+            
+                <div class="column-titles">
+                    {#each columnCounts as column}
+                        <div class="row-title"></div>
+                    {/each}
+                </div>
+                    <div class="header-container">
+                        <div class="font-default text-slate-300 header-row">
+                         
+                            <h1>
+                                <span>
+                                    <Collapsible.Trigger>
+                                        <Button variant="outline" class="bg-transparent border-none group p-0 m-0">
+                                            <ChevronsUpDown class="w-4 h-4 text-current group-hover:text-highlight-color" />
+                                        </Button>
+                                    </Collapsible.Trigger>
+                                </span>
+                                <span class="key font-semibold text-lg"> {row.name}</span> 
+                                <span class="issues-count ml-1">{issues.length}</span>
+                             
+                            </h1>
+                        </div>
+
+                    
+                    </div>
+    
+                    
+
+                
+              </div>
+
+          
+
+          <div class="collapsible-content">
+            <Collapsible.Content  transition={slide} transitionConfig={{ duration: 400}}>
+                <Board
+                  items={row.columns}
+                  rowName={row.name}
+                  rowByField={filters.rowByField}
+                  columnByField={filters.columnByField}
+                  orderBy={filters.orderByField}
+                  applyHideEmptyRowsAndColumns={applyHideEmptyRowsAndColumns2}
+                  board={board}
+                />
+              </Collapsible.Content>
+            </div>
+            </Collapsible.Root>
+
+   
+          
+      {/each}
+    </ul>
+  
 </div>

@@ -13,6 +13,7 @@
     export let applyHideEmptyRowsAndColumns;
     export let board;
     let exportingColumns = items;
+    import { cubicOut } from 'svelte/easing';
 
     const flipDurationMs = 130;
 
@@ -22,6 +23,8 @@
         items[colIdx].items = e.detail.items;
         items = [...items];
     }
+
+    
 
     async function handleDndFinalizeCards(cid, e) {
         isDragging.set(false); 
@@ -64,21 +67,25 @@
         board = [...board]; //Fix
         items = [...items];
     }
+
+    import { fade } from 'svelte/transition';
 </script>
 
 <style>
     .board {
         display: flex;
-        flex-wrap: nowrap;
+        flex-direction: row;
         width: 100%;
         padding: 1em;
-        margin-bottom: 40px;
+
     }
+
+
 </style>
 
 
-<section class="board">
+<div class="board">
     {#each items as column (column.id)}
         <Column {column} {flipDurationMs} {handleDndConsiderCards} {handleDndFinalizeCards} {board}/>
     {/each}
-</section>
+</div>

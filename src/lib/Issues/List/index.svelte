@@ -7,9 +7,15 @@
     import ListDisplayOptions from './ListDisplayOptions.svelte';
     import * as Collapsible from "$lib/components/ui/collapsible";
     import AddButton from '../Kaban/AddButton.svelte';
-    
+    import { ChevronsUpDown    } from 'lucide-svelte';
+    import { Button } from "$lib/components/ui/button";
+    import { slide } from "svelte/transition";
+
+
+    import * as ContextMenu from "$lib/components/ui/context-menu";
+
     let groupedIssues = [];
-    
+     
 
     let filtersFormStore = {
         rowByField: 'state',
@@ -138,20 +144,60 @@
 <style>
     .list-container {
         height: 100%;
+        padding-bottom: 50px;
+        padding-top: 20px;
         overflow-y: auto;
+        align-items: center;
+        justify-content: center;
     }
+
+    .header-container {
+ 
+        padding: 10px; /* Add some padding if needed */
+
+    }
+
+    ul {
+        background: rgb(6, 6, 8);   
+        padding-bottom: 1px;
+        padding-top: 1px;
+
+    }
+
+
 </style>
 
 
 
 
 <div class="list-container">
-    <h3>Issues List:</h3>
+
     {#each groupedIssues as { key, issues }}
         <Collapsible.Root open={true}>
-            <AddButton/>
-            <Collapsible.Trigger class="collapsible-header"><h1>{key}</h1></Collapsible.Trigger>
-            <Collapsible.Content class="collapsible-content">
+       
+            <div class="header-containerr font-default flex items-center justify-between space-x-4 px-6  text-slate-300">
+                <h1>
+             
+                    <span class="key font-semibold text-lg ">{key}</span> 
+                    <span class="issues-count ml-1">{issues.length}</span>
+                 
+                </h1>
+                <div>
+                    <AddButton/>
+                    <Collapsible.Trigger>
+                    
+               
+                        <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0">
+                            <ChevronsUpDown class="w-4 h-4 text-current group-hover:text-highlight-color" />
+                        </Button>
+    
+                    </Collapsible.Trigger>
+                </div>
+                
+       
+            </div>
+        
+            <Collapsible.Content class="collapsible-content" transition={slide} transitionConfig={{ duration: 400}}>
                 <ul>
                     {#each issues as issue}
                         <IssueItem {issue} {groupedIssues} />

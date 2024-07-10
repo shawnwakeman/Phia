@@ -23,7 +23,7 @@
     
 
     export let completionApi = "/api/generate";
-    let className = "relative min-h-[500px] w-full max-w-screen-lg border-stone-200 bg-white p-12 pb-24 sm:pb-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg";
+    let className = "editor";
     export { className as class };
     export let defaultValue = defaultEditorContent;
     export let extensions = [];
@@ -69,7 +69,7 @@
     $: if (editor && !hydrated) {
       const value = disableLocalStorage ? defaultValue : $content;
       if (value) {
-        editor.commands.setContent(value);
+        // editor.commands.setContent(value);
       }
       hydrated = true;
     }
@@ -89,8 +89,7 @@
         const json = editor2.getJSON();
         content.set(json);
       }
-      if (currentSelectedIssue) {
-        console.log("aksjdhasjkhdlkajshdkjashdkjhaslkdjh");
+      if ($currentSelectedIssue) {
         await saveSummary($currentSelectedIssue.id, editor2.getJSON(), sessionId, "summaries_issues");
         
       }
@@ -98,36 +97,47 @@
       onDebouncedUpdate(editor2);
     }, debounceDuration);
 
-    let prevoiusId = 0
-    onMount(() => {
-      initializeEditor();
+
+    onMount(async () => {
+
       // Subscribe to changes in the currentSelectedIssue
 
+        if ($currentSelectedIssue) {
+            initializeEditor()
+            console.log($currentSelectedIssue);
+            const documentid = $currentSelectedIssue.id;
+            if (editor) {
 
-      currentSelectedIssue.subscribe( async value => {
-        console.log(value);
-        const documentid = value.id;
-        if (editor) {
-            if (prevoiusId !== 0) {
-                await saveSummary(prevoiusId, editor.getJSON(), sessionId, "summaries_issues");
+            
+                const summary = await fetchSummary($currentSelectedIssue.id, "summaries_issues");
+                console.log(summary);
+                editor.commands.setContent(summary)
+                updateEditorSubscription(documentid);
+
+
+
+    
             }
-         
-            const summary = await fetchSummary(value.id, "summaries_issues");
-            editor.commands.setContent(summary)
-            updateEditorSubscription(documentid);
-            prevoiusId = value.id
+
         }
-      });
-      return () => {
+
+     
        
-      };
+
+
+
+
+      
+
     });
+    
   
     function initializeEditor() {
       editor = new Editor({
         element,
         onTransaction: () => {
           editor = editor;
+         
         },
         extensions: [...defaultExtensions, ...extensions],
         editorProps: {
@@ -145,7 +155,7 @@
 
             const currentState = editor.getJSON();
             const changes = diff(lastSentState, currentState);
-            if (changes) {
+            if (changes ) {
                 await saveSummaryChanges($currentSelectedIssue.id, changes, sessionId, "summaries_issues");
                 lastSentState = currentState;
             }
@@ -199,11 +209,7 @@
 
   </script>
   
-  <div>
-    <div id="editor" bind:this={element}></div>
-  
-  </div>
-  
+<div class=" feature-wrapper wrapper">
   {#if editor && editor.isEditable}
     <EditorBubbleMenu {editor} />
   {/if}
@@ -216,4 +222,34 @@
   </div>
   
   <Toasts />
-  
+
+
+</div>
+
+
+
+<style>
+
+.editor {
+
+    height: 100%;
+    overflow: auto;
+
+    padding-left: 2em;
+    padding-top: 2em;
+    padding-bottom: 2em;
+
+
+
+}
+
+.wrapper {
+    margin-right: 20px;
+    margin-left: 15px;
+    margin-top: 2vw; 
+    margin-bottom: 2vw;
+    padding-right: 5px;
+    overflow: hidden; /* Added to prevent overflow issues */
+    height: 100%;
+}
+</style>

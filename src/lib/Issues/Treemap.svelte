@@ -1,17 +1,18 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { Node, Issue } from "../../types/collection";
-    import { selectedNodeStore, nodesDataStore, issuesDataStore, currentSelectedIssue, selectedIssues,filteredIssuesDataStore, filterStoreTM } from "../../stores";
+    import { selectedNodeStore, nodesDataStore, issuesDataStore, currentSelectedIssue, selectedIssues,filteredIssuesDataStore, filterStoreTM, openContextMenuId } from "../../stores";
     import { get } from "svelte/store";
     import * as d3 from 'd3';
     import IssueItem from './List/IssueItem.svelte';
     import * as Drawer from "$lib/components/ui/drawer";
     import { writable } from 'svelte/store';
     import Options from './TreemapDisplayOptions.svelte'
-
-
-  let drawerOpen = writable(false);
-
+    import IssueView from './issueView/IssueView.svelte';
+    import * as ContextMenu from "$lib/components/ui/context-menu";
+    import ContextMenuItem from '$lib/components/ui/context-menu/context-menu-item.svelte';
+    let drawerOpen = writable(false);
+    import * as Sheet from "$lib/components/ui/sheet";
 
 
 // Example usage:
@@ -211,36 +212,74 @@ const gatherAllIssues = (node) => {
         console.log('Filters updated:', filters);
         // Your code to handle filter changes
     });
+    
    
+    const showContextMenu = writable(false);
+
 
     onMount(() => {
 
 
-        const parentDiv = document.getElementById('treemap');
-        const parentRect = parentDiv.getBoundingClientRect()
-        let width = parentRect.width;
-        let height = parentRect.height
+
+        let width = 0;
+        let height = 0;
+
+ 
+       
+
+
         function updateDimensions() {
-            const parentDiv = document.getElementById('treemap');
-            const parentRect = parentDiv.getBoundingClientRect();
-            const parentWidth = parentRect.width;
-            const parentHeight = parentRect.height
-                console.log(parentWidth, parentHeight);
-                width = parentWidth;
-                height = parentHeight;
-                updateViewBox(parentWidth, parentHeight);
-                drawTreeMap(data)
+            const parentDiv = document.getElementById('data');
+            const layoutDiv = document.getElementById('layout-id');
+            const sidebarDiv = document.getElementById('sidebar-div');
+            const svgElement = document.getElementById('treemap');
+            if (layoutDiv && parentDiv && sidebarDiv && svgElement) {
+
+                const layoutHeight = parseFloat(window.getComputedStyle(layoutDiv).height);
+                const sidebarWidth = parseFloat(window.getComputedStyle(sidebarDiv).width);
+
+                
+                parentDiv.style.height = `${window.innerHeight - layoutHeight}px`;
+                parentDiv.style.width = `${window.innerWidth - sidebarWidth}px`;
+
+                width = window.innerWidth - sidebarWidth - 25;
+                height = window.innerHeight - layoutHeight - 18;
+
+                const dataDiv = document.getElementById('data');
+            
+                
+                // Get the dimensions of the data div
+                const widthSvg = dataDiv.clientWidth - 15;
+                const heightSvg = dataDiv.clientHeight - 15;
+                
+                // Set the dimensions of the SVG element
+                svgElement.setAttribute('width', widthSvg);
+                svgElement.setAttribute('height', heightSvg);
+
+
+           
+                
+
+
+                updateViewBox(width, height);
+
+                d3.select("#treemap")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                drawTreeMap(data);
+            }
+               
+           
         }
 
         const svg = d3.select("#treemap")
             .attr("viewBox", [0, 0, width, height])
-            .style("font", "10px sans-serif");
-
+            .style("font", "10px sans-serif")
 
         function updateViewBox(newWidth: number, newHeight: number) {
             d3.select("#treemap")
                 .attr("viewBox", `0 0 ${newWidth} ${newHeight}`);
-
 
    
         }
@@ -285,7 +324,7 @@ const gatherAllIssues = (node) => {
 
         
         window.addEventListener('resize', () => {
-            if( data) {
+            if(data) {
                 updateDimensions();
          
             }
@@ -293,7 +332,7 @@ const gatherAllIssues = (node) => {
              
             
         });
-
+    
         let isZoomed = false;
         let currentZoomNode = null;
 
@@ -328,7 +367,7 @@ const gatherAllIssues = (node) => {
 
         
 
-            svg.selectAll("*").remove();
+            svg.selectAll("g").remove();
 
             const nodes = svg.selectAll("g")
             .data(root.descendants())
@@ -391,8 +430,8 @@ const gatherAllIssues = (node) => {
                         return `<div>${d.data.name}</div>`;
                     }
                 })
-                .on("click", (event, d) => handleClick(event, d));
-
+                .on("click", (event, d) => handleClick(event, d))
+                .on("contextmenu", (event, d) => handleRightClick(event, d)); 
                 function handleClick(event, d) {
                     if (event.ctrlKey) {
                         // Control key is pressed
@@ -440,7 +479,23 @@ const gatherAllIssues = (node) => {
                         drawTreeMap(nodesWithParents);
                     }
                 }
+            function handleRightClick(event, d) {
+            event.preventDefault(); // Prevent the default context menu
+            if (d.data.value !== undefined) {
+                // Handle right-click on an issue
+                console.log("Right-clicked on issue:", d.data);
 
+                showContextMenu.set(true);
+
+
+                // Add your custom right-click logic here
+            } else {
+                // Handle right-click on a node\
+                showContextMenu.set(false);
+                console.log("Right-clicked on node:", d.data);
+                // Add your custom right-click logic here
+            }
+        }
 
         // Update styles for selected issues
         function updateStyles() {
@@ -456,82 +511,89 @@ const gatherAllIssues = (node) => {
 
     updateDimensions()
 
+   
+       
+
+    
+
     return () => {
         unsubscribe();
     }
 
+
+
+
+
   });
 
 
+    
 
   </script>
+  
+<ContextMenu.Root>
+    <ContextMenu.Trigger>
+        
+     
+            <div class="data" id="data">
+        
+               
+            
+                    <svg id="treemap"></svg>
+                    
+        
+             </div>
+
+    </ContextMenu.Trigger>
+    {#if $showContextMenu}
+    <ContextMenu.Content>
+        <ContextMenu.Item>Profile</ContextMenu.Item>
+        <ContextMenu.Item>Billing</ContextMenu.Item>
+        <ContextMenu.Item>Team</ContextMenu.Item>
+        <ContextMenu.Item>Subscription</ContextMenu.Item>
+      </ContextMenu.Content>
+    {/if}
+
+    </ContextMenu.Root>
 
 
-<div class="data">
-    <div class="treemap-container">
-        <svg id="treemap"></svg>
-    </div>
-</div>
 
 
-
-
-<Drawer.Root bind:open={$drawerOpen}>
-    <Drawer.Content>
-      <Drawer.Header>
-        <Drawer.Title>Issue Details</Drawer.Title>
-        <Drawer.Description>Details of the selected issue.</Drawer.Description>
-      </Drawer.Header>
-      <div>
-        <div><strong>Name:</strong> {$currentSelectedIssue.name}</div>
-        <div><strong>Description:</strong> {$currentSelectedIssue.description}</div>
-        <div><strong>Node ID:</strong> {$currentSelectedIssue.node_id}</div>
-        <div><strong>#</strong>{$currentSelectedIssue.project_specific_id}</div>
-        <div><strong>Cycle:</strong> {$currentSelectedIssue.cycle}</div>
-        <div><strong>Description:</strong> {$currentSelectedIssue.description}</div>
-        <div><strong>Created At:</strong> {$currentSelectedIssue.created_at}</div>
-        <div><strong>State:</strong> {$currentSelectedIssue.state}</div>
-        <div><strong>Priority:</strong> {$currentSelectedIssue.priority}</div>
-        <div><strong>Assignee:</strong> {$currentSelectedIssue.assignee}</div>
-        <div><strong>Tags:</strong> {$currentSelectedIssue.tags}</div>
-        <div><strong>Creator ID:</strong> {$currentSelectedIssue.creator_id}</div>
-        <div><strong>Completed At:</strong> {$currentSelectedIssue.completed_at}</div>
-        <div><strong>Due Date:</strong> {$currentSelectedIssue.due_date}</div>
-
-      </div>
-      <Drawer.Footer>
-        <button on:click={() => drawerOpen.set(false)}>Submit</button>
-        <Drawer.Close>Cancel</Drawer.Close>
-      </Drawer.Footer>
-    </Drawer.Content>
-  </Drawer.Root>
+<Sheet.Root bind:open={$drawerOpen}>   
+    <IssueView {drawerOpen} issue={$issuesDataStore.find(issue => issue.id === $currentSelectedIssue?.id)}/>
+  </Sheet.Root>
   
 <style>
-  #treemap {
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
+
+
+
+    #treemap {
+        margin: 0;
+    }
+
+
+
+    .treemap-container {
+
+        overflow: hidden;
   }
 
-  .treemap-container {
-    flex: 1; /* Take up remaining space */
-    
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-bottom: 12px;
-  
-  }
 
 
   :global(.selected-rect) {
     stroke: red;
     stroke-width: 2px;
-}
+    }
 
     .data {
-        display: flex;
-        flex: 1;
-        overflow: auto;
+  
+        overflow: hidden;
+
+        padding-top: 5px;
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-bottom: 15px;
+      
     }
   
 

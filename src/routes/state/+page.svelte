@@ -149,6 +149,7 @@
         margin-right: 12px;
         margin-bottom: 12px;
         border-radius:   8px;
+        
     }
 
     

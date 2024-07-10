@@ -140,7 +140,7 @@ export const defaultExtensions = [
             if (node.type.name === 'heading') {
                 return `Heading ${node.attrs.level}`;
             }
-            return "Press '/' for commands.";
+            return "Add description...";
         },
     
     }),

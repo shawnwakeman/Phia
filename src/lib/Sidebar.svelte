@@ -29,11 +29,12 @@
       overflow-y: auto;
       overflow-x: hidden; /* Hide horizontal scrollbar */
       user-select: none;  /* user */
+     
     }
   
     .sidebar:hover {
       width: 13rem;
-
+  
     }
   
     .sidebar-item {
@@ -67,7 +68,7 @@
     }
   </style>
   
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar-div">
     <ul>
       {#each items as item}
         <li>

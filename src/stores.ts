@@ -45,8 +45,12 @@ export const targetStatesStore = writable<TargetStates[]>();
 export const currentBlock = writable<Blocks | null>();
 
 export const isDragging = writable(false);
-export let AddDrawerOpen  = writable(false);
+export let drawerOpen  = writable(false);
 export const selectedIssues = writable<Issue[]>([]);// Store for selected issues
+
+
+export const openContextMenuId = writable(null);
+
 
 
 export const filteredIssuesForSnapshot = derived(

@@ -11,6 +11,7 @@
     export let handleDndFinalizeCards;
     export let board;
     import * as ContextMenu from "$lib/components/ui/context-menu";
+    import autoAnimate from '@formkit/auto-animate';
     $: selected = get(selectedIssues);
 
     let isHovered = false;
@@ -24,26 +25,30 @@
     function handleMouseLeave() {
         isHovered = false;
     }
+
+
+    
 </script>
 
 <style>
     .column {
-        min-height: 200px;
         flex: 0 0 370px;
         padding: 0.5em;
         margin: 1em;
-        border: 1px solid #333333;
         display: flex;
         flex-direction: column;
         overflow: hidden;
         position: relative;
+     
     }
+
 
     .column-content {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
         width: 100%;
+        height: fit-content; /* Set initial height */
     }
 
 
@@ -52,8 +57,9 @@
     .column:hover .plus-button {
         display: flex;
     }
-</style>
 
+
+</style>
 
 <div class="column" on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseLeave}>
     <div class="column-content" use:dndzone={{ items: column.items, flipDurationMs }}

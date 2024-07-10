@@ -2,9 +2,11 @@
     import { flip } from 'svelte/animate';
     import { writable } from 'svelte/store';
     import * as ContextMenu from "$lib/components/ui/context-menu";
-    import { currentSelectedIssue, selectedIssues } from '../../../stores';
-    import * as Drawer from "$lib/components/ui/drawer";
+    import { currentSelectedIssue, selectedIssues, openContextMenuId } from '../../../stores';
+    import IssueView from '../issueView/IssueView.svelte';
+    import * as Sheet from "$lib/components/ui/sheet";
     import { get } from 'svelte/store';
+    import { onMount } from 'svelte';
     export let item;
     export let flipDurationMs;
     export let board;
@@ -113,6 +115,31 @@
             console.log("No issue ID found on the clicked element.");
         }
     }
+
+
+    let isOpen = false;
+
+
+    function handleContextMenu(event, issue) {
+        event.preventDefault();
+        openContextMenuId.set(issue.id);
+    }
+
+    function handleOpenChange(open) {
+        if (!open) {
+            openContextMenuId.set(null);
+        }
+    }
+
+    onMount(() => {
+        openContextMenuId.subscribe((id) => {
+
+            
+            isOpen = (id === item.id);
+        });
+    });
+
+
   </script>
   
 <style>
@@ -138,13 +165,14 @@
     }
 </style>
 
-<ContextMenu.Root>
+<ContextMenu.Root open={isOpen} onOpenChange={handleOpenChange} closeOnOutsideClick={true} closeOnEscape={true}>
     <ContextMenu.Trigger>
         <div 
             class="card" 
             data-id={item.id} 
             class:selected={selected.some(issue => issue.id === item.id)} 
-            on:click={handleClick}>
+            on:click={handleClick}
+            on:contextmenu={(event) => handleContextMenu(event, item)}>
             <div><strong>ID:</strong> {item.id}</div>
             <div><strong>Name:</strong> {item.name}</div>
             <div><strong>Node ID:</strong> {item.node_id}</div>
@@ -159,35 +187,10 @@
     </ContextMenu.Content>
 </ContextMenu.Root>
 
-  
-  
-  
-  <Drawer.Root bind:open={$drawerOpen}>
-    <Drawer.Content>
-      <Drawer.Header>
-        <Drawer.Title>Issue Details</Drawer.Title>
-        <Drawer.Description>Details of the selected issue.</Drawer.Description>
-      </Drawer.Header>
-      <div>
-        <div><strong>Name:</strong> {item.name}</div>
-        <div><strong>Description:</strong> {item.description}</div>
-        <div><strong>Node ID:</strong> {item.node_id}</div>
-        <div><strong>#</strong>{item.project_specific_id}</div>
-        <div><strong>Cycle:</strong> {item.cycle}</div>
-        <div><strong>Description:</strong> {item.description}</div>
-        <div><strong>Created At:</strong> {item.created_at}</div>
-        <div><strong>State:</strong> {item.state}</div>
-        <div><strong>Priority:</strong> {item.priority}</div>
-        <div><strong>Assignee:</strong> {item.assignee}</div>
-        <div><strong>Tags:</strong> {item.tags}</div>
-        <div><strong>Creator ID:</strong> {item.creator_id}</div>
-        <div><strong>Completed At:</strong> {item.completed_at}</div>
-        <div><strong>Due Date:</strong> {item.due_date}</div>
 
-      </div>
-      <Drawer.Footer>
-        <button on:click={() => drawerOpen.set(false)}>Submit</button>
-        <Drawer.Close>Cancel</Drawer.Close>
-      </Drawer.Footer>
-    </Drawer.Content>
-  </Drawer.Root>
+  
+<Sheet.Root bind:open={$drawerOpen}>
+   
+
+    <IssueView {drawerOpen} issue={item}/>
+</Sheet.Root>

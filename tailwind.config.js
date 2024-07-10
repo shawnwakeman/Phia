@@ -81,6 +81,7 @@ const config = {
 				title: ['var(--font-title)', 'Inter'],
 				default: ['var(--font-default)', 'Inter']
 			},
+	
 
 
 

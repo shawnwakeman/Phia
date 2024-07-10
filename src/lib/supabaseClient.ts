@@ -379,9 +379,7 @@ export async function saveSummary(nodeId: number, summaryContent: JSONContent = 
     type: "doc",
     content: [
         {
-            type: "heading",
-            attrs: { level: 1 },
-            content: [{ type: "text", text: "Summary" }]
+            
         }
     ]
 }, sessionId: UUID, table: string) {
@@ -422,9 +420,7 @@ export async function fetchSummary(nodeId: number, table: string) {
         type: "doc",
         content: [
             {
-                type: "heading",
-                attrs: { level: 1 },
-                content: [{ type: "text", text: "Summary" }]
+        
             }
         ]
     };
@@ -573,9 +569,13 @@ function sanitizeIssue(rawIssue: any): Issue {
         priority: rawIssue.priority === null ? null : String(rawIssue.priority),
         state: rawIssue.state === null ? null : String(rawIssue.state),
         columnIndex: Number(rawIssue.columnIndex),
-        creator_id: Number(rawIssue.creator_id), // Assuming creator_id should always be a number
+        creator_id: rawIssue.creator_id === null ? null : Number(rawIssue.creator_id), // Assuming creator_id can be null
         completed_at: rawIssue.completed_at ? new Date(rawIssue.completed_at).toISOString() : null,
-        due_date: rawIssue.due_date ? new Date(rawIssue.due_date).toISOString() : null
+        due_date: rawIssue.due_date ? new Date(rawIssue.due_date).toISOString() : null,
+        assignee: rawIssue.assignee === null ? null : String(rawIssue.assignee),
+        cycle: rawIssue.cycle === null ? null : String(rawIssue.cycle),
+        tags: rawIssue.tags === null ? null : String(rawIssue.tags),
+        project_specific_id: rawIssue.project_specific_id === null ? null : Number(rawIssue.project_specific_id)
     };
 }
 
@@ -583,6 +583,8 @@ function sanitizeIssue(rawIssue: any): Issue {
 
 
 export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes an 'id' field
+ 
+    
     if (!issue || !issue.id) {
         console.error('Issue or Issue ID is null or undefined');
         return { success: false, error: 'Invalid issue object' };
@@ -595,15 +597,18 @@ export async function updateIssue(issue: Issue) { // Assuming 'Issue' includes a
     const { data, error } = await supabase
         .from('issues')
         .update({
-        // Specify the fields to update
+            // Specify the fields to update
             description: issue.description,
             node_id: issue.node_id,
             project_id: issue.project_id,
             priority: issue.priority,
             state: issue.state,
             name: issue.name,
-            creator_id: issue.creator_id
-
+            creator_id: issue.creator_id,
+            assignee: issue.assignee,
+            cycle: issue.cycle,
+            tags: issue.tags,
+            project_specific_id: issue.project_specific_id
         })
         .eq('id', issue.id); // Match the issue 'id' for updating
 
