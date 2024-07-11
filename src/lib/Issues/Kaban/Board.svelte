@@ -22,6 +22,7 @@
         const colIdx = items.findIndex(c => c.id === cid);
         items[colIdx].items = e.detail.items;
         items = [...items];
+ 
     }
 
     
@@ -53,39 +54,92 @@
             try {
                 const result = await updateIssue({ ...item, columnIndex: index });
                 if (!result.success) {
-                    console.error('Failed to update issue in database', result.error);
+                 
                 } else {
-                    console.log('Issue updated successfully', item);
+                   
                 }
             } catch (error) {
-                console.error('Error updating issue', error);
+               
             }
         });
-
+        // Fix
         applyHideEmptyRowsAndColumns();
 
         board = [...board]; //Fix
         items = [...items];
     }
+    import { onMount, afterUpdate } from 'svelte';
+    import { gsap } from 'gsap';
 
-    import { fade } from 'svelte/transition';
-</script>
 
-<style>
-    .board {
-        display: flex;
-        flex-direction: row;
-        width: 100%;
-        padding: 1em;
+ 
+    let boardContainer: HTMLElement;
+    let prevHeight = 0;
 
+
+    function calculateHeight() {
+        if (!boardContainer) return 0;
+
+        // Get the maximum height of all columns by summing the heights of their children (items)
+        let maxHeight = 0;
+
+        Array.from(boardContainer.children).forEach((col: HTMLElement) => {
+            const columnContent = col.querySelector('.column-content') as HTMLElement;
+            if (columnContent) {
+                let colHeight = Array.from(columnContent.children).reduce((acc, item: HTMLElement) => {
+                    return acc + item.getBoundingClientRect().height;
+                }, 0);
+                if (colHeight > maxHeight) {
+                    maxHeight = colHeight;
+                }
+            }
+        });
+
+        return maxHeight + 100;
     }
 
 
+    function animateHeightChange() {
+        if (!boardContainer) return;
+
+        // Calculate the new height
+        const newHeight = calculateHeight();
+
+        if (newHeight !== prevHeight) {
+            // Animate the height change
+            gsap.to(boardContainer, { height: newHeight, duration: 0.4 });
+
+            // Update the previous height
+            prevHeight = newHeight;
+        }
+    }
+
+
+
+
+    afterUpdate(() => {
+        setTimeout(() => {
+            animateHeightChange();
+        }, 0);  // Delay of 100ms before accepting updates
+    });
+    import { Separator } from "$lib/components/ui/separator";
+
+</script>
+
+
+<style>
+    .board-container {
+        display: flex;
+        flex-direction: row;
+        margin-left: 2em;
+    }
 </style>
 
-
-<div class="board">
+<div class="board-container" bind:this={boardContainer}>
     {#each items as column (column.id)}
+    
         <Column {column} {flipDurationMs} {handleDndConsiderCards} {handleDndFinalizeCards} {board}/>
+        <Separator orientation="vertical" />
+
     {/each}
 </div>

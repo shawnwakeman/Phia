@@ -188,7 +188,7 @@
       height: 100vh;
   
       overflow: hidden;
-      background-color: #1f2937;
+      background-color: rgb(31, 41, 55);
     }
 
     .content-issues {

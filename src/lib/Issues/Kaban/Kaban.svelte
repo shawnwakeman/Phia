@@ -597,11 +597,11 @@ function customSort(a, b, field) {
         position: sticky;
         top: 0;
    
-        padding-top: 1em;
+        padding-top: 2em;
         background: rgb(6, 6, 8);   
         z-index: 10;
         height: 7.5%;
-        width: max-content;
+   
     }
 
     .column-titles {
@@ -616,48 +616,62 @@ function customSort(a, b, field) {
 
     }
 
+    .row-titles {
+        display: flex; /* Change to inline-flex to allow horizontal scrolling */
+        flex-direction: row;
+        padding-left: 2.05em;
+        padding-right: 2.05em;
+        left: 0; /* Horizontal stickiness */
+        position: sticky;
+        top: 0;
+        background-color: #7c1212;
+        
+
+    }
+
+
 
   .column-title {
-
-    width: 370px;
-   
-
-
-    margin-right: 2em; /* Increased margin between column titles */
+    flex: 1; /* Allow the title to grow and shrink as needed */
+    padding: 0.5em;
+    margin-right: 2em; /* Adjust margin as needed */
     display: flex; /* Use flexbox for centering content */
-    align-items: left; /* Vertically center content */
-    justify-content: left; /* Horizontally center content */
+    align-items: center; /* Vertically center content */
+    justify-content: flex-start; /* Align items to the left */
     text-align: center; /* Center text */
-
+    max-width: 350px; /* Set maximum width */
+    min-width: 250px; /* Set minimum width */
+    
   }
 
 
   
     .row-title {
-        width: 370px;
-      
-
-
-        margin-right: 2em; /* Increased margin between column titles */
+        
+        flex: 1; /* Allow the title to grow and shrink as needed */
+        margin-right: 2em; /* Adjust margin as needed */
         display: flex; /* Use flexbox for centering content */
-        align-items: left; /* Vertically center content */
-        justify-content: left; /* Horizontally center content */
+        align-items: center; /* Vertically center content */
+        justify-content: flex-start; /* Align items to the left */
         text-align: center; /* Center text */
+        max-width: 350px; /* Set maximum width */
+        min-width: 250px; /* Set minimum width */
         background-color: #333333;
+        padding: 0.5em;
   }
   .row-container {
 
-    user-select: none;  /* user */
+        user-select: none;  /* user */
         position: sticky;
         position: relative; /* Ensure the parent div is relatively positioned */
         position: -webkit-sticky; /* Safari */
         position: sticky;
-        top: 7.5%;
-   
 
-        background: rgb(46, 46, 173);   
+        top: 7%;
+        margin: 1em;
         z-index: 5;
-        width: max-content;
+     
+
 
 }
 
@@ -678,17 +692,19 @@ function customSort(a, b, field) {
 
   .header-row {
     position: sticky;
+    padding-left: 1em;
     left: 0;
-    background-color: #ffffff; /* Match the background color with the column titles */
     z-index: 9; /* Ensure it stays behind the column titles but above the board */
+
+    background-color: #22382d;
 
   }
 
   .header-container {
     display: flex;
     align-items: center;
-    background-color: #ffffff;
-    border-bottom: 1px solid #cccccc;
+
+
     position: sticky; /* Make the whole container sticky */
     top: 0; /* Set the top position to 0 so it sticks to the top of the viewport */
     z-index: 10; /* Higher z-index to ensure it's above other content */
@@ -696,10 +712,27 @@ function customSort(a, b, field) {
     min-width: 100%; /* Ensure the row container stretches with content */
 }
 
-.row-container,
-.collapsible-content {
-    transition: all 0.3s ease;
+
+.header-container1 {
+    background: hsla(207, 21%, 47%, 0.822);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 8px;
+
 }
+
+
+
+
+
+
+    .header-wrapper {
+
+        background: hsla(0, 0%, 0%, 0.822);
+
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+    }
 
 
 
@@ -722,7 +755,7 @@ function customSort(a, b, field) {
 
 
 
-    <div class="column-titles-container">
+    <div class="column-titles-container header-wrapper">
         <div class="column-titles">
             {#each columnCounts as column}
                 <div class="column-title">
@@ -737,21 +770,14 @@ function customSort(a, b, field) {
         </div>
       </div>
 
-      <ul use:autoAnimate> <!-- 👀 thats it folks! -->
+ 
         {#each board as row (row.id)}
      
         <Collapsible.Root open={true}>
 
             <div class="row-container">
-            
-                <div class="column-titles">
-                    {#each columnCounts as column}
-                        <div class="row-title"></div>
-                    {/each}
-                </div>
-                    <div class="header-container">
-                        <div class="font-default text-slate-300 header-row">
-                         
+                <div class="row-titles">
+                        <div class="font-default text-slate-300 header-row ">
                             <h1>
                                 <span>
                                     <Collapsible.Trigger>
@@ -762,16 +788,19 @@ function customSort(a, b, field) {
                                 </span>
                                 <span class="key font-semibold text-lg"> {row.name}</span> 
                                 <span class="issues-count ml-1">{issues.length}</span>
-                             
                             </h1>
                         </div>
-
-                    
+                    <div>
+                        
                     </div>
-    
-                    
+                    {#each columnCounts as column, index}
+                        {#if index !== columnCounts.length - 1}
+                            <div class="row-title"></div>
+                        {/if}
+                    {/each}
 
-                
+                 
+                </div>
               </div>
 
           
@@ -794,6 +823,6 @@ function customSort(a, b, field) {
    
           
       {/each}
-    </ul>
+   
   
 </div>

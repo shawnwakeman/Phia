@@ -13,8 +13,9 @@
     import * as ContextMenu from "$lib/components/ui/context-menu";
     import autoAnimate from '@formkit/auto-animate';
     $: selected = get(selectedIssues);
-
+    import { gsap } from 'gsap';
     let isHovered = false;
+    import { onMount, afterUpdate } from 'svelte';
 
 
 
@@ -26,21 +27,24 @@
         isHovered = false;
     }
 
+  
+
 
     
 </script>
 
 <style>
-    .column {
-        flex: 0 0 370px;
-        padding: 0.5em;
-        margin: 1em;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        position: relative;
-     
-    }
+.column {
+    flex: 1; /* Allow the column to grow and shrink as needed */
+
+    margin: 1em;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    max-width: 350px; /* Set maximum width */
+    min-width: 250px; /* Set minimum width */
+}
 
 
     .column-content {
@@ -48,20 +52,19 @@
         flex-direction: column;
         flex-grow: 1;
         width: 100%;
-        height: fit-content; /* Set initial height */
+        overflow: hidden; /* Ensure smooth height animation */
+        min-height: 100px
     }
 
 
 
 
-    .column:hover .plus-button {
-        display: flex;
-    }
+
 
 
 </style>
 
-<div class="column" on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseLeave}>
+<div class="column">
     <div class="column-content" use:dndzone={{ items: column.items, flipDurationMs }}
          on:consider={(e) => handleDndConsiderCards(column.id, e)} on:finalize={(e) => handleDndFinalizeCards(column.id, e)}>
      
@@ -70,8 +73,6 @@
                 <Card {item} {flipDurationMs} {board} />
             </div>
         {/each}
-
-    
     </div>
-
 </div>
+

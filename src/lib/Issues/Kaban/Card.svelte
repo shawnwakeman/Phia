@@ -10,10 +10,10 @@
     export let item;
     export let flipDurationMs;
     export let board;
-    
-  
+    import * as Avatar from "$lib/components/ui/avatar";
+    import { CircleUserRound } from 'lucide-svelte';
     let drawerOpen = writable(false);
-    
+    import { Button } from "$lib/components/ui/button";
     let selected = [];
 
     selectedIssues.subscribe(value => {
@@ -144,39 +144,84 @@
   
 <style>
     .card {
-        height: 15%;
+        height: 150px;
         min-height: 100px;
         width: 100%;
-        margin: 0.4em 0;
-        padding: 10px;
+    
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: flex-start;
-        background-color: #b30a0a;
-        border: 1px solid #333333;
+        background: red;
+        margin-top: 0.25em;
+        margin-bottom: 0.25em;
         position: relative;
         user-select: none;
         box-sizing: border-box;
+        border-radius: 12px;
     }
     .card.selected {
         border: 2px solid blue;
         background-color: #FFF700;
+    }
+
+    .top {
+        
+        width: 100%;
+        background-color: lightblue;
+        flex: 1;
+    }
+
+      .bottom {
+            width: 100%;
+            background-color: rgb(27, 22, 46);
+            flex: 1;
+        }
+
+    .top-top {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .left {
+        display: flex;
     }
 </style>
 
 <ContextMenu.Root open={isOpen} onOpenChange={handleOpenChange} closeOnOutsideClick={true} closeOnEscape={true}>
     <ContextMenu.Trigger>
         <div 
-            class="card" 
+            class="card font-default" 
             data-id={item.id} 
             class:selected={selected.some(issue => issue.id === item.id)} 
             on:click={handleClick}
             on:contextmenu={(event) => handleContextMenu(event, item)}>
-            <div><strong>ID:</strong> {item.id}</div>
-            <div><strong>Name:</strong> {item.name}</div>
-            <div><strong>Node ID:</strong> {item.node_id}</div>
-            <div><strong>#</strong>{item.project_specific_id}</div>
+
+        
+            <div class="top">
+                <div class="top-top">
+                    <div class="issue-id">#{item.project_specific_id}</div>
+                    <div class="left">
+                        <Avatar.Root class="w-12 h-12 bg-inherint" >
+                            <Avatar.Image class="bg-transparent" src="" alt="@shadcn" />
+                            <Avatar.Fallback class="bg-transparent">
+                                <CircleUserRound class="w-12 h-12 "/>
+                            </Avatar.Fallback>
+                        </Avatar.Root>
+                        <Button variant="outline">Button</Button>
+                    </div>
+                    
+
+                </div>
+              
+                <div class="issue-name">{item.name}</div>
+            </div>
+        
+            <div class="bottom">
+                <div class="status-indicator">s</div>
+                <div class="status-dot">s</div>
+            </div>
         </div>
     </ContextMenu.Trigger>
     <ContextMenu.Content>

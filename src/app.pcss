@@ -35,7 +35,9 @@
  
     --radius: 0.5rem;
 
-    --background-black: rgb(6, 6, 8)
+    --background-black: rgb(6, 6, 8);
+    --forground-header: rgb(31, 41, 55);   
+
     --novel-black: rgb(0 0 0);
     --novel-white: rgb(255 255 255);
     --novel-stone-50: rgb(250 250 249);
@@ -233,19 +235,24 @@
       --sb-size: 8px;
     }
 
-    ::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
+ 
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background-color: #15181c; /* Set your desired background color here */
+  }
+
+    ::-webkit-scrollbar-thumb {
+      border: 4px solid rgba(0, 0, 0, 0);
+      background-clip: padding-box;
+      border-radius: 9999px;
+      background-color: #8e98a5;
     }
-  ::-webkit-scrollbar-thumb {
-    border: 4px solid rgba(0, 0, 0, 0);
-    background-clip: padding-box;
-    border-radius: 9999px;
-    background-color: #8e98a5;
-  }
-  ::-webkit-scrollbar-corner {
-    background-color: background-black;
-  }
+
+    ::-webkit-scrollbar-corner {
+      background-color: #15181c;
+    }
 
 
 

@@ -95,7 +95,7 @@ export const filterStoreList= writable({
 
 
 export const filterStoreKanBan = writable({
-  rowByField: 'state',
+  rowByField: 'priority',
   columnByField: 'state',
   orderByField: 'id',
   orderDirection: 'asc',
