@@ -1,0 +1,12 @@
+diff --git a/node_modules/svelte-dnd-action/src/pointerAction.js b/node_modules/svelte-dnd-action/src/pointerAction.js
+index b15a741..27e6f2a 100644
+--- a/node_modules/svelte-dnd-action/src/pointerAction.js
++++ b/node_modules/svelte-dnd-action/src/pointerAction.js
+@@ -427,7 +427,6 @@ export function dndzone(node, options) {
+             if (!draggedEl.parentElement) {
+                 originDropZoneRoot.appendChild(draggedEl);
+                 // to prevent the outline from disappearing
+-                draggedEl.focus();
+                 watchDraggedElement();
+                 hideElement(originalDragTarget);
+                 originDropZoneRoot.appendChild(originalDragTarget);

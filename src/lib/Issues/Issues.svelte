@@ -194,10 +194,12 @@
         padding: 0.5em;
         border-radius: 10px; /* Optional: rounded corners */
         transition: bottom 0.3s ease-in-out;
+    
     }
 
     .bottom-bar-visible {
         bottom: 20px; /* Slide up into view with a gap from the bottom */
+        z-index: 1;
     }
 
     .bottom-bar button {

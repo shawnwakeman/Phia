@@ -14,6 +14,7 @@
     import { CircleUserRound } from 'lucide-svelte';
     let drawerOpen = writable(false);
     import { Button } from "$lib/components/ui/button";
+    import Breadcrums from './breadcrums.svelte';
     let selected = [];
 
     selectedIssues.subscribe(value => {
@@ -22,9 +23,9 @@
 
 
     function handleClick(event) {
-        const issueId = event.target.dataset.id;
+        const issueId = item.id;
   
-        if (issueId) {
+        
             const clickedIssue = item;
             let selected = get(selectedIssues);
 
@@ -111,9 +112,7 @@
             selectedIssues.set(selected);
 
             console.log('Selected issues:', selected);
-        } else {
-            console.log("No issue ID found on the clicked element.");
-        }
+       
     }
 
 
@@ -138,8 +137,11 @@
             isOpen = (id === item.id);
         });
     });
-
-    import { Separator } from "$lib/components/ui/separator";
+    function handleClickF(event: Event) {
+        event.stopPropagation();
+        // Your additional click logic here
+        console.log('Button clicked!');
+    }
   </script>
   
 <style>
@@ -151,19 +153,29 @@
 
    
    
-        background: red;
+      
         margin-top: 1em;
         margin-bottom: 0.5em;
-     
-  
+        outline: none;
+        box-shadow: none;
     
-        border-radius: 12px;
+
         
     }
-    .card.selected {
-        border: 2px solid blue;
-        background-color: #FFF700;
+    .card:active,
+    .card:focus {
+        outline: none;
+        box-shadow: none;
     }
+    .card:hover * {
+        border-color: rgb(90, 97, 107); 
+    }
+
+    
+
+    
+
+
 
     .top {
         
@@ -171,13 +183,42 @@
         background-color: hsl(214, 14%, 15%);
         flex: 1;
         border-radius: 10px 10px 0px 0px;
+        border-top: 2px solid rgba(255, 0, 0, 0);
+        border-left: 2px solid rgba(255, 0, 0, 0);
+        border-right: 2px solid rgba(255, 0, 0, 0);
+        border-bottom: none;
+        transition: border-color 0.3s ease, background-color 0.3s ease;
     }
+
+    .top.selected {
+        border-color: rgb(52, 102, 196); 
+        
+    }
+
+    .bottom.selected {
+        border-color: rgb(52, 102, 196); 
+
+    }
+
+
+
+    
 
       .bottom {
             width: 100%;
             background-color: hsl(210, 13%, 20%);
             flex: 1;
             border-radius: 0px 0px 10px 10px;
+            flex-wrap: wrap;
+            border-top: none;
+            border-left: 2px solid rgba(255, 0, 0, 0);
+            border-right: 2px solid rgba(255, 0, 0, 0);
+            border-bottom: 2px solid rgba(255, 0, 0, 0);
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .button-style {
+            background-color: #3892ff;
         }
 
     .top-top {
@@ -196,18 +237,18 @@
         <div 
             class="card font-default" 
             data-id={item.id} 
-            class:selected={selected.some(issue => issue.id === item.id)} 
             on:click={handleClick}
             on:contextmenu={(event) => handleContextMenu(event, item)}>
 
         
-            <div class="top px-2">
-                <div class="top-top">
+            <div class="top " class:selected={selected.some(issue => issue.id === item.id)} >
+                <div class="top-top px-2">
                     <div class="issue-id font-medium text-lg pt-5">#{item.project_specific_id}</div>
-                    <div class="left pt-1">
+                    <div class="left pt-2">
 
-                        <Button class="rounded-full h-7" variant="outline">Button</Button>
-                        <Button class="h-7 w-7" variant="outline">
+                        <Button on:click={handleClickF} class="rounded-full h-7" variant="outline">Button</Button>
+                        
+                        <Button class="h-7 w-7" variant="ghost">
                             <Avatar.Root class="w-6 h-6 bg-inherint" >
                                 <Avatar.Image class="bg-transparent" src="" alt="@shadcn" />
                                 <Avatar.Fallback class="bg-transparent">
@@ -223,17 +264,25 @@
 
                 </div>
               
-                <div class="issue-name text-xl font-bold">{item.name}</div>
+                <div class="issue-name text-xl font-bold px-2">{item.name}</div>
+                <div class="pl-2">
+                      
+                        <Breadcrums issue={item}/>
+               
+                    
+                </div>
+           
             </div>
         
-            <div class="bottom px-5 py-5">
-                <div>
-                    <Button class="rounded-md w-8 h-7 p-1" variant="outline">P</Button>
+            <div class="bottom px-2 py-3" class:selected={selected.some(issue => issue.id === item.id)} >
+                <div >
+                    <Button class="rounded px-2 h-7 bg-[#21262c]" variant="outline">P</Button>
+                    <Button class="rounded px-2 h-7 bg-[#21262c]" variant="outline">P</Button>
         
-                    <Button class="rounded-md h-7" variant="outline">stage</Button>
+                    <Button class="rounded-md px-2 h-7 bg-[#21262c]" variant="outline">stage</Button>
     
-                    <Button class="rounded-md h-7" variant="outline">cycle</Button>
-                    <Button class="rounded-md h-7" variant="outline">Button</Button>
+                    <Button class="rounded px-2 h-7 bg-[#21262c]" variant="outline">cycle</Button>
+                    <Button class="rounded px-2 h-7  bg-[#21262c]" variant="outline">Button</Button>
                 </div>
           
               

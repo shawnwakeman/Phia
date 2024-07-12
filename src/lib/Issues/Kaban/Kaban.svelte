@@ -354,6 +354,7 @@ function customSort(a, b, field) {
 
 
   
+    import gsap from 'gsap';
 
 
   let boardContainer;
@@ -365,7 +366,7 @@ function customSort(a, b, field) {
   let scrollTop = 0;
 
   const autoScrollThreshold = 50;
-  const autoScrollSpeed = 20;
+  const autoScrollSpeed = 150;
   let autoScrollInterval;
 
   $: if ($isDragging) {
@@ -480,14 +481,26 @@ function customSort(a, b, field) {
 
     
 
-    if (scrollX !== 0 || scrollY !== 0) {
-      boardContainer.scrollLeft += scrollX;
-      boardContainer.scrollTop += scrollY;
+
+
+
+
+
+
+      gsap.to(boardContainer, {
+        scrollLeft: boardContainer.scrollLeft += scrollX,
+        duration: 1, // Adjust duration for smoothness
+        ease: "power2.out"
+    });
+
+      gsap.to(boardContainer, {
+        scrollTop: boardContainer.scrollTop += scrollY ,
+        duration: 1, // Adjust duration for smoothness
+        ease: "power2.out"
+    });
    
       console.log(`Auto-scrolling applied: scrollX=${scrollX}, scrollY=${scrollY}`);
-    } else {
 
-    }
   }
 
   function startAutoScroll() {
@@ -510,25 +523,56 @@ function customSort(a, b, field) {
     stopAutoScroll();
   }
 
+  function handleScroll(event) {
+    console.log('Scroll event detected');
+  };
+
+  function handleWheel(event) {
+    event.preventDefault();
+    console.log("Wheel event detected");
+
+    const delta = event.deltaY || event.detail || event.wheelDelta;
+    const extraScroll = 150; // Extra scroll distance
+
+    let newScrollTop = boardContainer.scrollTop + delta;
+
+    // Adjust newScrollTop by adding or subtracting extraScroll
+    if (delta > 0) {
+        newScrollTop += extraScroll;
+    } else {
+        newScrollTop -= extraScroll;
+    }
+
+    // Ensure newScrollTop doesn't go beyond bounds
+    newScrollTop = Math.max(0, Math.min(boardContainer.scrollHeight - boardContainer.clientHeight, newScrollTop));
+
+    gsap.to(boardContainer, {
+        scrollTop: newScrollTop,
+        duration: 0.5, // Adjust duration for smoothness
+        ease: "power2.out"
+    });
+}
+
+
 
 
   onMount(() => {
     updateBoard();
 
 
- 
+
 
     boardContainer.addEventListener('mousedown', handleMouseDown);
  
     window.addEventListener('mousemove', handleGlobalMouseMove);
 
-
+    window.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
         boardContainer.removeEventListener('mousedown', handleMouseDown);
   
         window.removeEventListener('mousemove', handleGlobalMouseMove);
-     
+        window.removeEventListener('wheel', handleWheel);
     };
   });
 
@@ -615,58 +659,25 @@ function customSort(a, b, field) {
 
     }
 
-    .row-titles {
-        display: flex; /* Change to inline-flex to allow horizontal scrolling */
-        flex-direction: row;
-        padding-left: 2.05em;
-        padding-right: 2.05em;
-        left: 0; /* Horizontal stickiness */
-        position: sticky;
-        top: 0;
-        background-color: #7c1212;
-        
-
-    }
 
 
 
   .column-title {
     flex: 1; /* Allow the title to grow and shrink as needed */
     padding: 0.5em;
-    margin-right: 2em; /* Adjust margin as needed */
+    padding-left: 1.5em;
+    margin-right: 3em; /* Adjust margin as needed */
     display: flex; /* Use flexbox for centering content */
     align-items: center; /* Vertically center content */
     justify-content: flex-start; /* Align items to the left */
     text-align: center; /* Center text */
-    max-width: 350px; /* Set maximum width */
+    max-width: 320px; /* Set maximum width */
     min-width: 250px; /* Set minimum width */
     
   }
 
 
   
- 
-  .row-container {
-
-        user-select: none;  /* user */
-        position: sticky;
-        position: relative; /* Ensure the parent div is relatively positioned */
-        position: -webkit-sticky; /* Safari */
-        position: sticky;
-
-        top: 7%;
-        margin: 1em;
-        z-index: 5;
-     
-
-
-}
-
-  .row-content {
-    flex: 1;
-    display: flex;
-
-  }
 
 
 
@@ -697,16 +708,18 @@ function customSort(a, b, field) {
         position: -webkit-sticky; /* Safari */
         position: sticky;
 
-        top: 80px;
-        margin-right: -2em;
+        top: 70px;
+        margin-right: -0.5em;
+   
         z-index: 5;
-        margin-left: 2em;
+        margin-left: 1.5em;
         margin-top: 0.5em;
         margin-bottom: 0.5em;
         padding-top: 0.25em;
-        background: hsla(207, 21%, 47%, 0.822);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
+        background: hsla(207, 17%, 49%, 0.815);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      
         border-radius: 8px;
 
 }
@@ -718,10 +731,10 @@ function customSort(a, b, field) {
 
     .header-wrapper {
 
-        background: hsla(0, 0%, 0%, 0.822);
+        background: hsla(0, 0%, 0%, 0.6);
 
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
 
@@ -786,7 +799,7 @@ function customSort(a, b, field) {
               
     
               <div class="collapsible-content">
-                <Collapsible.Content  transition={slide} transitionConfig={{ duration: 400}}>
+                <Collapsible.Content>
                     <Board
                       items={row.columns}
                       rowName={row.name}

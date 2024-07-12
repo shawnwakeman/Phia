@@ -65,7 +65,9 @@
     nodesDataStore.set(data.nodes)
     issuesDataStore.set(data.issues);
     
-
+    const handleScroll = () => {
+    console.log('Scroll event detected');
+  };
 
     onMount(async () => {
        
@@ -73,7 +75,13 @@
         filteredIssuesDataStore.set(issues);  // Set the initial filtered issues store value
         
         updateSelectedNodeStore()
-       
+    //     window.addEventListener('wheel', handleScroll);
+
+    //     return () => {
+
+    //     window.removeEventListener('wheel', handleScroll, true);
+    // };
+    
     });
 
 
@@ -212,6 +220,7 @@
         padding: 0.5em;
         border-radius: 10px; /* Optional: rounded corners */
         transition: bottom 0.3s ease-in-out;
+        z-index: 100;
     }
 
     .bottom-bar-visible {

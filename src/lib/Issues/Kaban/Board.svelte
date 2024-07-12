@@ -14,6 +14,8 @@
     export let board;
     let exportingColumns = items;
     import { cubicOut } from 'svelte/easing';
+    import { onMount, afterUpdate, onDestroy } from 'svelte';
+    import { gsap } from 'gsap';
 
     const flipDurationMs = 130;
 
@@ -68,8 +70,6 @@
         board = [...board]; //Fix
         items = [...items];
     }
-    import { onMount, afterUpdate } from 'svelte';
-    import { gsap } from 'gsap';
 
 
  
@@ -116,6 +116,21 @@
 
 
 
+    function handleResize() {
+    animateHeightChange();
+  }
+
+    onMount(() => {
+        if (typeof window !== 'undefined') {
+        window.addEventListener('resize', handleResize);
+        }
+    });
+
+    onDestroy(() => {
+        if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', handleResize);
+        }
+    });
 
     afterUpdate(() => {
         setTimeout(() => {
@@ -132,6 +147,7 @@
         display: flex;
         flex-direction: row;
         margin-left: 2em;
+ 
     }
 
 
@@ -139,10 +155,11 @@
 </style>
 
 <div class="board-container-internal" bind:this={boardContainer}>
+    <Separator orientation="vertical" class="-scale-y-105" />
     {#each items as column (column.id)}
      
             <Column {column} {flipDurationMs} {handleDndConsiderCards} {handleDndFinalizeCards} {board}/>
-            <Separator orientation="vertical" />
+            <Separator orientation="vertical" class="-scale-y-105" />
     
     {/each}
 </div>

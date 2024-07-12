@@ -22,15 +22,19 @@
         
         display: flex;
         flex-direction: column;
-        width: 400px;
+        width: 320px;
         flex-grow: 1;
         flex-shrink: 1;
         margin-right: 1.5em;
         margin-left: 1.5em;
-      
+        margin-top: 0.5em;
+
     }
 
-
+    .column-content, 
+    .column-content * {
+        border: none !important;
+    }
 
 
     @media (max-width: 1600px) {
@@ -40,21 +44,21 @@
     }
 
 
-
-
+    .card-container:focus {
+        outline: red !important;
+    }
 
 
 </style>
 
 
-    <div class="column-content" use:dndzone={{ items: column.items, flipDurationMs }}
-         on:consider={(e) => handleDndConsiderCards(column.id, e)} on:finalize={(e) => handleDndFinalizeCards(column.id, e)}>
-     
-        {#each column.items as item (item.id)}
-            <div animate:flip={{ duration: flipDurationMs }}>
-                <Card {item} {flipDurationMs} {board} />
-            </div>
-        {/each}
-    </div>
+<div class="column-content" use:dndzone={{ items: column.items, flipDurationMs, dropTargetStyle: {} }}
+     on:consider={(e) => handleDndConsiderCards(column.id, e)} on:finalize={(e) => handleDndFinalizeCards(column.id, e)}>
+    {#each column.items as item (item.id)}
+        <div animate:flip={{ duration: flipDurationMs }} class="card-container">
+            <Card {item} {flipDurationMs} {board} />
+        </div>
+    {/each}
+</div>
 
 
