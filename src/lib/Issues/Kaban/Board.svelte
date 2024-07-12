@@ -131,14 +131,16 @@
     .board-container {
         display: flex;
         flex-direction: row;
-        margin-left: 2em;
     }
+
 </style>
 
 <div class="board-container" bind:this={boardContainer}>
     {#each items as column (column.id)}
-    
-        <Column {column} {flipDurationMs} {handleDndConsiderCards} {handleDndFinalizeCards} {board}/>
+
+            <Column {column} {flipDurationMs} {handleDndConsiderCards} {handleDndFinalizeCards} {board}/>
+
+       
         <Separator orientation="vertical" />
 
     {/each}

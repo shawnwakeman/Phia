@@ -139,26 +139,21 @@
         });
     });
 
-
+    import { Separator } from "$lib/components/ui/separator";
   </script>
   
 <style>
     .card {
-        height: 150px;
+      
         min-height: 100px;
-        width: 100%;
+
+
     
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: flex-start;
+        
         background: red;
-        margin-top: 0.25em;
-        margin-bottom: 0.25em;
-        position: relative;
-        user-select: none;
-        box-sizing: border-box;
+       
         border-radius: 12px;
+  
     }
     .card.selected {
         border: 2px solid blue;
@@ -168,15 +163,17 @@
     .top {
         
         width: 100%;
-        background-color: lightblue;
+        background-color: hsl(214, 14%, 15%);
         flex: 1;
+        border-radius: 10px 10px 0px 0px;
     }
 
-      .bottom {
+    .bottom {
             width: 100%;
-            background-color: rgb(27, 22, 46);
+            background-color: hsl(210, 13%, 20%);
             flex: 1;
-        }
+            border-radius: 0px 0px 10px 10px;
+    }
 
     .top-top {
         display: flex;
@@ -199,29 +196,8 @@
             on:contextmenu={(event) => handleContextMenu(event, item)}>
 
         
-            <div class="top">
-                <div class="top-top">
-                    <div class="issue-id">#{item.project_specific_id}</div>
-                    <div class="left">
-                        <Avatar.Root class="w-12 h-12 bg-inherint" >
-                            <Avatar.Image class="bg-transparent" src="" alt="@shadcn" />
-                            <Avatar.Fallback class="bg-transparent">
-                                <CircleUserRound class="w-12 h-12 "/>
-                            </Avatar.Fallback>
-                        </Avatar.Root>
-                        <Button variant="outline">Button</Button>
-                    </div>
-                    
-
-                </div>
-              
-                <div class="issue-name">{item.name}</div>
-            </div>
+              <h1>asdasdasd</h1>
         
-            <div class="bottom">
-                <div class="status-indicator">s</div>
-                <div class="status-dot">s</div>
-            </div>
         </div>
     </ContextMenu.Trigger>
     <ContextMenu.Content>

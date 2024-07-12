@@ -1,14 +1,14 @@
 <script lang="ts">
-    import Kaban from '../../lib/Issues/Kaban/Kaban.svelte'
+    import Kaban from '$lib/Issues/Kaban/Kaban.svelte'
     import Card from '$lib/Issues/Kaban/Card.svelte'
-    import Treemap from '../../lib/Issues/Treemap.svelte'
+    import Treemap from '$lib/Issues/Treemap.svelte'
     import TreemapOptions from '../../lib/Issues/TreemapDisplayOptions.svelte'
-    import Sidebar from '../../lib/Sidebar.svelte'
+    import Sidebar from '$lib/Sidebar.svelte'
     import List from '$lib/Issues/List/index.svelte'
     import ListOptions from '$lib/Issues/List/ListDisplayOptions.svelte'
-    import type { PageData } from './$types';
+  
     import type { Issue, Node } from "../../types/collection";
-    import { addIssue, supabase, findRootNodes } from "../../lib/supabaseClient";
+    import { addIssue, supabase, findRootNodes } from "$lib/supabaseClient";
     import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore, selectedIssues   } from "../../stores";
     import FilterControls from '$lib/Issues/Kaban/Filter.svelte'
     import KanbanOptions from '$lib/Issues/Kaban/FilterControls.svelte'
@@ -100,8 +100,6 @@
 
                     <FilterControls/>
 
-             
-                    
                 </div>
                 <div class="middle-section">
                     

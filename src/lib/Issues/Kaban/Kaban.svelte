@@ -579,38 +579,36 @@ function customSort(a, b, field) {
   .board-container {
     overflow-y: auto;
     overflow-x: auto;
-    width: 100%;
+
     height: 100%;
     cursor: grab;
     user-select: none;  /* user */
     
   }
-  .board-container.grabbing {
-    cursor: grabbing;
-  }
+
   .column-titles-container {
 
        
         user-select: none;  /* user */
         position: sticky;
         position: -webkit-sticky; /* Safari */
-        position: sticky;
+       
         top: 0;
    
         padding-top: 2em;
         background: rgb(6, 6, 8);   
         z-index: 10;
         height: 7.5%;
+        
    
     }
 
     .column-titles {
         display: flex; /* Change to inline-flex to allow horizontal scrolling */
         justify-content: flex-start;
-        padding-left: 2.05em;
-        padding-right: 2.05em;
+
  
-        position: sticky;
+  
         top: 0;
     
 
@@ -634,31 +632,19 @@ function customSort(a, b, field) {
   .column-title {
     flex: 1; /* Allow the title to grow and shrink as needed */
     padding: 0.5em;
-    margin-right: 2em; /* Adjust margin as needed */
+   
     display: flex; /* Use flexbox for centering content */
     align-items: center; /* Vertically center content */
     justify-content: flex-start; /* Align items to the left */
     text-align: center; /* Center text */
     max-width: 350px; /* Set maximum width */
-    min-width: 250px; /* Set minimum width */
+    min-width: 300px; /* Set minimum width */
     
   }
 
 
   
-    .row-title {
-        
-        flex: 1; /* Allow the title to grow and shrink as needed */
-        margin-right: 2em; /* Adjust margin as needed */
-        display: flex; /* Use flexbox for centering content */
-        align-items: center; /* Vertically center content */
-        justify-content: flex-start; /* Align items to the left */
-        text-align: center; /* Center text */
-        max-width: 350px; /* Set maximum width */
-        min-width: 250px; /* Set minimum width */
-        background-color: #333333;
-        padding: 0.5em;
-  }
+ 
   .row-container {
 
         user-select: none;  /* user */
@@ -681,43 +667,46 @@ function customSort(a, b, field) {
 
   }
 
-  .toggle-button {
-    margin-right: 1em;
-  }
+
 
   .internals {
-  height: 7.5%;
+    width: fit-content;
 
-  }
-
-  .header-row {
-    position: sticky;
-    padding-left: 1em;
-    left: 0;
-    z-index: 9; /* Ensure it stays behind the column titles but above the board */
-
-    background-color: #22382d;
-
-  }
-
-  .header-container {
-    display: flex;
-    align-items: center;
-
-
-    position: sticky; /* Make the whole container sticky */
-    top: 0; /* Set the top position to 0 so it sticks to the top of the viewport */
-    z-index: 10; /* Higher z-index to ensure it's above other content */
-    width: 100%; /* Ensure the row container stretches with content */
-    min-width: 100%; /* Ensure the row container stretches with content */
 }
 
+  .header-row {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    left: 0;
+    padding-left: 1em;
+    z-index: 9; /* Ensure it stays behind the column titles but above the board */
 
-.header-container1 {
-    background: hsla(207, 21%, 47%, 0.822);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border-radius: 8px;
+  
+
+  }
+
+
+
+
+.header-container {
+    user-select: none;  /* user */
+        position: sticky;
+        position: relative; /* Ensure the parent div is relatively positioned */
+        position: -webkit-sticky; /* Safari */
+        position: sticky;
+
+        top: 80px;
+        margin-right: -2em;
+        z-index: 5;
+        margin-left: 2em;
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+        padding-top: 0.25em;
+        background: hsla(207, 21%, 47%, 0.822);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-radius: 8px;
 
 }
 
@@ -754,75 +743,67 @@ function customSort(a, b, field) {
     >
 
 
-
-    <div class="column-titles-container header-wrapper">
-        <div class="column-titles">
-            {#each columnCounts as column}
-                <div class="column-title">
-                    <div class="font-default  text-slate-300">
-                        <h1>
-                            <span class="key font-semibold text-lg "> {column.name}</span> 
-                            <span class="issues-count ml-1">{column.count}</span>              
-                        </h1>          
-                    </div>
-                </div>
-            {/each}
-        </div>
-      </div>
-
- 
-        {#each board as row (row.id)}
-     
-        <Collapsible.Root open={true}>
-
-            <div class="row-container">
-                <div class="row-titles">
-                        <div class="font-default text-slate-300 header-row ">
+            <div class="column-titles-container header-wrapper">
+            <div class="column-titles">
+                {#each columnCounts as column}
+                    <div class="column-title">
+                        <div class="font-default  text-slate-300">
                             <h1>
-                                <span>
-                                    <Collapsible.Trigger>
-                                        <Button variant="outline" class="bg-transparent border-none group p-0 m-0">
-                                            <ChevronsUpDown class="w-4 h-4 text-current group-hover:text-highlight-color" />
-                                        </Button>
-                                    </Collapsible.Trigger>
-                                </span>
-                                <span class="key font-semibold text-lg"> {row.name}</span> 
-                                <span class="issues-count ml-1">{issues.length}</span>
-                            </h1>
+                                <span class="key font-semibold text-lg "> {column.name}</span> 
+                                <span class="issues-count ml-1">{column.count}</span>              
+                            </h1>          
                         </div>
-                    <div>
-                        
                     </div>
-                    {#each columnCounts as column, index}
-                        {#if index !== columnCounts.length - 1}
-                            <div class="row-title"></div>
-                        {/if}
-                    {/each}
-
-                 
-                </div>
-              </div>
-
-          
-
-          <div class="collapsible-content">
-            <Collapsible.Content  transition={slide} transitionConfig={{ duration: 400}}>
-                <Board
-                  items={row.columns}
-                  rowName={row.name}
-                  rowByField={filters.rowByField}
-                  columnByField={filters.columnByField}
-                  orderBy={filters.orderByField}
-                  applyHideEmptyRowsAndColumns={applyHideEmptyRowsAndColumns2}
-                  board={board}
-                />
-              </Collapsible.Content>
+                {/each}
             </div>
-            </Collapsible.Root>
+          </div>
+     
+  
+     
+     
+            {#each board as row (row.id)}
+            <!-- <div class="internals"> -->
+            <Collapsible.Root open={true}>
+                <div class="header-container">
+                    <div class="font-default text-slate-300 header-row ">
+                        <h1>
+                            <span>
+                                <Collapsible.Trigger>
+                                    <Button variant="outline" class="bg-transparent border-none group p-0 m-0">
+                                        <ChevronsUpDown class="w-4 h-4 text-current group-hover:text-highlight-color" />
+                                    </Button>
+                                </Collapsible.Trigger>
+                            </span>
+                            <span class="key font-semibold text-lg"> {row.name}</span> 
+                            <span class="issues-count ml-1">{issues.length}</span>
+                        </h1>
+                    </div>
+                   
+                </div>
+                
+    
+              
+           
+         
+                <Collapsible.Content  transition={slide} transitionConfig={{ duration: 400}}>
+                    <Board
+                      items={row.columns}
+                      rowName={row.name}
+                      rowByField={filters.rowByField}
+                      columnByField={filters.columnByField}
+                      orderBy={filters.orderByField}
+                      applyHideEmptyRowsAndColumns={applyHideEmptyRowsAndColumns2}
+                      board={board}
+                    />
+                  </Collapsible.Content>
+         
+                </Collapsible.Root>
+      
+       
+            <!-- </div> -->
+          {/each}
+     
 
-   
-          
-      {/each}
    
   
 </div>

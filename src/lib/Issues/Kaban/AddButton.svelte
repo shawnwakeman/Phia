@@ -66,7 +66,7 @@
 
 <Dialog.Root bind:open={dialogOpen}>
     <Dialog.Trigger>
-        <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0" on:click={() => setCurrentView("table")}>
+        <Button variant="outline" size="icon" class="bg-transparent border-none group p-0 m-0">
             <DiamondPlus  class="w-4 h-4 text-current group-hover:text-highlight-color" />
         </Button>
     </Dialog.Trigger>

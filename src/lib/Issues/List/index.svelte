@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { get, writable } from 'svelte/store';
-    import {filteredIssuesDataStore, filteredIssuesForSnapshot, filterStoreList } from "../../../stores";
+    import {filteredIssuesDataStore, filteredIssuesForSnapshot, filterStoreList, nodesDataStore, selectedNodeStore} from "../../../stores";
     import IssueItem from './IssueItem.svelte';
     import FilterControls from '../Kaban/Filter.svelte';
     import ListDisplayOptions from './ListDisplayOptions.svelte';
@@ -11,11 +11,11 @@
     import { Button } from "$lib/components/ui/button";
     import { slide } from "svelte/transition";
 
-
+    import type { Issue, Node } from "../../types/collection";
     import * as ContextMenu from "$lib/components/ui/context-menu";
 
     let groupedIssues = [];
-     
+    export let nodes = false;
 
     let filtersFormStore = {
         rowByField: 'state',
@@ -113,10 +113,40 @@
     }
 
     // Handle display option changes
+
+    function getNestedIssues(nodeId: number, nodes: Node[], issues: Issue[]): Issue[] {
+  
+
+    function findChildNodeIds(nodeId: number, nodes: Node[]): number[] {
+        const childNodes = nodes.filter(node => node.parent_id === nodeId);
+        let childNodeIds = childNodes.map(node => node.id);
+        for (let childNode of childNodes) {
+        childNodeIds = childNodeIds.concat(findChildNodeIds(childNode.id, nodes));
+        }
+        return childNodeIds;
+    }
+
+    const nestedNodeIds = [nodeId, ...findChildNodeIds(nodeId, nodes)];
+    const filteredIssues = issues.filter(issue => issue.node_id !== null && nestedNodeIds.includes(issue.node_id));
+
+    
+    return filteredIssues;
+    }
+
+
+
    
     // Update the board
     function updateBoard() {
-        const filteredIssues = get(filteredIssuesDataStore);
+        let filteredIssues = get(filteredIssuesDataStore);
+
+        let issuesTemp;
+        if (nodes && $selectedNodeStore) {
+            console.log($selectedNodeStore.id, $nodesDataStore, filteredIssues);
+            
+            filteredIssues = getNestedIssues($selectedNodeStore.id, $nodesDataStore, filteredIssues)
+        }
+        console.log(filteredIssues);
         groupedIssues = groupAndSortIssues(filteredIssues, filtersFormStore.rowByField, filtersFormStore.orderByField, filtersFormStore.orderDirection);
     }
 
