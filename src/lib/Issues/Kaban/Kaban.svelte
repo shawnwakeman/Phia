@@ -366,7 +366,7 @@ function customSort(a, b, field) {
   let scrollTop = 0;
 
   const autoScrollThreshold = 50;
-  const autoScrollSpeed = 150;
+  const autoScrollSpeed = 200;
   let autoScrollInterval;
 
   $: if ($isDragging) {
@@ -482,24 +482,22 @@ function customSort(a, b, field) {
     
 
 
+    if (scrollX !== 0 || scrollY !== 0) {
+        gsap.to(boardContainer, {
+            scrollLeft: boardContainer.scrollLeft + scrollX,
+            scrollTop: boardContainer.scrollTop + scrollY,
+            duration: 1, // Adjust duration for smoothness
+            ease: "power2.out"
+        });
+
+        console.log(`Auto-scrolling applied: scrollX=${scrollX}, scrollY=${scrollY}`);
+    }
 
 
 
 
-
-      gsap.to(boardContainer, {
-        scrollLeft: boardContainer.scrollLeft += scrollX,
-        duration: 1, // Adjust duration for smoothness
-        ease: "power2.out"
-    });
-
-      gsap.to(boardContainer, {
-        scrollTop: boardContainer.scrollTop += scrollY ,
-        duration: 1, // Adjust duration for smoothness
-        ease: "power2.out"
-    });
+  
    
-      console.log(`Auto-scrolling applied: scrollX=${scrollX}, scrollY=${scrollY}`);
 
   }
 
