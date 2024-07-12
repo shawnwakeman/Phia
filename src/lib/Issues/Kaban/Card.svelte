@@ -146,14 +146,19 @@
     .card {
       
         min-height: 100px;
-
-
     
-        
+    
+
+   
+   
         background: red;
-       
-        border-radius: 12px;
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+     
   
+    
+        border-radius: 12px;
+        
     }
     .card.selected {
         border: 2px solid blue;
@@ -168,12 +173,12 @@
         border-radius: 10px 10px 0px 0px;
     }
 
-    .bottom {
+      .bottom {
             width: 100%;
             background-color: hsl(210, 13%, 20%);
             flex: 1;
             border-radius: 0px 0px 10px 10px;
-    }
+        }
 
     .top-top {
         display: flex;
@@ -196,8 +201,46 @@
             on:contextmenu={(event) => handleContextMenu(event, item)}>
 
         
-              <h1>asdasdasd</h1>
+            <div class="top px-2">
+                <div class="top-top">
+                    <div class="issue-id font-medium text-lg pt-5">#{item.project_specific_id}</div>
+                    <div class="left pt-1">
+
+                        <Button class="rounded-full h-7" variant="outline">Button</Button>
+                        <Button class="h-7 w-7" variant="outline">
+                            <Avatar.Root class="w-6 h-6 bg-inherint" >
+                                <Avatar.Image class="bg-transparent" src="" alt="@shadcn" />
+                                <Avatar.Fallback class="bg-transparent">
+                                    <CircleUserRound/>
+                                </Avatar.Fallback>
+                            </Avatar.Root>
+
+                        </Button>
+                        
+                       
+                    </div>
+                    
+
+                </div>
+              
+                <div class="issue-name text-xl font-bold">{item.name}</div>
+            </div>
         
+            <div class="bottom px-5 py-5">
+                <div>
+                    <Button class="rounded-md w-8 h-7 p-1" variant="outline">P</Button>
+        
+                    <Button class="rounded-md h-7" variant="outline">stage</Button>
+    
+                    <Button class="rounded-md h-7" variant="outline">cycle</Button>
+                    <Button class="rounded-md h-7" variant="outline">Button</Button>
+                </div>
+          
+              
+                
+
+              
+            </div>
         </div>
     </ContextMenu.Trigger>
     <ContextMenu.Content>

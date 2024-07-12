@@ -84,7 +84,7 @@
         let maxHeight = 0;
 
         Array.from(boardContainer.children).forEach((col: HTMLElement) => {
-            const columnContent = col.querySelector('.column-content') as HTMLElement;
+            const columnContent = col
             if (columnContent) {
                 let colHeight = Array.from(columnContent.children).reduce((acc, item: HTMLElement) => {
                     return acc + item.getBoundingClientRect().height;
@@ -128,20 +128,22 @@
 
 
 <style>
-    .board-container {
+    .board-container-internal {
         display: flex;
         flex-direction: row;
+        margin-left: 2em;
     }
+
+
 
 </style>
 
-<div class="board-container" bind:this={boardContainer}>
+<div class="board-container-internal" bind:this={boardContainer}>
     {#each items as column (column.id)}
-
+     
             <Column {column} {flipDurationMs} {handleDndConsiderCards} {handleDndFinalizeCards} {board}/>
-
-       
-        <Separator orientation="vertical" />
-
+            <Separator orientation="vertical" />
+    
     {/each}
 </div>
+

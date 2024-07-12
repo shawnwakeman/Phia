@@ -16,21 +16,28 @@
 </script>
 
 <style>
-    .column {
-        
-    }
 
     .column-content {
         min-height: 100px;
+        
         display: flex;
         flex-direction: column;
-        width: 500px;
-  
-     
-  
-
+        width: 400px;
+        flex-grow: 1;
+        flex-shrink: 1;
+        margin-right: 1.5em;
+        margin-left: 1.5em;
+      
     }
 
+
+
+
+    @media (max-width: 1600px) {
+    .column-content {
+        width: 300px;
+    }
+    }
 
 
 
@@ -39,7 +46,7 @@
 
 </style>
 
-<div class="column">
+
     <div class="column-content" use:dndzone={{ items: column.items, flipDurationMs }}
          on:consider={(e) => handleDndConsiderCards(column.id, e)} on:finalize={(e) => handleDndFinalizeCards(column.id, e)}>
      
@@ -49,5 +56,5 @@
             </div>
         {/each}
     </div>
-</div>
+
 

@@ -599,14 +599,15 @@ function customSort(a, b, field) {
         background: rgb(6, 6, 8);   
         z-index: 10;
         height: 7.5%;
-        
+        margin-right: -2em;
    
     }
 
     .column-titles {
         display: flex; /* Change to inline-flex to allow horizontal scrolling */
         justify-content: flex-start;
-
+        padding-left: 2.05em;
+        padding-right: 2.05em;
  
   
         top: 0;
@@ -632,13 +633,13 @@ function customSort(a, b, field) {
   .column-title {
     flex: 1; /* Allow the title to grow and shrink as needed */
     padding: 0.5em;
-   
+    margin-right: 2em; /* Adjust margin as needed */
     display: flex; /* Use flexbox for centering content */
     align-items: center; /* Vertically center content */
     justify-content: flex-start; /* Align items to the left */
     text-align: center; /* Center text */
     max-width: 350px; /* Set maximum width */
-    min-width: 300px; /* Set minimum width */
+    min-width: 250px; /* Set minimum width */
     
   }
 
@@ -670,7 +671,7 @@ function customSort(a, b, field) {
 
 
   .internals {
-    width: fit-content;
+  width: fit-content;
 
 }
 
@@ -681,7 +682,7 @@ function customSort(a, b, field) {
     left: 0;
     padding-left: 1em;
     z-index: 9; /* Ensure it stays behind the column titles but above the board */
-
+    width: 500px;
   
 
   }
@@ -742,7 +743,8 @@ function customSort(a, b, field) {
     role="application"
     >
 
-
+    <div class="internals">
+    
             <div class="column-titles-container header-wrapper">
             <div class="column-titles">
                 {#each columnCounts as column}
@@ -759,10 +761,10 @@ function customSort(a, b, field) {
           </div>
      
   
-     
+    
      
             {#each board as row (row.id)}
-            <!-- <div class="internals"> -->
+         
             <Collapsible.Root open={true}>
                 <div class="header-container">
                     <div class="font-default text-slate-300 header-row ">
@@ -778,13 +780,12 @@ function customSort(a, b, field) {
                             <span class="issues-count ml-1">{issues.length}</span>
                         </h1>
                     </div>
-                   
                 </div>
                 
     
               
-           
-         
+    
+              <div class="collapsible-content">
                 <Collapsible.Content  transition={slide} transitionConfig={{ duration: 400}}>
                     <Board
                       items={row.columns}
@@ -796,13 +797,13 @@ function customSort(a, b, field) {
                       board={board}
                     />
                   </Collapsible.Content>
-         
+                </div>
                 </Collapsible.Root>
-      
+    
        
-            <!-- </div> -->
+              
           {/each}
-     
+    </div>
 
    
   
