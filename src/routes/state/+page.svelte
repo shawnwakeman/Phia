@@ -5,8 +5,6 @@
     import type { Node, Issue, TargetStates } from "../../types/collection";
     import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore, sidebarWidthStore, targetStatesStore } from "../../stores";
     import { get } from "svelte/store";
-    import { toggleMode } from "mode-watcher";
-    import { Button } from "$lib/components/ui/button/index.js";
     import NodeManager from '$lib/nodeManager/index.svelte';
  
     export let data: { nodes: Node[], issues: Issue[], rootNode: Node, targetStates: TargetStates[] };
@@ -37,13 +35,9 @@
         sidebarWidth = width;
     }
 
-    let tabs = [{ id: "table", name: "table" }, { id: "kaban", name: "kaban" }, { id: "treemap", name: "Tree Map" }];
-    let currentViewID = "table";
-    let show = false;
 
-    function setCurrentView(viewid: string) {
-        currentViewID = viewid;
-    }
+   
+
 </script>
 
 
@@ -66,16 +60,10 @@
                 
              
             
-                {#if currentViewID === 'table'}
-                    <h1 class="font-default font-bold">List</h1>
+             
+                <h1 class="font-default font-bold">List</h1>
                   
-                {:else if currentViewID === 'kaban'}
-                    <h1 class="font-default font-bold">Board</h1>
-                  
-                {:else if currentViewID === 'treemap'}
-                    <h1 class="font-default font-bold">Treemap</h1>
-               
-                {/if}
+              
          
                
             </div>

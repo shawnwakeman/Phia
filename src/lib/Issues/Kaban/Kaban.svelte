@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy  } from 'svelte';
-  import { issuesDataStore, addedIssue, filteredIssuesDataStore, filteredIssuesForSnapshot, filterStoreKanBan } from "../../../stores";
-  import { slide } from "svelte/transition";
+  import { addedIssue, filteredIssuesDataStore, filteredIssuesForSnapshot, filterStoreKanBan } from "../../../stores";
+
   import { addIssue } from '$lib/supabaseClient';
   import { get } from 'svelte/store';
   import Board from './Board.svelte';

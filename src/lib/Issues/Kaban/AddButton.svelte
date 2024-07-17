@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
-    import { addIssue, saveSummary } from '$lib/supabaseClient';
+    import { addIssue } from '$lib/supabaseClient';
     import * as Dialog from "$lib/components/ui/dialog";
     import Editor from "$lib/dist/ui/editor/indexForIssueView.svelte";
     import { Editor as EditorType } from '@tiptap/core';
-    import { onDestroy, onMount } from 'svelte';
+    import { onDestroy } from 'svelte';
     import { writable } from 'svelte/store';
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { fade } from "svelte/transition";

@@ -37,11 +37,8 @@
     });
 
     let newFeatureName = '';
-    let newFeatureValue = 0;
     let newFeatureState = '';
-
     let editingFeatureName = ''; // New variable for edit operation
-    let hoveredFeatureIndex: number | null = null;
     let editingFeatureIndex: number | null = null;
 
     async function addFeature() {

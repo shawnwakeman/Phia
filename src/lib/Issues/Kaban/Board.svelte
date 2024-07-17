@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { flip } from 'svelte/animate';
-    import { dndzone } from 'svelte-dnd-action';
+
     import { isDragging } from '../../../stores';
     import { updateIssue } from "$lib/supabaseClient";
     import Column from './Column.svelte';
@@ -12,8 +11,6 @@
     export let orderBy;
     export let applyHideEmptyRowsAndColumns;
     export let board;
-    let exportingColumns = items;
-    import { cubicOut } from 'svelte/easing';
     import { onMount, afterUpdate, onDestroy } from 'svelte';
     import { gsap } from 'gsap';
 

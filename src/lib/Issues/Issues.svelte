@@ -1,20 +1,16 @@
 <script lang="ts">
     import Kaban from '$lib/Issues/Kaban/Kaban.svelte'
-    import Card from '$lib/Issues/Kaban/Card.svelte'
     import Treemap from '$lib/Issues/Treemap.svelte'
     import TreemapOptions from '../../lib/Issues/TreemapDisplayOptions.svelte'
-    import Sidebar from '$lib/Sidebar.svelte'
     import List from '$lib/Issues/List/index.svelte'
     import ListOptions from '$lib/Issues/List/ListDisplayOptions.svelte'
-  
     import type { Issue, Node } from "../../types/collection";
-    import { addIssue, supabase, findRootNodes } from "$lib/supabaseClient";
-    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore, selectedIssues   } from "../../stores";
+    import { issuesDataStore, filteredIssuesDataStore, selectedIssues } from "../../stores";
     import FilterControls from '$lib/Issues/Kaban/Filter.svelte'
     import KanbanOptions from '$lib/Issues/Kaban/FilterControls.svelte'
     import SelectionBar from '$lib/Issues/selectionBar.svelte'
     import { onMount } from 'svelte';
-    import { Rows3, SquareKanban, Network, Filter , SlidersHorizontal, DiamondPlus    } from 'lucide-svelte';
+    import { Rows3, SquareKanban, Network } from 'lucide-svelte';
     import { Button } from "$lib/components/ui/button/index.js";
     import { get } from 'svelte/store';
     import AddButton from '$lib/Issues/Kaban/AddButton.svelte'
@@ -23,12 +19,11 @@
     export let data: { nodes: Node[], issues: Issue[] };
 
 
-    let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
+ 
 
     let currentViewID = "kaban"
 
-    let show = false;
-    let sidebarWidth: string = "50%"
+
 
     function setCurrentView(viewid: string) {
         currentViewID = viewid;
@@ -57,14 +52,6 @@
     });
 
 
-    let rowByFieldTM = 'state';
-    let orderByFieldTM = 'id';
-    let orderDirectionTM = 'asc';
-    let hideEmptyRowsTM = false;
-    let hideNullRowsTM = false;
-    let notFirstLoadTM = false;
-
-    const flipDurationMs = 130;
 
 
 </script>

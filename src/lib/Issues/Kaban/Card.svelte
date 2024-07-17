@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { flip } from 'svelte/animate';
     import { writable } from 'svelte/store';
     import * as ContextMenu from "$lib/components/ui/context-menu";
     import { currentSelectedIssue, selectedIssues, openContextMenuId } from '../../../stores';
@@ -23,7 +22,6 @@
 
 
     function handleClick(event) {
-        const issueId = item.id;
   
         
             const clickedIssue = item;

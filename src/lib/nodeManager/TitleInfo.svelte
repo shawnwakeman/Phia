@@ -1,7 +1,7 @@
 <script>
 
 
-    import { selectedNodeId, selectedNodeStore, nodesDataStore} from "../../stores";
+    import { selectedNodeStore} from "../../stores";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import Breadcrums from "./breadcrums.svelte";
 </script>

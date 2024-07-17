@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { filterStoreKanBan } from "../../../stores";
     import {SlidersHorizontal } from 'lucide-svelte';

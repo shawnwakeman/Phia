@@ -6,15 +6,13 @@
     import Sidebar from '$lib/Sidebar.svelte'
     import List from '$lib/Issues/List/index.svelte'
     import ListOptions from '$lib/Issues/List/ListDisplayOptions.svelte'
-  
     import type { Issue, Node } from "../../types/collection";
-    import { addIssue, supabase, findRootNodes } from "$lib/supabaseClient";
-    import { selectedNodeStore, issuesDataStore, nodesDataStore, selectedNodeId, currentSelectedIssue, filteredIssuesDataStore, selectedIssues   } from "../../stores";
+    import { issuesDataStore, nodesDataStore, filteredIssuesDataStore, selectedIssues } from "../../stores";
     import FilterControls from '$lib/Issues/Kaban/Filter.svelte'
     import KanbanOptions from '$lib/Issues/Kaban/FilterControls.svelte'
     import SelectionBar from '$lib/Issues/selectionBar.svelte'
     import { onMount } from 'svelte';
-    import { Rows3, SquareKanban, Network, Filter , SlidersHorizontal, DiamondPlus    } from 'lucide-svelte';
+    import { Rows3, SquareKanban, Network } from 'lucide-svelte';
     import { Button } from "$lib/components/ui/button/index.js";
     import { get } from 'svelte/store';
     import AddButton from '$lib/Issues/Kaban/AddButton.svelte'
@@ -23,76 +21,28 @@
     export let data: { nodes: Node[], issues: Issue[] };
 
 
-    let tabs = [{id: "table", name: "table"}, {id: "kaban", name: "kaban"}, {id: "treemap", name: "Tree Map"}]
+   
 
     let currentViewID = "kaban"
 
-    let show = false;
-    let sidebarWidth: string = "50%"
 
     function setCurrentView(viewid: string) {
         currentViewID = viewid;
     }
 
-
-
-
-    let currentSelectedNode: Node | null = null
-    $: currentSelectedNode = $selectedNodeStore;
-
-
-    function createNewNode() {
-        
-        const rootNode = data.nodes.find(node => node.parent_id === null);
-        if (rootNode) {
-            console.log(rootNode);
-            
-            addIssue(rootNode.id);
-        }
-        
-
-    }
-
-
-
-    
-    function updateSelectedNodeStore() {
-        const selectedNode = data.nodes.find(node => node.id === $selectedNodeId);
-            selectedNodeStore.set(selectedNode || null);
-    }
     
 
     nodesDataStore.set(data.nodes)
     issuesDataStore.set(data.issues);
     
-    const handleScroll = () => {
-    console.log('Scroll event detected');
-  };
 
     onMount(async () => {
        
         const issues = get(issuesDataStore);
         filteredIssuesDataStore.set(issues);  // Set the initial filtered issues store value
         
-        updateSelectedNodeStore()
-    //     window.addEventListener('wheel', handleScroll);
-
-    //     return () => {
-
-    //     window.removeEventListener('wheel', handleScroll, true);
-    // };
-    
     });
 
-
-    let rowByFieldTM = 'state';
-    let orderByFieldTM = 'id';
-    let orderDirectionTM = 'asc';
-    let hideEmptyRowsTM = false;
-    let hideNullRowsTM = false;
-    let notFirstLoadTM = false;
-
-    const flipDurationMs = 130;
 
 
 </script>
@@ -179,11 +129,6 @@
 </main>
 <style> 
 
-    html, body {
-        height: 100%;
-        margin: 0;
-    }
-
   
 
 
@@ -227,18 +172,7 @@
         bottom: 20px; /* Slide up into view with a gap from the bottom */
     }
 
-    .bottom-bar button {
-        background: #444;
-        color: white;
-        border: none;
-        padding: 0.3em 0.6em; /* Adjusted padding for smaller buttons */
-        cursor: pointer;
-        border-radius: 5px; /* Optional: rounded buttons */
-    }
-
-    .bottom-bar button:hover {
-        background: #555;
-    }
+   
     .internals-kanban {
         overflow: hidden;
         height: 100%;

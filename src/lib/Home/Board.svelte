@@ -37,11 +37,8 @@
     let expandedWidth = null;
     let expandedHeight = null;
 
-
-    
-    function toggleExpand(id) {
-        const itemToExpand = items.find(item => item.id === id);
-        if (!itemToExpand) return;
+    function toggleContract(id) {
+  
 
         if (expandedItem === id) {
             // If already expanded, collapse it
@@ -69,10 +66,22 @@
             });
 
             expandedItem = null;
-            expandedHeight =null;
+            expandedHeight = null;
             expandedWidth = null
-        } else {
-            // Expand the clicked item
+        }
+
+            
+    }
+    function toggleExpand(id) {
+        const itemToExpand = items.find(item => item.id === id);
+        if (!itemToExpand) return;
+
+        if (!(expandedItem === id)) {
+
+            console.log(expandedItem);
+
+            
+            // If already expanded, collapse it
             expandedItem = id;
             
             const expandingElement = document.querySelector(`.grid-item-${id}`);
@@ -146,8 +155,107 @@
             }
         });
 
-        }
+        } 
     }
+
+    
+
+    function handleResize() {
+        
+
+        const itemToExpand = items.find(item => item.id === expandedItem);
+        if (!itemToExpand) return;
+
+
+            
+            const expandingElement = document.querySelector(`.grid-item-${id}`);
+            let left = parseInt(expandingElement.style.left);
+            let top = parseInt(expandingElement.style.top);
+
+            expandedWidth = parseInt(expandingElement.style.width)
+            expandedHeight = parseInt(expandingElement.style.height);
+            gsap.to(expandingElement, {
+                width: window.innerWidth - 100,
+                height: window.innerHeight - 100,
+                x: 10 - left,
+                y: 10 - top,
+                duration: 1,
+                ease: "power2.out"
+            });
+
+            
+            // Animate other items to move out of the wa
+            const intersectingItemsRight = findAllIntersections(itemToExpand, items, 'right');
+            const intersectingItemsLeft = findAllIntersections(itemToExpand, items, 'left');
+            
+            const allIntersectingItems = new Set([...intersectingItemsRight, ...intersectingItemsLeft]);
+
+
+            items.forEach(item => {
+            if (item.id !== id) {
+                const element = document.querySelector(`.grid-item-${item.id}`) ;
+                let translateX = 0;
+                let translateY = 0;
+                let left = parseInt(expandingElement.style.left) || 0; // Factor in current left
+                let top = parseInt(expandingElement.style.top) || 0;
+                let leftEl = parseInt(element.style.left) || 0; // Factor in current left
+  
+
+                if (item.y < itemToExpand.y) {
+                    translateY = -top;
+                } else if (item.y > itemToExpand.y) {
+                    translateY = window.innerHeight - expandedHeight - 80;
+                }
+       
+                if (allIntersectingItems.has(item)) {
+                    translateY = 0;
+                }
+              
+          
+                if (item.x < itemToExpand.x) {
+                  
+                    translateX = - left + 10; // Move left by its own width
+                } else if (item.x > itemToExpand.x) {
+                    translateX = window.innerWidth - left - expandedWidth - 80 ;
+                }
+
+                console.log(left, translateY, item.id.slice(0, 5), window.innerWidth, leftEl);
+
+             
+                
+                if (translateY !== 0) {
+                    translateX = 0;
+                }
+              
+
+                gsap.to(element, {
+                    x: translateX,
+                    y: translateY,
+                    duration: 1,
+                    ease: "power2.out"
+                });
+            }
+        });
+
+    } 
+      
+
+     
+  
+
+    // onMount(() => {
+       
+       
+    //     //     window.addEventListener('resize', handleResize);
+
+    //     //     return () => {
+
+    //     //     window.removeEventListener('resize', handleResize, true);
+    //     // };
+    
+    // });
+
+
 
     function isIntersecting(item1, item2) {
         const item1Start = item1.y;
@@ -203,35 +311,49 @@ const gridCellHeight = 100; // Assume each grid cell is 100 pixels high
 	}
 </script>
 
-<button class="btn" on:click={addNewItem}>Add New Item</button>
-<button class="btn" on:click={resetGrid}>Reset Grid</button>
 
-<Grid {itemSize} cols={10}  gap={gap} collision="compress" bind:controller={gridController} class="grid-container">
+
+<div class="board-for-grid">
+    <Grid {itemSize} cols={10}  gap={gap} collision="compress" bind:controller={gridController} class="grid-container">
     
-	{#each items as item (item.id)}
-		<div transition:fade={{ duration: 300 }} id={item.id}>
-			<GridItem id={item.id} bind:x={item.x} bind:y={item.y} bind:w={item.w} bind:h={item.h} class="grid-item grid-item-{item.id}">
-               
-                <div slot="moveHandle" let:moveStart>
-                    <div class=" bg-slate-600 rounded text-white cursor-move" on:pointerdown={moveStart}>
-                        MOVE
+        {#each items as item (item.id)}
+            <div transition:fade={{ duration: 300 }} id={item.id}>
+                <GridItem id={item.id} bind:x={item.x} bind:y={item.y} bind:w={item.w} bind:h={item.h} class="grid-item grid-item-{item.id}">
+                   
+                    <div slot="moveHandle" let:moveStart>
+                        <div class=" bg-slate-600 rounded text-white cursor-move" on:pointerdown={moveStart}>
+                            MOVE
+                        </div>
                     </div>
-                </div>
+    
+                    <button
+                        on:pointerdown={(e) => e.stopPropagation()}
+                        on:click={() => toggleExpand(item.id)}
+                        class="remove"
+                    >
+                        ✕
+                    </button>
 
-				<button
-					on:pointerdown={(e) => e.stopPropagation()}
-					on:click={() => toggleExpand(item.id)}
-					class="remove"
-				>
-					✕
-				</button>
+                    <button
+                    on:pointerdown={(e) => e.stopPropagation()}
+                    on:click={() => toggleContract(item.id)}
+            
+                >
+                    ✕
+                </button>
       
+                
+          
+    
+                    <div class="item">{item.id.slice(0, 5)}</div>
+                </GridItem>
+            </div>
+        {/each}
+    </Grid>
 
-				<div class="item">{item.id.slice(0, 5)}</div>
-			</GridItem>
-		</div>
-	{/each}
-</Grid>
+</div>
+
+
 
 <style>
 	.item {
@@ -259,6 +381,11 @@ const gridCellHeight = 100; // Assume each grid cell is 100 pixels high
         gap: 12px; /* Equivalent to gap-3 */
         background-color: #cbd5e1; /* Equivalent to bg-slate-300 */
         padding: 12px; /* Equivalent to p-3 */
+    }
+
+    .board-for-grid {
+  
+        padding: 12px;
     }
 
 

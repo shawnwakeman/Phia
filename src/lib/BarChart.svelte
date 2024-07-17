@@ -7,9 +7,6 @@
     import * as d3 from 'd3';
     import { selectedNodeStore } from "../stores";
     import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore, targetStatesStore, currentBlock } from "../stores";
-    import { get } from 'svelte/store';
-    import { AspectRatio } from "$lib/components/ui/aspect-ratio";
-    const primcolor = "red"
     type WritableNode = {
     id: number
     name: string;
@@ -32,10 +29,7 @@
         });
 
 
-    let blocks: Blocks | null
     let nodes: d3.HierarchyCircularNode<WritableNode>;    
-    let originalNodes: d3.HierarchyCircularNode<WritableNode>;
-    let lastNode: WritableNode; 
     let selectedNode: d3.HierarchyCircularNode<WritableNode> | null = nodes;
     function getNestedIssuesTotalPriority(nodeId: number, nodes: Node[], issues: Issue[]): number {
 
@@ -68,19 +62,19 @@
 }
 
     
-function generateDummyData(count: number): Node[] {
-    const data: Node[] = [];
-    for (let i = 0; i < count; i++) {
-        data.push({
-            id: i,
-            parent_id: i === 0 ? null : 0, // Random parent_id
-            name: `Element ${i}`,
-            value: Math.floor(Math.random() * 100) + 1, // Random value
-            state: 'Open' // Example state
-        });
-    }
-    return data;
-}
+// function generateDummyData(count: number): Node[] {
+//     const data: Node[] = [];
+//     for (let i = 0; i < count; i++) {
+//         data.push({
+//             id: i,
+//             parent_id: i === 0 ? null : 0, // Random parent_id
+//             name: `Element ${i}`,
+//             value: Math.floor(Math.random() * 100) + 1, // Random value
+//             state: 'Open' // Example state
+//         });
+//     }
+//     return data;
+// }
 
 function createHierarchy(data: Node[]): WritableNode | null {
     
@@ -169,7 +163,6 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
     let data: WritableNode | null;
     let isFirstLoad = true; 
-    let isFirstLoad2 = true; 
     let width: number = 100;
     let halfWidth = 100;
     let height: number = 100;
@@ -197,7 +190,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 const parentHeight = parentRect.height * 1.5;
                 const aspectRatio = parentWidth / parentHeight;
                 const innerWidth = Math.min(aspectRatio * parentHeight, parentWidth);
-                const innerHeight = innerWidth / aspectRatio;
+        
 
                 if (!isFirstLoad) {
                     width = parentWidth;
@@ -348,7 +341,6 @@ function createHierarchy(data: Node[]): WritableNode | null {
         
     }
 
-    let previousHalfWidth = null;
 
     function applyResize(node) {
 
@@ -962,9 +954,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
 
 
     function updateText(nodes: d3.HierarchyCircularNode<WritableNode>) {
-    const selectedLeafParentId = (selectedNode && (!selectedNode.children || selectedNode.children.length === 0))
-        ? selectedNode.parent?.data.id
-        : null;
+  
 
     const selectedNodeId = $selectedNodeStore.id;
     const selectedNodeDepth = selectedNode.depth;
@@ -992,7 +982,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 .attr("class", "text-node font-default font-medium")
                 .attr("text-anchor", "middle")
                 .attr("alignment-baseline", "middle")
-                .text(d => d.data.name)
+                .text(d => d.data.id)
                 .on("click", handleCircleClick);
 
             // Only wrap text if the radius is large enough
@@ -1022,7 +1012,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
         },
         update => {
             update.select("text")
-                .text(d => d.data.name)  // Ensure the text is updated
+                .text(d => d.data.id)  // Ensure the text is updated
                 .attr("class", d => d.r > 10 ? "text-node font-default font-medium" : "text-node font-default font-small")
                 .filter(d => d.r > 10)
                 .call(wrap, 10);

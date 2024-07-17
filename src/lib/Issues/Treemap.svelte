@@ -4,13 +4,9 @@
     import { selectedNodeStore, nodesDataStore, issuesDataStore, currentSelectedIssue, selectedIssues,filteredIssuesDataStore, filterStoreTM, openContextMenuId } from "../../stores";
     import { get } from "svelte/store";
     import * as d3 from 'd3';
-    import IssueItem from './List/IssueItem.svelte';
-    import * as Drawer from "$lib/components/ui/drawer";
     import { writable } from 'svelte/store';
-    import Options from './TreemapDisplayOptions.svelte'
     import IssueView from './issueView/IssueView.svelte';
     import * as ContextMenu from "$lib/components/ui/context-menu";
-    import ContextMenuItem from '$lib/components/ui/context-menu/context-menu-item.svelte';
     let drawerOpen = writable(false);
     import * as Sheet from "$lib/components/ui/sheet";
 
@@ -215,8 +211,8 @@ const gatherAllIssues = (node) => {
     
    
     const showContextMenu = writable(false);
-
-
+    let currentNode = null;
+    let hydratedForAni = false;
     onMount(() => {
 
 
@@ -267,7 +263,14 @@ const gatherAllIssues = (node) => {
                     .attr("width", width)
                     .attr("height", height);
 
-                drawTreeMap(data);
+                  
+                        drawTreeMap(data);
+                  
+                        drawTreeMap(data, true);
+              
+                 
+             
+
             }
                
            
@@ -300,7 +303,7 @@ const gatherAllIssues = (node) => {
         nodesDataStore.subscribe((value) => {
             if (hydrated) {
                 data = buildHierarchy(value, $filteredIssuesDataStore);
-                drawTreeMap(data)
+                drawTreeMap(data )
             }
            
             
@@ -335,8 +338,10 @@ const gatherAllIssues = (node) => {
     
         let isZoomed = false;
         let currentZoomNode = null;
+        
 
-        function drawTreeMap(data) {
+        function drawTreeMap(data, shouldAnimate = false,  x = 0, y = null, ) {
+    
             
      
             const isIssueSelected = (issue) => {
@@ -356,6 +361,7 @@ const gatherAllIssues = (node) => {
             .paddingTop(19)
             .paddingInner(5)
             .round(true)
+     
             (d3.hierarchy(data)
             .sum(d => d.value)
             .sort((a, b) => b.value - a.value));
@@ -363,94 +369,148 @@ const gatherAllIssues = (node) => {
             const root = treemap(data);
 
 
-        const nodes = svg.selectAll("g.node")
-            .data(root.descendants(), d => d.data.name);
+        const nodes = svg.selectAll("g")
+            .data(root.descendants(), d => d.data.id);
 
+        if (shouldAnimate) {
+                
+            }
         nodes.exit()
-            .transition()
-            .duration(750)
-            .attr("transform", d => `translate(${d.x0 + width},${d.y0 + height})`)
+        .transition()
+            .duration(shouldAnimate ? 750 : 0)
+            .attr("transform", d => {
+                // Determine the direction based on the position relative to the new root
+                const direction = d.x0 < x ? -1 : 1;
+                return `translate(${d.x0 + direction * width},${d.y0})`;
+            })
             .style("opacity", 0)
             .remove();
                     
-        const nodesEnter = nodes.enter()
-            .append("g")
-            .attr("class", "node")
-            .attr("transform", d => `translate(${d.x0},${d.y0})`)
-            .style("opacity", 0);
+            const nodesEnter = nodes.enter()
+                .append("g")
+                .attr("transform", d => {
+                    // Determine the direction based on the position relative to the new root
+            
+                    const directionY = d.y0 < y ? -1 : 1;
+            
+                    
+                if (y) {
+                    const directionX = d.x0 < y.x0 ? -1 : 1;
+                    return `translate(${d.x0 + directionX * width},${d.y0})`; // Enter from left or right
+                } else {
+                    const directionX = d.x0 < x ? -1 : 1;
+                const directionY = d.y0 < y ? -1 : 1;
+                const xDist = Math.abs(d.x0 - x);
+                const yDist = Math.abs(d.y0 - y);
+            
+                if (xDist < yDist) {
+                    return `translate(${d.x0 - directionX * width},${d.y0})`; // Enter from left or right
+                } else {
+                    return `translate(${d.x0},${d.y0 - directionY * height})`; // Enter from top or bottom
+                }
+                }
+                })
+                 .style("opacity", 0);
 
         const nodesMerge = nodesEnter.merge(nodes);
     
         nodesMerge.transition()
-        .duration(750)
+        .duration(shouldAnimate ? 750 : 0)
         .attr("transform", d => `translate(${d.x0},${d.y0})`)
         .style("opacity", 1)
-        .selectAll("rect")
-        .attr("width", d => d.x1 - d.x0)
-        .attr("height", d => d.y1 - d.y0);
 
 
-        nodesMerge.select("rect").remove();
-        nodesMerge.select("foreignObject").remove();
 
-        
+
+      
         drawStuff(nodesMerge)
         
 
             // Draw rectangles
 
-            function drawStuff(nodes) {
-                nodes.append("rect")
-            .attr("fill", d => d.data.value !== undefined ? color2(d.data.state) : color(d.depth))
-            .attr("width", d => d.x1 - d.x0)
-            .attr("height", d => d.y1 - d.y0)
+        function drawStuff(nodes) {
+            const rects = nodes.selectAll("rect")
+                .data(d => [d], d => d.data.id); // Bind single datum to each rect
+
+        // Handle entering elements
+        const rectsEnter = rects.enter()
+            .append("rect")
             .attr("rx", 8)
             .attr("ry", 8)
+            .attr("width", d => d.x1 - d.x0) // Set width directly for entering elements
+            .attr("height", d => d.y1 - d.y0) // Set height directly for entering elements
+            .attr("fill", d => d.data.value !== undefined ? color2(d.data.state) : color(d.depth))
             .attr("stroke", d => {
                 if (isIssueSelected(d.data)) {
-                    return "red"
+                    return "red";
                 }
-                
                 const fillColor = d3.rgb(d.data.value !== undefined ? color2(d.data.state) : color(d.depth));
                 return fillColor.darker(1.2);
             })
-            .attr("stroke-width", d => {
+            .attr("stroke-width", d => isIssueSelected(d.data) ? "2px" : "1px");
+
+        // Handle updating elements
+        rects.merge(rectsEnter)
+            .transition()
+            .duration(shouldAnimate ? 750 : 0)
+            .attr("width", d => d.x1 - d.x0)
+            .attr("height", d => d.y1 - d.y0)
+            .attr("fill", d => d.data.value !== undefined ? color2(d.data.state) : color(d.depth))
+            .attr("stroke", d => {
                 if (isIssueSelected(d.data)) {
-                    return "2px"
+                    return "red";
                 }
-                return "1px"
-
+                const fillColor = d3.rgb(d.data.value !== undefined ? color2(d.data.state) : color(d.depth));
+                return fillColor.darker(1.2);
             })
+            .attr("stroke-width", d => isIssueSelected(d.data) ? "2px" : "1px");
 
+        rects.exit().remove();
 
-            nodes.append("foreignObject")
-                .attr("width", d => d.x1 - d.x0)
-                .attr("height", d => d.y1 - d.y0)
-                .append("xhtml:div")
-                .style("overflow", "hidden")
-                .style("height", "100%")
-                .style("width", "100%")
-                .style("white-space", "pre-wrap")
-                .style("word-wrap", "break-word")
-                .style("text-align", "left")
-                .style("display", "flex")
-                .style("flex-direction", "column")
-                .style("align-items", "flex-start")
-                .style("justify-content", "flex-start")
-                .style("padding", "2px")
-                .style("padding-top", "3px") // Adjust top padding value as needed
-                .style("padding-left", "4px") // Adjust left padding value as needed
-                .style("font-size", "10px")
-                .style("color", "#000")
-                .html(d => {
-                    if (d.data.value !== undefined) {
-                        return `<div>${d.data.name}</div><div>Value: ${d.data.value}</div>`;
-                    } else {
-                        return `<div>${d.data.name}</div>`;
-                    }
-                })
-                .on("click", (event, d) => handleClick(event, d))
-                .on("contextmenu", (event, d) => handleRightClick(event, d)); 
+        
+            
+
+        const texts = nodes.selectAll("foreignObject")
+        .data(d => [d], d => d.data.id);
+
+        const textsEnter = texts.enter()
+                .append("foreignObject")
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0)
+        .append("xhtml:div")
+        .style("overflow", "hidden")
+        .style("height", "100%")
+        .style("width", "100%")
+        .style("white-space", "pre-wrap")
+        .style("word-wrap", "break-word")
+        .style("text-align", "left")
+        .style("display", "flex")
+        .style("flex-direction", "column")
+        .style("align-items", "flex-start")
+        .style("justify-content", "flex-start")
+        .style("padding", "2px")
+        .style("padding-top", "3px") // Adjust top padding value as needed
+        .style("padding-left", "4px") // Adjust left padding value as needed
+        .style("font-size", "10px")
+        .style("color", "#000")
+        .html(d => {
+            if (d.data.value !== undefined) {
+                return `<div>${d.data.name}</div><div>Value: ${d.data.value}</div>`;
+            } else {
+                return `<div>${d.data.name}</div>`;
+            }
+        })
+                    .on("click", (event, d) => handleClick(event, d))
+                    .on("contextmenu", (event, d) => handleRightClick(event, d));
+
+                    textsEnter.merge(texts)
+        .transition()
+        .duration(shouldAnimate ? 750 : 0)
+        .style("font-size", "12px") // Example animation to change font-size
+        .attr("width", d => d.x1 - d.x0) // Ensure the container size is updated
+        .attr("height", d => d.y1 - d.y0);
+
+                texts.exit().remove();
             }
 
 
@@ -498,8 +558,10 @@ const gatherAllIssues = (node) => {
 
                         const nodesWithParents = getNodeWithParents(d.data);
                         console.log(nodesWithParents);
-
-                        drawTreeMap(nodesWithParents);
+                        console.log(d.x0);
+                       
+                        drawTreeMap(nodesWithParents, true, d.x0, currentNode);
+                        currentNode = d;
                     }
                 }
             function handleRightClick(event, d) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from 'svelte';
+    import { createEventDispatcher } from 'svelte';
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { writable, get } from 'svelte/store';
     import {filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../../stores";
