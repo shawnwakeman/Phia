@@ -362,26 +362,45 @@ const gatherAllIssues = (node) => {
 
             const root = treemap(data);
 
-            const x = d3.scaleLinear().rangeRound([0, width]);
-            const y = d3.scaleLinear().rangeRound([0, height]);
+
+        const nodes = svg.selectAll("g.node")
+            .data(root.descendants(), d => d.data.name);
+
+        nodes.exit()
+            .transition()
+            .duration(750)
+            .attr("transform", d => `translate(${d.x0 + width},${d.y0 + height})`)
+            .style("opacity", 0)
+            .remove();
+                    
+        const nodesEnter = nodes.enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("transform", d => `translate(${d.x0},${d.y0})`)
+            .style("opacity", 0);
+
+        const nodesMerge = nodesEnter.merge(nodes);
+    
+        nodesMerge.transition()
+        .duration(750)
+        .attr("transform", d => `translate(${d.x0},${d.y0})`)
+        .style("opacity", 1)
+        .selectAll("rect")
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0);
+
+
+        nodesMerge.select("rect").remove();
+        nodesMerge.select("foreignObject").remove();
 
         
+        drawStuff(nodesMerge)
+        
 
-            svg.selectAll("g").remove();
-
-            const nodes = svg.selectAll("g")
-            .data(root.descendants())
-            .join("g")
-            .attr("transform", d => `translate(${d.x0},${d.y0})`);
-
-            
-
-    
-            
             // Draw rectangles
 
-
-            nodes.append("rect")
+            function drawStuff(nodes) {
+                nodes.append("rect")
             .attr("fill", d => d.data.value !== undefined ? color2(d.data.state) : color(d.depth))
             .attr("width", d => d.x1 - d.x0)
             .attr("height", d => d.y1 - d.y0)
@@ -432,6 +451,10 @@ const gatherAllIssues = (node) => {
                 })
                 .on("click", (event, d) => handleClick(event, d))
                 .on("contextmenu", (event, d) => handleRightClick(event, d)); 
+            }
+
+
+
                 function handleClick(event, d) {
                     if (event.ctrlKey) {
                         // Control key is pressed
@@ -460,7 +483,7 @@ const gatherAllIssues = (node) => {
                                 const newSelectedIssues = [...issues, ...allIssues.filter(issue => !isIssueSelected(issue))];
                                 selectedIssues.set(newSelectedIssues);
                                 console.log("All issues under node selected:", allIssues);
-            }
+                            }
                         }
                  
                     } else if (d.data.value !== undefined) {

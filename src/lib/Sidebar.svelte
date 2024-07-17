@@ -29,6 +29,7 @@
       overflow-y: auto;
       overflow-x: hidden; /* Hide horizontal scrollbar */
       user-select: none;  /* user */
+      z-index: 5;
      
     }
   

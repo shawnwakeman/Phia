@@ -116,6 +116,7 @@
     "svelte-drawer-component": "^1.2.2",
     "svelte-gestures": "^4.0.0",
     "svelte-grid": "^5.1.2",
+    "svelte-grid-extended": "^1.2.1",
     "svelte-radix": "^1.1.0",
     "svelte-splitpanes": "^0.8.0",
     "svelte-tiptap": "^1.1.3",
