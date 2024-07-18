@@ -1,3 +1,4 @@
+import { supabase } from './lib/supabaseClient';
 // src/stores.ts
 import { writable, derived } from 'svelte/store';
 import type { Node, Issue, Blocks, TargetStates } from './types/collection'
@@ -104,3 +105,41 @@ export const filterStoreKanBan = writable({
   hideNullRows: false,
   hideNullColumns: false,
 });
+
+
+let isDataLoaded = false;
+
+export async function loadData() {
+    if (!isDataLoaded) {
+        const projectID = 1;
+
+        try {
+            const { data: nodesData, error: nodesError } = await supabase
+                .from('nodes')
+                .select()
+                .eq('project_id', projectID);
+
+            if (nodesError) {
+                console.error('Error fetching nodes:', nodesError);
+            } else {
+                nodesDataStore.set(nodesData);
+            }
+
+            const { data: issuesData, error: issuesError } = await supabase
+                .from('issues')
+                .select()
+                .eq('project_id', projectID);
+
+            if (issuesError) {
+                console.error('Error fetching issues:', issuesError);
+            } else {
+                issuesDataStore.set(issuesData);
+            }
+
+            isDataLoaded = true;
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
+    }
+}
+

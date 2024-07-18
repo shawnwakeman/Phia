@@ -150,9 +150,11 @@
         groupedIssues = groupAndSortIssues(filteredIssues, filtersFormStore.rowByField, filtersFormStore.orderByField, filtersFormStore.orderDirection);
     }
 
+
+
     // Initialize the board on mount
     onMount(() => {
-
+      
         updateBoard();
     });
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ContextMenu as ContextMenuPrimitive } from "bits-ui";
-	import Check from "svelte-radix/Check.svelte";
+    import { Check } from 'lucide-svelte';
 	import { cn } from "$lib/utils.js";
 
 	type $$Props = ContextMenuPrimitive.CheckboxItemProps;

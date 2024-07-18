@@ -1,7 +1,7 @@
 
       <script lang="ts">
         import { type Issue } from "../../../types/collection";
-        import * as Drawer from "$lib/components/ui/drawer";
+     
         import Editor from "$lib/dist/ui/editor/indexForIssues.svelte"
         import IssueTitle from "./IssueTitle.svelte";
         import { onMount } from 'svelte';

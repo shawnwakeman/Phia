@@ -213,12 +213,10 @@ const gatherAllIssues = (node) => {
     const showContextMenu = writable(false);
     let currentNode = null;
     let hydratedForAni = false;
+
+
     onMount(() => {
-
-
-
-        let width = 0;
-        let height = 0;
+  
 
  
        

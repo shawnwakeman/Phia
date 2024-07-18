@@ -6,7 +6,7 @@
     import { createLocalStorageStore } from "../../stores/localStorage.js";
     import { createDebouncedCallback, noop } from "../../utils.js";
     import { Editor } from "@tiptap/core";
-    import { useCompletion } from "ai/svelte";
+
     import ImageResizer from "./extensions/ImageResizer.svelte";
     import { onMount } from "svelte";
     import { defaultEditorContent } from "./default-content.js";
@@ -45,25 +45,7 @@
     let lastSentState = null;
     let sessionId = uuidv4()
   
-    const { complete, completion, isLoading, stop } = useCompletion({
-      id: "novel",
-      api: completionApi,
-      onFinish: (_prompt, completion2) => {
-        editor?.commands.setTextSelection({
-          from: editor.state.selection.from - completion2.length,
-          to: editor.state.selection.from
-        });
-      },
-      onError: (err) => {
-        addToast({
-          data: {
-            text: err.message,
-            type: "error"
-          }
-        });
-      }
-    });
-  
+   
     const content = createLocalStorageStore(storageKey, defaultValue);
     let hydrated = false;
     $: if (editor && !hydrated) {
@@ -74,16 +56,8 @@
       hydrated = true;
     }
     
-    let prev = "";
-    function insertAiCompletion() {
-      const diff = $completion.slice(prev.length);
-      prev = $completion;
-      editor?.commands.insertContent(diff);
-    }
-    $: {
-      [$completion];
-      insertAiCompletion();
-    }
+
+   
     const debouncedUpdates = createDebouncedCallback(async ({ editor: editor2 }) => {
       if (!disableLocalStorage) {
         const json = editor2.getJSON();
@@ -145,13 +119,6 @@
           ...editorProps
         },
         onUpdate: async  (e) => {
-            console.log("adsdasd");
-          const selection = e.editor.state.selection;
-          const lastTwo = getPrevText(e.editor, { chars: 2 });
-          if (lastTwo === "++" && !$isLoading) {
-            e.editor.commands.deleteRange({ from: selection.from - 2, to: selection.from });
-            complete(getPrevText(e.editor, { chars: 5e3 }));
-          } else {
 
             const currentState = editor.getJSON();
             const changes = diff(lastSentState, currentState);
@@ -162,7 +129,7 @@
       
             onUpdate(e.editor);
             debouncedUpdates(e);
-          }
+    
   
           // Update Supabase with new content
         

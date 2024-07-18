@@ -1,56 +1,18 @@
-<script>import { getPrevText } from "../../../editor.js";
+<script>
 import { LoadingCircle } from "../../icons/index.js";
-import { useCompletion } from "ai/svelte";
 import { anyify } from "../../../utils.js";
-import { addToast } from "../../toasts.svelte";
+
 export let items = [];
 export let command;
 export let editor;
 export let range;
 let selectedIndex = 0;
-const { complete, isLoading } = useCompletion({
-  id: "novel",
-  api: "/api/generate",
-  onResponse: (response) => {
-    if (response.status === 429) {
-      addToast({
-        data: {
-          text: "You have reached your request limit for the day.",
-          type: "error"
-        }
-      });
-      return;
-    }
-    editor.chain().focus().deleteRange(range).run();
-  },
-  onFinish: (_prompt, completion) => {
-    editor.commands.setTextSelection({
-      from: range.from,
-      to: range.from + completion.length
-    });
-  },
-  onError: (e) => {
-    addToast({
-      data: {
-        text: e.message,
-        type: "error"
-      }
-    });
-  }
-});
+
 const selectItem = (index) => {
   const item = items[index];
   if (item) {
     if (item.title === "Continue writing") {
-      if ($isLoading)
-        return;
-      complete(
-        getPrevText(editor, {
-          chars: 5e3,
-          offset: 1
-        })
-      );
-    } else {
+
       command(item);
     }
   }
@@ -95,7 +57,7 @@ let container;
 				<div
 					class="flex h-10 w-10 items-center justify-center rounded-md border border-stone-200 bg-white"
 				>
-					{#if item.title === 'Continue writing' && $isLoading}
+					{#if item.title === 'Continue writing'}
 						<LoadingCircle />
 					{:else}
 						<svelte:component this={anyify(item.icon)} size="18" />

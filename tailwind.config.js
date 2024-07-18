@@ -77,10 +77,7 @@ const config = {
 				md: "calc(var(--radius) - 2px)",
 				sm: "calc(var(--radius) - 4px)"
 			},
-			fontFamily: {
-				title: ['var(--font-title)', 'Inter'],
-				default: ['var(--font-default)', 'Inter']
-			},
+
 	
 
 

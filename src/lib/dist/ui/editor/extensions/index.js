@@ -17,7 +17,7 @@ import UpdatedImage from './updated-image.js';
 import FileNode from './FileNode.js';
 import { SvelteCounterExtension } from './Table.js';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { all, createLowlight } from 'lowlight'
+import { common, createLowlight } from 'lowlight'
 import Typography from '@tiptap/extension-typography'
 import { ColorHighlighter } from './ColorHighlighter.js'
 import { SmilieReplacer } from './SmilieReplacer.js'
@@ -31,7 +31,7 @@ import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
 
 
-const lowlight = createLowlight(all)
+const lowlight = createLowlight(common)
 
 
 

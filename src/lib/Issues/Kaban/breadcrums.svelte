@@ -46,22 +46,7 @@
         return obj;
     }
 
-    function navigateTo(id: number) {
-        // Navigation logic here
-    }
 
-    document.addEventListener('DOMContentLoaded', function() {
-    const cardContainer = document.querySelector('.card-container');
-    const breadcrumbContainer = document.querySelector('.breadcrumb-container');
-
-    cardContainer.addEventListener('focus', function() {
-      breadcrumbContainer.classList.add('disable-transform');
-    });
-
-    cardContainer.addEventListener('blur', function() {
-      breadcrumbContainer.classList.remove('disable-transform');
-    });
-  });
     
 </script>
 
@@ -113,6 +98,4 @@
           {/if}
       {/each}
     </nav>
-
- 
   </div>
