@@ -22,7 +22,7 @@ type HierarchyNode = {
 };
 
 function buildHierarchy(nodes: Node[], issues: Issue[]) {
-
+  
     const nodeMap = new Map<number, Node>();
     const hierarchyMap = new Map<number, HierarchyNode>();
 
@@ -90,6 +90,7 @@ function buildHierarchy(nodes: Node[], issues: Issue[]) {
     console.log(JSON.stringify(hierarchyMap.get(rootNode.id)!, null, 2));
 
     updateNodeValues(hierarchyMap.get(rootNode.id)!);
+
     return hierarchyMap.get(rootNode.id)!;
 
 
@@ -216,7 +217,8 @@ const gatherAllIssues = (node) => {
 
 
     onMount(() => {
-  
+        let width = 0;
+        let height = 0;
 
  
        

@@ -16,7 +16,7 @@
 	import FilterControls from "$lib/Issues/Kaban/Filter.svelte";
 	import KanbanOptions from "$lib/Issues/Kaban/FilterControls.svelte";
 	import SelectionBar from "$lib/Issues/selectionBar.svelte";
-	import { onMount } from "svelte";
+
 	import { Rows3, SquareKanban, Network } from "lucide-svelte";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { get } from "svelte/store";

@@ -73,7 +73,7 @@
     <ul>
       {#each items as item}
         <li>
-          <a class="sidebar-item" href={item.href}>
+          <a class="sidebar-item"  href={item.href} data-sveltekit-preload-data>
             <span class="sidebar-item-icon">{item.icon}</span>
             <span class="sidebar-item-text">{item.text}</span>
           </a>
@@ -84,7 +84,7 @@
     <ul>
         {#each bottomItems as item}
           <li>
-            <a class="sidebar-item" href={item.href}>
+            <a class="sidebar-item"  href={item.href} data-sveltekit-preload-data>
               <span class="sidebar-item-icon">{item.icon}</span>
               <span class="sidebar-item-text">{item.text}</span>
             </a>

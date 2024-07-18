@@ -550,9 +550,6 @@
 		stopAutoScroll();
 	}
 
-	function handleScroll(event) {
-		console.log("Scroll event detected");
-	}
 
 	function handleWheel(event) {
 		event.preventDefault();
@@ -588,13 +585,13 @@
 
 	onMount(() => {
         
-		updateBoard();
+	
 
 		boardContainer.addEventListener("mousedown", handleMouseDown);
 
 		window.addEventListener("mousemove", handleGlobalMouseMove);
 
-		window.addEventListener("wheel", handleWheel, { passive: false });
+		window.addEventListener("wheel", handleWheel, { passive: true });
 
 		return () => {
 			boardContainer.removeEventListener("mousedown", handleMouseDown);
@@ -782,8 +779,7 @@
 
 	.header-container {
 		user-select: none; /* user */
-		position: sticky;
-		position: relative; /* Ensure the parent div is relatively positioned */
+
 		position: -webkit-sticky; /* Safari */
 		position: sticky;
 

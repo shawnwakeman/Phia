@@ -153,10 +153,7 @@
 
 
     // Initialize the board on mount
-    onMount(() => {
-      
-        updateBoard();
-    });
+
 
     // Subscribe to filteredIssuesDataStore
     const unsubscribe = filteredIssuesDataStore.subscribe(value => {
