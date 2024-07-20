@@ -5,12 +5,12 @@
 		filteredIssuesDataStore,
 		filteredIssuesForSnapshot,
 		filterStoreKanBan,
-	} from "../../../stores";
+	} from "$lib/stores";
 	import { addIssue } from "$lib/supabaseClient";
 	import { get } from "svelte/store";
 	import Board from "./Board.svelte";
 	import type { Issue } from "../../../types/collection";
-	import { isDragging } from "../../../stores";
+	import { isDragging } from "$lib/stores";
 	import { Button } from "$lib/components/ui/button";
 	import * as Collapsible from "$lib/components/ui/collapsible";
 
@@ -550,7 +550,6 @@
 		stopAutoScroll();
 	}
 
-
 	function handleWheel(event) {
 		event.preventDefault();
 		console.log("Wheel event detected");
@@ -584,9 +583,6 @@
 	}
 
 	onMount(() => {
-        
-	
-
 		boardContainer.addEventListener("mousedown", handleMouseDown);
 
 		window.addEventListener("mousemove", handleGlobalMouseMove);

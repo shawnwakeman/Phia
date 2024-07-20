@@ -10,7 +10,7 @@
 		issuesDataStore,
 		sidebarWidthStore,
 		targetStatesStore,
-	} from "../../stores";
+	} from "$lib/stores";
 	import { get } from "svelte/store";
 
 	import NodeManager from "$lib/nodeManager/index.svelte";

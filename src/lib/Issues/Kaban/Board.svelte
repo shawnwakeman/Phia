@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    import { isDragging } from '../../../stores';
+    import { isDragging } from '../../stores';
     import { updateIssue } from "$lib/supabaseClient";
     import Column from './Column.svelte';
 

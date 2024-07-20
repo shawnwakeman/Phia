@@ -1,6 +1,6 @@
 <script>
     import { onMount } from 'svelte';
-    import { blocksDataStore, currentBlock } from '../../../stores';
+    import { blocksDataStore, currentBlock } from '../../stores';
 
 
     let timelineContainer;

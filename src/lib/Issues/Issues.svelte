@@ -5,7 +5,7 @@
     import List from '$lib/Issues/List/index.svelte'
     import ListOptions from '$lib/Issues/List/ListDisplayOptions.svelte'
     import type { Issue, Node } from "../../types/collection";
-    import { issuesDataStore, filteredIssuesDataStore, selectedIssues } from "../../stores";
+    import { issuesDataStore, filteredIssuesDataStore, selectedIssues } from "$lib/stores";
     import FilterControls from '$lib/Issues/Kaban/Filter.svelte'
     import KanbanOptions from '$lib/Issues/Kaban/FilterControls.svelte'
     import SelectionBar from '$lib/Issues/selectionBar.svelte'

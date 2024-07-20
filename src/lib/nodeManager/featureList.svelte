@@ -1,8 +1,8 @@
 <script lang="ts">
     import { writable, get } from 'svelte/store';
-    import { nodesDataStore } from '../../stores';  // Adjust path as necessary
+    import { nodesDataStore } from '../stores';  // Adjust path as necessary
     import type { Node } from '../../types/collection';
-    import { selectedNodeId } from '../../stores';
+    import { selectedNodeId } from '../stores';
     import { addNode, updateNodeNameByID, deleteNodeById } from '$lib/supabaseClient';
 
     interface Feature {

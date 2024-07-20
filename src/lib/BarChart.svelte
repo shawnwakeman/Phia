@@ -5,8 +5,8 @@
     import { onMount } from 'svelte';
     import type { Node, Issue, Blocks } from "../types/collection"
     import * as d3 from 'd3';
-    import { selectedNodeStore } from "../stores";
-    import { selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore, targetStatesStore, currentBlock } from "../stores";
+ 
+    import { selectedNodeStore, selectedNodeId, nodesDataStore, navigateNodeStore, issuesDataStore, sidebarWidthStore, targetStatesStore, currentBlock } from "$lib/stores";
     type WritableNode = {
     id: number
     name: string;
@@ -834,7 +834,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
                         
                         return getColorByStatus(hasTargetState.target_state);
                     } else {
-                        console.log(hasTargetState);
+                
                         return d.data.totalPriority === 0 ? darkerColor(d.data.fillColor) : '#654ea3'
                     }
                     
@@ -982,7 +982,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
                 .attr("class", "text-node font-default font-medium")
                 .attr("text-anchor", "middle")
                 .attr("alignment-baseline", "middle")
-                .text(d => d.data.id)
+                .text(d => d.data.name)
                 .on("click", handleCircleClick);
 
             // Only wrap text if the radius is large enough
@@ -1012,7 +1012,7 @@ function createHierarchy(data: Node[]): WritableNode | null {
         },
         update => {
             update.select("text")
-                .text(d => d.data.id)  // Ensure the text is updated
+                .text(d => d.data.name)  // Ensure the text is updated
                 .attr("class", d => d.r > 10 ? "text-node font-default font-medium" : "text-node font-default font-small")
                 .filter(d => d.r > 10)
                 .call(wrap, 10);

@@ -43,6 +43,9 @@ export const handle: Handle = async ({ event, resolve }) => {
       return { session: null, user: null }
     }
 
+
+    
+
     return { session, user }
   }
 

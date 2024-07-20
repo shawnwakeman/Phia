@@ -65,7 +65,7 @@
       }
       if (selectedNodeStore) {
         console.log("aksjdhasjkhdlkajshdkjashdkjhaslkdjh");
-        await saveSummary($selectedNodeStore.id, editor2.getJSON(), sessionId, "summaries");
+        await saveSummary($selectedNodeStore.id, editor2.getJSON(), sessionId, "summaries_base");
         
       }
       
@@ -83,10 +83,10 @@
         const documentid = value.id;
         if (editor) {
             if (prevoiusId !== 0) {
-                await saveSummary(prevoiusId, editor.getJSON(), sessionId, "summaries");
+                await saveSummary(prevoiusId, editor.getJSON(), sessionId, "summaries_base");
             }
          
-            const summary = await fetchSummary(value.id, "summaries");
+            const summary = await fetchSummary(value.id, "summaries_base");
             editor.commands.setContent(summary)
             updateEditorSubscription(documentid);
             prevoiusId = value.id
@@ -114,7 +114,7 @@
             const currentState = editor.getJSON();
             const changes = diff(lastSentState, currentState);
             if (changes) {
-                await saveSummaryChanges($selectedNodeStore.id, changes, sessionId, "summaries");
+                await saveSummaryChanges($selectedNodeStore.id, changes, sessionId, "summaries_base");
                 lastSentState = currentState;
             }
       
@@ -133,11 +133,11 @@
       if (unsubscribe) unsubscribe(); // Unsubscribe from the previous channel if exists
   
       // Subscribe to changes in Supabase
-      const channel = supabase.channel('custom-filter-channel')
+      const channel = supabase.channel('custom-filter-channels')
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
-          table: 'summaries',
+          table: 'summaries_base',
           filter: `node_id=eq.${documentid}`
         }, (payload) => {
           

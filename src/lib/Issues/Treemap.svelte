@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { Node, Issue } from "../../types/collection";
-    import { selectedNodeStore, nodesDataStore, issuesDataStore, currentSelectedIssue, selectedIssues,filteredIssuesDataStore, filterStoreTM, openContextMenuId } from "../../stores";
+    import { selectedNodeStore, nodesDataStore, issuesDataStore, currentSelectedIssue, selectedIssues,filteredIssuesDataStore, filterStoreTM, openContextMenuId } from "$lib/stores";
     import { get } from "svelte/store";
     import * as d3 from 'd3';
     import { writable } from 'svelte/store';

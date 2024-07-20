@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-    import { filterStoreList } from '../../../stores';
+    import { filterStoreList } from '../../stores';
     import {SlidersHorizontal } from 'lucide-svelte';
     import { Button } from "$lib/components/ui/button/index.js";
    

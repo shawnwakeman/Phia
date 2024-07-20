@@ -2,7 +2,7 @@
     import { flip } from 'svelte/animate';
     import { writable } from 'svelte/store';
     import * as ContextMenu from "$lib/components/ui/context-menu";
-    import { currentSelectedIssue, selectedIssues, selectionAnchor, openContextMenuId   } from '../../../stores';
+    import { currentSelectedIssue, selectedIssues, selectionAnchor, openContextMenuId   } from '../../stores';
     import * as Sheet from "$lib/components/ui/sheet";
     import { get } from 'svelte/store';
     import IssueView from '../issueView/IssueView.svelte';

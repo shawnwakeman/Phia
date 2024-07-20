@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { selectedNodeStore, nodesDataStore, selectedNodeId, navigateNodeStore } from "../../../stores";
+    import { selectedNodeStore, nodesDataStore, selectedNodeId, navigateNodeStore } from "$lib/stores";
     import type { Node, Issue } from '../../../types/collection';
     export let issue: Issue;
  

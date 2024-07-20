@@ -12,7 +12,7 @@
 		nodesDataStore,
 		filteredIssuesDataStore,
 		selectedIssues,
-	} from "../../stores";
+	} from "../../lib/stores";
 	import FilterControls from "$lib/Issues/Kaban/Filter.svelte";
 	import KanbanOptions from "$lib/Issues/Kaban/FilterControls.svelte";
 	import SelectionBar from "$lib/Issues/selectionBar.svelte";
@@ -34,8 +34,8 @@
 	issuesDataStore.set(data.issues);
 
 
-		const issues = get(issuesDataStore);
-		filteredIssuesDataStore.set(issues); // Set the initial filtered issues store value
+    const issues = get(issuesDataStore);
+    filteredIssuesDataStore.set(issues); // Set the initial filtered issues store value
 
 </script>
 

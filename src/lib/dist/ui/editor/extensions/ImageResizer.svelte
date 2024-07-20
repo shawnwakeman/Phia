@@ -1,7 +1,7 @@
 <script>
     import { anyify } from "../../../utils.js";
     import Moveable from "svelte-moveable";
-    import { sidebarWidthStore } from '../../../../../stores'
+    import { sidebarWidthStore } from '$lib/stores'
     
     export let editor;
     

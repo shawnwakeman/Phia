@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
-
+import type { UserSettings } from "../types/collection";
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -142,3 +142,57 @@ export function get_name() {
 	const random_index = Math.floor(Math.random() * names.length);
 	return names[random_index];
 }
+
+
+export function mergeDefaults(
+    userSettings: UserSettings,
+    defaultSettings: UserSettings
+): UserSettings {
+    const merge = (userObj: any, defaultObj: any): any => {
+        const result: any = {};
+
+        // Add or merge properties from defaultObj
+        for (const key in defaultObj) {
+            if (defaultObj.hasOwnProperty(key)) {
+                if (typeof defaultObj[key] === "object" && !Array.isArray(defaultObj[key])) {
+                    result[key] = merge(userObj[key] || {}, defaultObj[key]);
+                } else {
+                    result[key] = userObj.hasOwnProperty(key) ? userObj[key] : defaultObj[key];
+                }
+            }
+        }
+
+        return result;
+    };
+
+    const result = merge(userSettings, defaultSettings);
+
+    // Remove properties not present in defaultSettings
+    const cleanUpUserSettings = (userObj: any, defaultObj: any) => {
+        for (const key in userObj) {
+            if (userObj.hasOwnProperty(key)) {
+                if (!defaultObj.hasOwnProperty(key)) {
+                    delete userObj[key];
+                } else if (typeof userObj[key] === "object" && !Array.isArray(userObj[key])) {
+                    cleanUpUserSettings(userObj[key], defaultObj[key]);
+                }
+            }
+        }
+    };
+
+    cleanUpUserSettings(result, defaultSettings);
+
+    return result;
+}
+
+
+export const defaultUserSettings: UserSettings = {
+	home: {
+		grid: {
+			gridLayout: [],
+			focusLayout: [],
+			usingSimple: false,
+		},
+		
+	},
+};

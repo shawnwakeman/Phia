@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { selectedNodeStore, currentBlock } from '../../stores';
+    import { selectedNodeStore, currentBlock } from '../stores';
     import { updateNodeAndChildrenState, updateNodeByID, updateNodeAndChildrenTargetState } from '$lib/supabaseClient';
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 

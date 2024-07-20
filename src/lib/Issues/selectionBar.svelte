@@ -1,6 +1,6 @@
 <script>
 
-import { selectedIssues } from "../../stores";
+import { selectedIssues } from "$lib/stores";
 
 </script>
 

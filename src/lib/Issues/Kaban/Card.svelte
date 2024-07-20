@@ -1,7 +1,7 @@
 <script lang="ts">
     import { writable } from 'svelte/store';
     import * as ContextMenu from "$lib/components/ui/context-menu";
-    import { currentSelectedIssue, selectedIssues, openContextMenuId } from '../../../stores';
+    import { currentSelectedIssue, selectedIssues, openContextMenuId } from '../../stores';
     import IssueView from '../issueView/IssueView.svelte';
     import * as Sheet from "$lib/components/ui/sheet";
     import { get } from 'svelte/store';

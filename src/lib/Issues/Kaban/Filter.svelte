@@ -2,7 +2,7 @@
     import { createEventDispatcher } from 'svelte';
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { writable, get } from 'svelte/store';
-    import {filteredIssuesDataStore, filteredIssuesForSnapshot } from "../../../stores";
+    import {filteredIssuesDataStore, filteredIssuesForSnapshot } from "$lib/stores";
     import { Filter, Trash2 } from 'lucide-svelte';
     import { Button } from "$lib/components/ui/button/index.js";
     const filterFields = [

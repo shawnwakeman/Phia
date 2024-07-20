@@ -2,7 +2,7 @@
 
     import type { Issue, Node, Blocks, TargetStates } from "../../types/collection";
 
-    import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore, sidebarWidthStore, blocksDataStore, targetStatesStore, currentBlock} from "../../stores";
+    import { selectedNodeId, selectedNodeStore, nodesDataStore, issuesDataStore, sidebarWidthStore, blocksDataStore, targetStatesStore, currentBlock} from "../../lib/stores";
     import { onMount } from 'svelte';
     import { get } from "svelte/store";
 

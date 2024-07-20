@@ -14,7 +14,7 @@
     import Toasts, { addToast } from "../toasts.svelte";
     import EditorBubbleMenu from "./bubble-menu/index.svelte";
     import { supabase, fetchSummary, saveSummary, saveSummaryChanges  } from "$lib/supabaseClient";
-    import { currentSelectedIssue } from '../../../../stores';
+    import { currentSelectedIssue } from '../../../stores';
     import { get } from 'svelte/store';
     import { create, diff, patch } from 'jsondiffpatch';
     import { v4 as uuidv4 } from 'uuid';
