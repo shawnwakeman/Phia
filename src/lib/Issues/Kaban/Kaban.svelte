@@ -550,6 +550,7 @@
 		stopAutoScroll();
 	}
 
+
 	function handleWheel(event) {
 		event.preventDefault();
 		console.log("Wheel event detected");
@@ -583,6 +584,9 @@
 	}
 
 	onMount(() => {
+        
+	
+
 		boardContainer.addEventListener("mousedown", handleMouseDown);
 
 		window.addEventListener("mousemove", handleGlobalMouseMove);

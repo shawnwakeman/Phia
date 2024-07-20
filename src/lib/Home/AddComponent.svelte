@@ -17,6 +17,7 @@
 		const h = Math.floor(Math.random() * 5) + 1;
         const min = { w: 1, h: 1 }
         const max = { w: 10, h: 10 }
+        const type = "pomodoro"
 		const newPosition = $gridController.getFirstAvailablePosition(w, h);
 		items = newPosition
 			? [
@@ -28,7 +29,8 @@
 						w,
 						h,
                         min,
-                        max
+                        max,
+                        type
 					},
 				]
 			: items;

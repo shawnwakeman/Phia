@@ -6,7 +6,7 @@
 	"svelteBracketNewLine": true,
 	"svelteAllowShorthand": true,
 	"trailingComma": "es5",
-	"printWidth": 80,
+	"printWidth": 100,
 	"tabWidth": 4,
 	"useTabs":true,
 	"arrowParens":"always",

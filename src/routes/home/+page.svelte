@@ -105,12 +105,13 @@
         flex: 1;
         overflow: hidden;
         user-select: none;
+        background-color: #1f2937;
     }
 
     .internals {
         overflow: hidden;
         height: 100%;
-         background: rgba(79, 79, 97, 0.349);   
+         background: rgba(21, 21, 26, 0.349);   
         margin-left: 12px;
         margin-right: 12px;
         margin-bottom: 12px;

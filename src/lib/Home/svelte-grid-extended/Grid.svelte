@@ -12,7 +12,7 @@
 </script>
 
 <script lang="ts">
-	import { createEventDispatcher, getContext, onMount, setContext } from 'svelte';
+	import { createEventDispatcher, getContext, onMount, setContext, onDestroy } from 'svelte';
 
 	import { assertGridOptions } from './utils/assert';
 	import { findGridSize } from './utils/breakpoints';
@@ -92,7 +92,7 @@
 	/**
 	 * Bound the grid items to the grid container.
 	 */
-	export let bounds = false;
+	export let bounds = true;
 
 	/**
 	 * Disable the items interaction.
@@ -188,32 +188,56 @@
 			_controller._internalCompress();
 		}
 	}
+    let isInitialSetup = true;
+    let oldWidth = 0;
+    let oldHeight = 0;
+    let sizeObserver;
+
+
 
 	onMount(() => {
-		const sizeObserver = new ResizeObserver((entries) => {
-			if (entries.length > 1) {
-				throw new Error('that observer must have only one entry');
-			}
-			const entry = entries[0];
+		const handleResize = (entries) => {
+            console.log(window.innerHeight, window.innerWidth);
+            
+        if (entries.length > 1) {
+            throw new Error('The observer must have only one entry');
+        }
 
-			const width = entry.contentRect.width;
-			const height = entry.contentRect.height;
+        const entry = entries[0];
+        const width = entry.contentRect.width;
+        const height = entry.contentRect.height;
 
-			_cols = findGridSize(cols, width, breakpoints);
-			_rows = findGridSize(rows, height, breakpoints);
+        if (window.innerHeight === oldHeight && window.innerWidth === oldWidth) {
+          
+            return;
+        } 
 
-			shouldExpandCols = _cols === 0;
-			shouldExpandRows = _rows === 0;
+        oldHeight = window.innerHeight;
+        oldWidth = window.innerWidth;
 
-			$gridSettings.itemSize = {
-				width: itemSize.width ?? (width - (_cols + 1) * gap) / _cols,
-				height: itemSize.height ?? (height - (_rows + 1) * gap) / _rows
-			};
-		});
+       
 
-		sizeObserver.observe(gridContainer);
+   
 
-		return () => sizeObserver.disconnect();
+        _cols = findGridSize(cols, width, breakpoints);
+        _rows = findGridSize(rows, height, breakpoints);
+
+        shouldExpandCols = _cols === 0;
+        shouldExpandRows = _rows === 0;
+
+        $gridSettings.itemSize = {
+            width: itemSize.width ?? (width - (_cols + 1) * gap) / _cols,
+            height: itemSize.height ?? (height - (_rows + 1) * gap) / _rows
+        };
+
+     
+    };
+    sizeObserver = new ResizeObserver(handleResize);
+    sizeObserver.observe(gridContainer);
+
+   
+
+
 	});
 
 	function registerItem(item: LayoutItem): void {

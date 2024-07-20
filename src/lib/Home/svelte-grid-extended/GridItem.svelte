@@ -534,7 +534,7 @@
 	class:active-default={!activeClass && active}
     class:non-active-default={!active && isMouseDown}
 	on:pointerdown={_movable && !$$slots.moveHandle ? moveStart : null}
-	style={`position: absolute; left:${left}px; top:${top}px; width: ${width}px; height: ${height}px; 
+	style={`position: absolute; left:${left}px; top:${top}px; width: ${width}px; height: ${height}px; z-index: 2;
 			${_movable && !$$slots.moveHandle ? 'cursor: move;' : ''} touch-action: none; user-select: none;`}
 	bind:this={itemRef}
 >
@@ -564,7 +564,7 @@
 		class={previewClass ?? ''}
 		class:item-preview-default={!previewClass}
 		style={`position: absolute; left:${preview.left}px; top:${preview.top}px;  
-		width: ${preview.width}px; height: ${preview.height}px; z-index: -10;`}
+		width: ${preview.width}px; height: ${preview.height}px; z-index: 1;`}
 	/>
 {/if}
 
