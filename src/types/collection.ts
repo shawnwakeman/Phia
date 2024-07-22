@@ -21,8 +21,18 @@ export type GridItemType = {
     h: number;
     min: { w: number, h: number };
     max: { w: number, h: number };
-    type: string;
+    type: ContainerType;
 };
+
+export type ContainerType = 
+  | { type: 'pomodoro' }
+  | { type: 'chart', options: ChartOptions };
+
+interface ChartOptions {
+  axis: string;
+  value: number;
+  description: string;
+}
 
 export type UserSettings = {
     home: {

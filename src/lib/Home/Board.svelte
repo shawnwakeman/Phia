@@ -3,10 +3,7 @@
 
 	import { fade, crossfade } from "svelte/transition";
 	import { gsap } from "gsap";
-	import Grid, {
-		GridItem,
-		type LayoutChangeDetail,
-	} from "$lib/Home/svelte-grid-extended";
+	import Grid, { GridItem, type LayoutChangeDetail } from "$lib/Home/svelte-grid-extended";
 	import Pomodoro from "./Widgets/Pomodoro.svelte";
 	import { settings, gridController } from "$lib/stores";
 	import { setSetting } from "$lib/supabaseClient";
@@ -14,23 +11,19 @@
 	import { quintOut } from "svelte/easing";
 	import { derived } from "svelte/store";
 	import { Maximize, Minimize, Move, X } from "lucide-svelte";
-	import { Button } from "$lib/components/ui/button";
+	import { Separator } from "$lib/components/ui/separator";
 	import type { UserSettings, GridItemType } from "../../types/collection";
+	import Chart from "./Widgets/Chart.svelte";
 
+	const componentMapArray = [
+		{ type: "pomodoro", component: Pomodoro },
+		{ type: "chart", component: Chart },
+	];
 
-    const componentMapArray = [
-        { type: "pomodoro", component: Pomodoro }
-    ];
-
-    const componentMap: { [key: string]: any } = {};
-    componentMapArray.forEach(item => {
-        componentMap[item.type] = item.component;
-    });
-
-
-
-    
-
+	const componentMap: { [key: string]: any } = {};
+	componentMapArray.forEach((item) => {
+		componentMap[item.type] = item.component;
+	});
 
 	let items = writable<GridItemType[]>();
 	let gap = 10;
@@ -47,8 +40,6 @@
 			items.set(grid);
 		}
 	});
-
-    
 
 	items.subscribe(() => {
 		console.log($settings);
@@ -106,9 +97,7 @@
 
 			$items.forEach((item) => {
 				if (item.id !== id) {
-					const element = document.querySelector(
-						`.grid-item-${item.id}`
-					);
+					const element = document.querySelector(`.grid-item-${item.id}`);
 					isAnimating = true;
 					gsap.to(element, {
 						x: 0,
@@ -172,16 +161,21 @@
 
 			let gridPerams = $gridController.gridParams;
 
+			let mainWidth =
+				gridPerams.cols *
+					(gridPerams.itemSize
+						? gridPerams.itemSize.width + gridPerams.gap + 1
+						: window.innerWidth - 124) - 20;
 
-            let mainWidth = gridPerams.cols *
-                                (gridPerams.itemSize
-                                    ? gridPerams.itemSize.width + gridPerams.gap + 1
-                                    : window.innerWidth - 124) - 20
-                    
-            let mainHeight = gridPerams.rows *
-                                (gridPerams.itemSize
-                                    ? gridPerams.itemSize.height + gridPerams.gap + 1
-                                    : window.innerHeight - 115) - 20
+			let mainHeight =
+				gridPerams.rows *
+					(gridPerams.itemSize
+						? gridPerams.itemSize.height + gridPerams.gap + 1
+						: window.innerHeight - 115) - 20;
+
+
+            mainWidth = Math.round(mainWidth);
+            mainHeight = Math.round(mainHeight);
 
 			gsap.to(expandingElement, {
 				width: mainWidth,
@@ -196,16 +190,8 @@
 			});
 
 			// Animate other items to move out of the way
-			const intersectingItemsRight = findAllIntersections(
-				itemToExpand,
-				$items,
-				"right"
-			);
-			const intersectingItemsLeft = findAllIntersections(
-				itemToExpand,
-				$items,
-				"left"
-			);
+			const intersectingItemsRight = findAllIntersections(itemToExpand, $items, "right");
+			const intersectingItemsLeft = findAllIntersections(itemToExpand, $items, "left");
 
 			const allIntersectingItems = new Set([
 				...intersectingItemsRight,
@@ -214,9 +200,7 @@
 
 			$items.forEach((item) => {
 				if (item.id !== id) {
-					const element = document.querySelector(
-						`.grid-item-${item.id}`
-					);
+					const element = document.querySelector(`.grid-item-${item.id}`);
 					let translateX = 0;
 					let translateY = 0;
 					let left = parseFloat(expandingElement.style.left) || 0;
@@ -235,8 +219,7 @@
 					if (item.y < itemToExpand.y) {
 						translateY = -top + 10;
 					} else if (item.y > itemToExpand.y) {
-						translateY =
-							mainHeight - expandedBounds.height;
+						translateY = mainHeight - expandedBounds.height;
 					}
 
 					if (allIntersectingItems.has(item)) {
@@ -246,8 +229,7 @@
 					if (item.x < itemToExpand.x) {
 						translateX = -left + 10;
 					} else if (item.x > itemToExpand.x) {
-						translateX =
-							mainWidth - left - expandedBounds.width + 10;
+						translateX = mainWidth - left - expandedBounds.width + 10;
 					}
 
 					if (translateY !== 0) {
@@ -354,11 +336,7 @@
 			readOnly="{expandedItem === null ? false : true}"
 		>
 			{#each $items as item (item.id)}
-				<div
-					transition:fade="{{ duration: 150 }}"
-					id="{item.id}"
-					class="grid-item-wrapper"
-				>
+				<div transition:fade="{{ duration: 150 }}" id="{item.id}" class="grid-item-wrapper">
 					<GridItem
 						id="{item.id}"
 						bind:x="{item.x}"
@@ -369,25 +347,22 @@
 						bind:max="{item.max}"
 						class="grid-item grid-item-{item.id}"
 					>
-						<div
-							slot="moveHandle"
-							let:moveStart
-							class="move-handle"
-						>
+
+                   
+						<div slot="moveHandle" let:moveStart class="move-handle">
 							<div
-								class=" rounded-md cursor-move w-8 flex items-center justify-center absolute left-px top-0 p-1 m-0.5 hover:bg-slate-500"
+								class=" w-full h-10 rounded-md cursor-move items-center  
+                                absolute left-0 top-0 hover:bg-slate-700 flex justify-start"
 								on:pointerdown="{moveStart}"
 							>
-								<Move
-									class="w-6 h-6 text-current group-hover:text-highlight-color"
-								/>
+								
 							</div>
 						</div>
-
+                        <h1 class="pl-2 text-slate-500 absolute left-0 top-0 p-1 m-1 h-10 *:">Chart</h1>
+                    
 						<button
-							on:click|stopPropagation="{() =>
-								toggleExpand(item.id)}"
-							class="expand absolute right-8 top-0 rounded-md hover:bg-slate-500 p-1 m-0.5"
+							on:click|stopPropagation="{() => toggleExpand(item.id)}"
+							class="expand absolute right-8 top-0 rounded-md hover:bg-slate-500 p-1 m-1"
 						>
 							{#if showExpandedIcon === false}
 								<Minimize
@@ -402,15 +377,15 @@
 
 						<button
 							on:click|stopPropagation="{() => remove(item.id)}"
-							class="contract-btn absolute top-0 right-px m-0.5 rounded-md hover:bg-slate-500"
+							class="contract-btn absolute top-0 right-px m-1 rounded-md hover:bg-slate-500"
 						>
-							<X
-								class="w-6 h-6 text-current group-hover:text-highlight-color m-1 "
-							/>
+							<X class="w-6 h-6 text-current group-hover:text-highlight-color m-1 " />
+                            
 						</button>
-                        
-                        <svelte:component this={componentMap[item.type]} class="item"/>
-					
+
+                       
+				
+						<svelte:component this="{componentMap[item.type.type]}" {item} />
 					</GridItem>
 				</div>
 			{/each}
@@ -420,9 +395,8 @@
 
 <style>
 	.item {
-
-        height: 100%;
-        width: 100%;
+		height: 100%;
+		width: 100%;
 		border-radius: 8px;
 	}
 
@@ -431,10 +405,9 @@
 	.remove-btn,
 	.move-handle div,
 	.expand {
-		opacity: 0;
+		/* opacity: 0; */
 		transition:
-			opacity 0.6s ease,
-			background-color 0.3s ease;
+        /* opacity 0.6s ease, */ background-color 0.3s ease;
 	}
 
 	.grid-item-wrapper:hover .remove,
@@ -446,14 +419,12 @@
 	}
 
 	:global(.grid-item) {
-		display: flex;
-		flex-direction: column;
 		background-color: #36383b; /* Equivalent to bg-slate-300 */
 		border-radius: 8px;
 	}
 
 	.move-handle {
-		flex-shrink: 0;
+		background-color: red;
 	}
 
 	.board-for-grid {
