@@ -12,12 +12,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const { session, user } = await safeGetSession();
 
-	if (!session) {
-		// Redirect to the authentication page with a return URL
-		const redirectTo = `/auth?redirectTo=${encodeURIComponent(url.pathname + url.search)}`;
-		throw redirect(303, redirectTo);
-	}
-
+	
 	if (!user) {
 		return { error: "No active session" };
 	}

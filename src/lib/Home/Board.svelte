@@ -11,13 +11,19 @@
 	import { quintOut } from "svelte/easing";
 	import { derived } from "svelte/store";
 	import { Maximize, Minimize, Move, X } from "lucide-svelte";
-	import { Separator } from "$lib/components/ui/separator";
-	import type { UserSettings, GridItemType } from "../../types/collection";
-	import Chart from "./Widgets/Chart.svelte";
 
+	import type { UserSettings, GridItemType } from "../../types/collection";
+	import BarChartBase from "./Widgets/BarChartBase.svelte";
+    import LineChartBase from "./Widgets/LineChartBase.svelte";
+    import PieChartBase from "./Widgets/PieChartBase.svelte";
+    import HeatMapBase from "./Widgets/HeatMapBase.svelte";
 	const componentMapArray = [
 		{ type: "pomodoro", component: Pomodoro },
-		{ type: "chart", component: Chart },
+		{ type: "barchartbase", component: BarChartBase },
+        { type: "linechartbase", component: LineChartBase },
+        { type: "piechartbase", component: PieChartBase },
+        { type: "heatmapbase", component: HeatMapBase },
+        
 	];
 
 	const componentMap: { [key: string]: any } = {};
@@ -349,16 +355,18 @@
 					>
 
                    
-						<div slot="moveHandle" let:moveStart class="move-handle">
-							<div
-								class=" w-full h-10 rounded-md cursor-move items-center  
-                                absolute left-0 top-0 hover:bg-slate-700 flex justify-start"
-								on:pointerdown="{moveStart}"
-							>
-								
-							</div>
-						</div>
-                        <h1 class="pl-2 text-slate-500 absolute left-0 top-0 p-1 m-1 h-10 *:">Chart</h1>
+                            <div slot="moveHandle" let:moveStart class="move-handle">
+                                <div
+                                    class="w-full h-10 rounded-md cursor-move items-center  
+                                        absolute left-0 top-0 hover:bg-slate-700 flex justify-start"
+                                    on:pointerdown="{moveStart}"
+                                >
+                                </div>
+                            </div>
+                            <h1 class="pl-2 text-slate-500 absolute left-0 top-0 p-1 m-1 h-10" style="pointer-events: none;">
+                                Chart
+                            </h1>
+                    
                     
 						<button
 							on:click|stopPropagation="{() => toggleExpand(item.id)}"
@@ -419,7 +427,7 @@
 	}
 
 	:global(.grid-item) {
-		background-color: #36383b; /* Equivalent to bg-slate-300 */
+		background-color: #36383b; /* make sure to change the points */
 		border-radius: 8px;
 	}
 

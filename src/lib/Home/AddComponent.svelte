@@ -18,7 +18,7 @@
         const min = { w: 1, h: 1 }
         const max = { w: 10, h: 10 }
         const type = {
-                        type: 'chart',
+                        type: 'heatmapbase',
                         options: {
                             axis: 'time',
                             value: 100,
