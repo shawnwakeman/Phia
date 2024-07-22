@@ -81,18 +81,12 @@
 			} else {
 				// Animate the collapse
 
-				gsap.set(element, {
-					width: parseFloat(element.style.width),
-					height: parseFloat(element.style.height),
-					left: parseFloat(element.style.left),
-					top: parseFloat(element.style.top),
-				});
 
 				gsap.to(element, {
 					width: expandedBounds.width,
 					height: expandedBounds.height,
-					left: expandedBounds.left,
-					top: expandedBounds.top,
+					x: 0,
+					y: 0,
 					duration: 0.75,
 					ease: "power1.inOut",
 					onComplete: () => {
@@ -180,15 +174,18 @@
 						: window.innerHeight - 115) - 20;
 
 
-            mainWidth = Math.round(mainWidth);
-            mainHeight = Math.round(mainHeight);
-
+            mainWidth = mainWidth;
+            mainHeight = mainHeight;
+         
 			gsap.to(expandingElement, {
 				width: mainWidth,
 				height: mainHeight,
-				left: 10,
-				top: 10,
+				x: -left + 10,
+				y: -top + 10,
+                z: 0.1,
+                rotationZ: .01, 
 				duration: 0.75,
+                force3D: true,
 				ease: "power1.inOut",
 				onComplete: () => {
 					isAnimating = false; // Reset animation flag
@@ -267,13 +264,13 @@
 			gsap.set(element, {
 				width: originalState.width,
 				height: originalState.height,
-				left: originalState.left,
-				top: originalState.top,
 				x: originalState.x,
 				y: originalState.y,
 			});
 		});
 		expandedItem = null;
+        showExpandedIcon = true;
+        isAnimating = false
 	}
 
 	function remove(id) {
@@ -288,6 +285,7 @@
 	}
 
 	onMount(() => {
+
 		window.addEventListener("resize", revertChanges);
 
 		return () => {
@@ -333,6 +331,7 @@
 	<div class="board-for-grid">
 		<Grid
 			{itemSize}
+      
 			cols="{10}"
 			rows="{10}"
 			{gap}
@@ -352,6 +351,7 @@
 						bind:min="{item.min}"
 						bind:max="{item.max}"
 						class="grid-item grid-item-{item.id}"
+                 
 					>
 
                    

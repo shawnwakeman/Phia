@@ -1,12 +1,13 @@
 <script>
 	import { onMount, afterUpdate, onDestroy } from "svelte";
 
-	import { Chart } from "chart.js/auto";
-	import { color } from "chart.js/helpers";
-	import { MatrixElement, MatrixController } from "chartjs-chart-matrix";
+    import { Chart, Tooltip, CategoryScale, LinearScale, Title } from 'chart.js';
+    import { color } from 'chart.js/helpers';
+    import { MatrixElement, MatrixController } from 'chartjs-chart-matrix';
 
-	import "chartjs-adapter-date-fns";
-	import { enUS } from "date-fns/locale";
+
+    import 'chartjs-adapter-date-fns';
+    import { enUS } from 'date-fns/locale';
 
 	export function isoDayOfWeek(dt) {
 		let wd = dt.getDay(); // 0..6, from sunday
@@ -18,6 +19,9 @@
 		const d = new Date();
 		return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 	}
+
+
+
 
 	function generateData() {
 		const data = [];
@@ -41,40 +45,46 @@
 
 	let portfolio;
 	let chartInstance;
-    let parentElement
-    let container
 
-    let canvasWidth
-    let canvasHeight
-    const datas = generateData()
+	let delayed;
+	let canvasWidth;
+	let canvasHeight;
 
+	let isCurved = true;
+	let isFilled = true;
+	let pointStyles = true;
+	const getDynamicMax = (data) => {
+		const maxDataValue = Math.max(...data.datasets[0].data);
+		return maxDataValue * 1.1; // Extend the max value by 20%
+	};
 
 	const data = {
 		datasets: [
 			{
 				label: "Basic matrix",
-				data: datas,
+				data: generateData(),
 				borderWidth: 1,
-				borderRadius: 5,
+                borderRadius: 5,
 				borderColor: "rgba(0,0,0,0.5)",
-				backgroundColor(c) {
-					const value = c.dataset.data[c.dataIndex].v;
+                backgroundColor(c) {
+                const value = c.dataset.data[c.dataIndex].v;
+             
+         
+                const minValue = 0;
+                const maxValue = 50;
 
-					const minValue = 0;
-					const maxValue = 50;
+                // Calculate the percentage of the value within the range
+                const percentage = (value - minValue) / (maxValue - minValue);
 
-					// Calculate the percentage of the value within the range
-					const percentage = (value - minValue) / (maxValue - minValue);
+                // Adjust the lightness (intensity) based on the percentage
+                const lightness = 50 + percentage * 50; // Ranges from 50% to 100%
 
-					// Adjust the lightness (intensity) based on the percentage
-					const lightness = 50 + percentage * 50; // Ranges from 50% to 100%
+                // Adjust the opacity (alpha) based on the percentage
+                const alpha = 0.1 + percentage * 0.9; // Ranges from 0.1 to 1
 
-					// Adjust the opacity (alpha) based on the percentage
-					const alpha = 0.1 + percentage * 0.9; // Ranges from 0.1 to 1
-
-					// Return the color in HSLA format
-					return `hsla(0, 100%, ${lightness}%, ${alpha})`; // Red color with varying lightness and alpha
-				},
+                // Return the color in HSLA format
+                return `hsla(0, 100%, ${lightness}%, ${alpha})`; // Red color with varying lightness and alpha
+                },
 
 				width: ({ chart }) =>
 					((chart.chartArea || {}).right - (chart.chartArea || {}).left) / 53 - 1,
@@ -85,20 +95,22 @@
 	};
 	const config = {
 		type: "matrix",
+        
 
 		data: data,
-		options: {
-        
-			maintainAspectRatio: false,
-			layout: {
-				autopadding: false,
-			},
-			responsive: true,
-			plugins: {
+            options: {
+               
+                maintainAspectRatio: false,
+            layout: {
+                autopadding: false
+            },
+            responsive: true,
+            plugins: {
 				legend: {
 					display: false,
 				},
 				tooltip: {
+                    
 					callbacks: {
 						labelColor: function (context) {
 							return {
@@ -111,20 +123,22 @@
 							return "#A9A9A9";
 						},
 						label: function (context) {
-					
+							console.log(context);
 							return " ".repeat(context.label.length * 1.5) + context.raw.v;
 						},
 					},
+                    
 				},
+                  
 			},
 			scales: {
 				y: {
 					type: "time",
-					adapters: {
-						date: {
-							locale: enUS,
-						},
-					},
+                    adapters: { 
+                        date: {
+                        locale: enUS, 
+                        },  
+                    }, 
 					offset: true,
 					time: {
 						unit: "day",
@@ -154,11 +168,11 @@
 				x: {
 					type: "time",
 
-					adapters: {
-						date: {
-							locale: enUS,
-						},
-					},
+                    adapters: { 
+                        date: {
+                        locale: enUS, 
+                        },  
+                    }, 
 					position: "bottom",
 					offset: true,
 					time: {
@@ -186,39 +200,20 @@
 		},
 	};
 
-    const resizeCanvas = () => {
-        if (container && portfolio) {
-            const boundingRect = container.getBoundingClientRect();
-            canvasWidth = boundingRect.width - 32;
-            canvasHeight = boundingRect.height * 0.4877;
-        }
-    };
-    
-
-
-
 	onMount(() => {
-       
-		Chart.register(MatrixElement, MatrixController);
+        Chart.register(Tooltip, CategoryScale, LinearScale, Title, MatrixElement, MatrixController);
 		const ctx = portfolio.getContext("2d");
-
 		chartInstance = new Chart(ctx, config);
 
-		const resizeObserver = new ResizeObserver(resizeCanvas);
-            resizeObserver.observe(container);
-            resizeCanvas();
-
-            return () => {
-                resizeObserver.unobserve(container);
-                resizeObserver.disconnect();
-                if (chartInstance) {
-                    chartInstance.destroy();
-                }
-            };
+		return () => {
+			if (chartInstance) {
+				chartInstance.destroy();
+			}
+		};
 	});
 </script>
 
-<div bind:this={container} class="td">
+<div class="td">
 	<div class="text-container">
 		<h1 class="font-bold text-lg ml-4 mr-2 mt-12">Trending up by 5.2% thiss</h1>
 		<h2 class="text-sm text-gray-400 ml-4 mt-1 mr-2">
@@ -226,22 +221,33 @@
 		</h2>
 	</div>
 
-    <div class="chart-container" style={`width: ${canvasWidth}px; height: ${canvasHeight}px;`}>
+	<div class="chart-container" style="position: relative;" >
 		<canvas  bind:this="{portfolio}"></canvas>
 	</div>
+
+	
 </div>
 
 <style>
 	.td {
-
+		display: flex;
+		flex-direction: column;
+		height: 100%;
 	}
 
 	.chart-container {
-		
-
+		flex-grow: 5;
+		display: flex;
+		overflow: hidden;
+		margin: 1rem 1rem 0rem 1rem;
         border: 2px solid red;
 	}
 
+    canvas {
+        border: 2px solid blue;
+    }
+
+    
 
 	.text-container {
 		white-space: nowrap;
