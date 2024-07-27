@@ -1,7 +1,7 @@
 <script>
 	import { onMount, afterUpdate, onDestroy } from "svelte";
 	import Chart, { elements } from "chart.js/auto";
-
+    import { TrendingUp } from 'lucide-svelte';
 	export let item;
 	import { fade } from "svelte/transition";
 
@@ -14,13 +14,16 @@
 
     let container;
 
-    let isCurved = true;
-    let isFilled = true;
+    let isCurved = false;
+    let isFilled = false;
     let pointStyles = true;
 	const getDynamicMax = (data) => {
 		const maxDataValue = Math.max(...data.datasets[0].data);
 		return maxDataValue * 1.1; // Extend the max value by 20%
 	};
+
+    let string = ""
+    let value = 1245
 
 	const data = {
 		labels: [
@@ -36,36 +39,30 @@
 		],
 		datasets: [
 			{
-				data: [300, 50, 100, 123, 1425, 123, 123, 463, 123],
-                backgroundColor: (context) => {
-					const ctx = context.chart.ctx;
-					const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
-					gradient.addColorStop(0, "rgba(24, 59, 157, 0.8)");
-					gradient.addColorStop(1, "rgba(24, 59, 157, 0.1)");
-					return gradient
-				},
-                borderColor: "#2563eb",
+				data: [1000, 800, 100, 123, 232, 255, 276, 463, 456],
+
+                borderColor: "rgb(89, 104, 125)",
                 cubicInterpolationMode: isCurved ? "monotone" : "default",
            
                 fill: isFilled ? "origin" : false
 			},
-            {
-				data: [123, 345, 244, 333, 124, 321, 123, 152, 1125],
-                backgroundColor: ["#e263eb"],
-                borderColor: "rgba(0, 0, 0, 0.3)",
-				// borderWidth: 1,
-                cubicInterpolationMode: isCurved ? "monotone" : "default",
-                pointStyles: pointStyles ? "circle" : false,
+            // {
+			// 	data: [123, 345, 244, 333, 124, 321, 123, 152, 1125],
+            //     backgroundColor: ["#e263eb"],
+            //     borderColor: "rgba(0, 0, 0, 0.3)",
+			// 	// borderWidth: 1,
+            //     cubicInterpolationMode: isCurved ? "monotone" : "default",
+            //     pointStyles: pointStyles ? "circle" : false,
 		
-			},
-            {
-				data: [123, 878, 345, 123, 678, 234, 456, 123, 633],
+			// },
+            // {
+			// 	data: [123, 878, 345, 123, 678, 234, 456, 123, 633],
     
-				// borderWidth: 1,
-                cubicInterpolationMode: isCurved ? "monotone" : "default",
+			// 	// borderWidth: 1,
+            //     cubicInterpolationMode: isCurved ? "monotone" : "default",
              
 	
-			},
+			// },
 		],
 	};
 
@@ -76,7 +73,7 @@
 		options: {
             elements: {
                 point: {
-                    pointRadius: 5,
+                    pointRadius: 4,
                     pointBorderWidth: 2,
                     pointBackgroundColor: "rgb(55, 56, 60)",
                     pointStyle: pointStyles ? "circle" : false,
@@ -87,11 +84,14 @@
             },
 			maintainAspectRatio: false,
             responsive: false,
-			borderRadius: 12,
-	
+            borderJoinStyle: "bevel",
+            layout: {
+				padding: 5,
+			},
         
 			scales: {
 				x: {
+                    display: false,
 					grid: {
 						display: false,
 					},
@@ -101,6 +101,7 @@
 					},
 				},
 				y: {
+                    display: false,
 					beginAtZero: true,
 					ticks: {
 						beginAtZero: false,
@@ -135,6 +136,8 @@
 						},
 						label: function (context) {
 							console.log(context);
+                            string = "on May 10"
+                            value = context.raw
 							return " ".repeat(context.label.length * 1.5) + context.raw;
 						},
 					},
@@ -151,6 +154,10 @@
 
         chartInstance = new Chart(ctx, config);
 
+        chartInstance.canvas.addEventListener('mouseleave', function() {
+            string = "";
+            value = 1245;
+        });
 
         
 
@@ -181,37 +188,53 @@
 </script>
 
 <div class="td">
-    <div class="text-container ">
-        <h1 class="font-bold text-lg ml-4 mr-2 mt-12">{item.type.header}</h1>
-        <h2 class="text-sm text-gray-400 ml-4 mt-1 mr-2 ">{item.type.description}</h2>
-    
-    </div>
-	
-	<div class="chart-container" style="position: relative;" bind:this="{container}">
-        <canvas bind:this="{portfolio}"></canvas>
-        <div>&nbsp;</div>
-	</div>
+	<div class="text-container mt-2">
+		<div>
+			<h2 class="text-sm text-gray-400 ml-2 mr-2">Total Issues</h2>
+      
+			<h1 class="font-bold ml-2 mt-1 mr-2">{value}</h1>
+            <h2 class="text-sm text-gray-400 ml-2 mr-2">{string}</h2>
+		</div>
 
-    <div class="text-container ">
-        <h1 class="font-medium ml-4 mt-2 mr-2 mb-3">Trending up by 5.2% this month</h1>
-    </div>
+        <h2 class="text-sm text-gray-400 ml-2 mr-2 mb-4 flex"><TrendingUp class="w-4 h-4 mr-1 align-middle justify-center"/> 5.6%</h2>
+	</div>
+  
+	<div class="chart-container" style="position: relative;" bind:this="{container}">
+		<canvas class="mb-2 mr-2" bind:this="{portfolio}"></canvas>
+		<div>&nbsp;</div>
+	</div>
 </div>
+
+
 
 <style>
 	.td {
 		display: flex;
-		flex-direction: column;
+		justify-content: space-between;
+		align-items: flex-start;
 		height: 100%;
+        padding-top: 40px;
 	}
+
+    h1 {
+        font-size: 2.3rem;
+        line-height: 1;
+    }
 
 	.chart-container {
-		flex-grow: 5;
-        display: flex;
 		overflow: hidden;
-		margin: 1rem 1rem 0rem 1rem;
+		height: 100%;
+		width: 100%;
 	}
 
-      .text-container{
-
-    }
+	.text-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 100%;
+		align-items: flex-start;
+		margin: 0 0rem 0rem 0.3rem;
+        z-index: 0;
+        min-width: 40%;
+	}
 </style>

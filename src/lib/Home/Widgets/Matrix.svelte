@@ -1,7 +1,13 @@
 <script>
 	import { onMount, afterUpdate, onDestroy } from "svelte";
-	import Chart from "chart.js/auto";
-	import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
+
+    import { Chart, Tooltip, CategoryScale, LinearScale, Title } from 'chart.js';
+    import { color } from 'chart.js/helpers';
+    import { MatrixElement, MatrixController } from 'chartjs-chart-matrix';
+
+
+    Chart.register(MatrixElement, MatrixController);
+
     import 'chartjs-adapter-date-fns';
     import { enUS } from 'date-fns/locale';
 
@@ -16,22 +22,26 @@
 		return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 	}
 
-	function generateData() {
-		const data = [];
-		const end = startOfToday();
-		let dt = new Date(new Date().setDate(end.getDate() - 365));
-		while (dt <= end) {
-			const iso = dt.toISOString().substr(0, 10);
-			data.push({
-				x: iso,
-				y: isoDayOfWeek(dt),
-				d: iso,
-				v: Math.random() * 50,
-			});
-			dt = new Date(dt.setDate(dt.getDate() + 1));
-		}
-		return data;
-	}
+
+
+    function generateData(days) {
+        const data = [];
+        const end = startOfToday();
+        let dt = new Date(new Date().setDate(end.getDate() - days));
+        
+        while (dt <= end) {
+            const iso = dt.toISOString().substr(0, 10);
+            data.push({
+                x: iso,
+                y: days === 7 ? 1 : isoDayOfWeek(dt),
+                d: iso,
+                v: Math.random() * 50,
+            });
+            dt = new Date(dt.setDate(dt.getDate() + 1));
+        }
+        
+        return data;
+    }
 
 	export let item;
 	import { fade } from "svelte/transition";
@@ -39,191 +49,157 @@
 	let portfolio;
 	let chartInstance;
 
-	let delayed;
-	let canvasWidth;
-	let canvasHeight;
+    let container;
 
-	let isCurved = true;
-	let isFilled = true;
-	let pointStyles = true;
-	const getDynamicMax = (data) => {
-		const maxDataValue = Math.max(...data.datasets[0].data);
-		return maxDataValue * 1.1; // Extend the max value by 20%
-	};
+    
+    let scale = {
+      x: {
+        ticks: {
+          stepSize: 1
+        },
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        offset: true,
+        ticks: {
+          stepSize: 1
+        },
+        grid: {
+          display: false
+        }
+      }
+    }
+
+
+
+   
 
 	const data = {
 		datasets: [
 			{
 				label: "Basic matrix",
-				data: generateData(),
+                data: [
+                    {x: 1, y: 1, v: 11},
+                    {x: 1, y: 2, v: 12},
+                    {x: 1, y: 3, v: 13},
+                    {x: 2, y: 1, v: 21},
+                    {x: 2, y: 2, v: 22},
+                    {x: 2, y: 3, v: 23},
+                    {x: 3, y: 1, v: 31},
+                    {x: 3, y: 2, v: 32},
+                    {x: 3, y: 3, v: 33}
+                ],
 				borderWidth: 1,
-				borderColor: "rgba(0,0,0,0.5)",
-				backgroundColor: "rgba(200,200,0,0.3)",
+                borderRadius: 2,
+              
+                backgroundColor(c) {
+                const value = c.dataset.data[c.dataIndex].v;
+                const alpha = (10 + value) / 60;
+                return color('#2563eb').alpha(alpha).rgbString();
+                },
+
 				width: ({ chart }) =>
-					((chart.chartArea || {}).right - (chart.chartArea || {}).left) / 53 - 1,
-				height: ({ chart }) =>
-					((chart.chartArea || {}).bottom - (chart.chartArea || {}).top) / 7 - 1,
+					(chart.chartArea || {}).width / 3 - 1 ,
+                height: ({ chart }) =>
+                (chart.chartArea || {}).height/ 3 - 1,
 			},
 		],
 	};
+
+
+
+    
 	const config = {
 		type: "matrix",
         
 
 		data: data,
             options: {
-                aspectRatio: 5,
-                maintainAspectRatio: true,
-            layout: {
-                autopadding: false
-            },
-            responsive: true,
+               
+            maintainAspectRatio: false,
+            responsive: false,
             plugins: {
 				legend: {
 					display: false,
 				},
 				tooltip: {
-                    
-					callbacks: {
-						labelColor: function (context) {
-							return {
-								borderColor: "rgb(0, 0, 0)",
-								backgroundColor: "#2563eb",
-								borderWidth: 2,
-							};
-						},
-						labelTextColor: function (context) {
-							return "#A9A9A9";
-						},
-						label: function (context) {
-							console.log(context);
-							return " ".repeat(context.label.length * 1.5) + context.raw;
-						},
-					},
-                    
-				},
+                    callbacks: {
+                    title() {
+                        return '';
+                    },
+                    label(context) {
+                        const v = context.dataset.data[context.dataIndex];
+                        return ['x: ' + v.x, 'y: ' + v.y, 'v: ' + v.v];
+                    }
+                    }
+                }
                   
 			},
-			scales: {
-				y: {
-					type: "time",
-                    adapters: { 
-                        date: {
-                        locale: enUS, 
-                        },  
-                    }, 
-					offset: true,
-					time: {
-						unit: "day",
-						round: "day",
-						isoWeekday: 1,
-						parser: "i",
-						displayFormats: {
-							day: "iiiiii",
-						},
-					},
-					reverse: true,
-					position: "right",
-					ticks: {
-						maxRotation: 0,
-						autoSkip: true,
-						padding: 1,
-						font: {
-							size: 9,
-						},
-					},
-					grid: {
-						display: false,
-						drawBorder: false,
-						tickLength: 0,
-					},
-				},
-				x: {
-					type: "time",
-
-                    adapters: { 
-                        date: {
-                        locale: enUS, 
-                        },  
-                    }, 
-					position: "bottom",
-					offset: true,
-					time: {
-						unit: "week",
-						round: "week",
-						isoWeekday: 1,
-						displayFormats: {
-							week: "MMM dd",
-						},
-					},
-					ticks: {
-						maxRotation: 0,
-						autoSkip: true,
-						font: {
-							size: 9,
-						},
-					},
-					grid: {
-						display: false,
-						drawBorder: false,
-						tickLength: 2,
-					},
-				},
-			},
+			scales: scale,
 		},
 	};
 
+
+    
+
 	onMount(() => {
-		Chart.register(MatrixController, MatrixElement);
+        
 		const ctx = portfolio.getContext("2d");
 		chartInstance = new Chart(ctx, config);
+
+        const updateCanvasSize = () => {
+       
+         
+                chartInstance.resize()
+            
+        };
+
+        const resizeObserver = new ResizeObserver(() => {
+            updateCanvasSize();
+        });
+
+        // Start observing the div
+        resizeObserver.observe(container);
 
 		return () => {
 			if (chartInstance) {
 				chartInstance.destroy();
 			}
+            resizeObserver.disconnect()
 		};
 	});
 </script>
 
 <div class="td">
-	<div class="text-container">
-		<h1 class="font-bold text-lg ml-4 mr-2 mt-12">Trending up by 5.2% thiss</h1>
-		<h2 class="text-sm text-gray-400 ml-4 mt-1 mr-2">
-			January - June 2024 or Issues vs. States
-		</h2>
+    <div class="text-container ">
+        <h1 class="font-bold text-lg ml-4 mr-2 mt-12">{item.type.header}</h1>
+        <h2 class="text-sm text-gray-400 ml-4 mt-1 mr-2 ">{item.type.description}</h2>
+    
+    </div>
+	
+	<div class="chart-container" style="position: relative;" bind:this="{container}">
+        <canvas bind:this="{portfolio}"></canvas>
+        <div>&nbsp;</div>
 	</div>
+    <div class="text-container ">
+        <h1 class="font-medium ml-4 mt-2 mr-2 mb-3">Trending up by 5.2% this month</h1>
+    </div>
 
-	<div class="chart-container" style="position: relative;" >
-		<canvas  bind:this="{portfolio}"></canvas>
-	</div>
-
-	<div class="text-container">
-		<h1 class="font-medium ml-4 mt-4 mr-2">Trending up by 5.2% this month</h1>
-		<h2 class="text-sm text-gray-400 ml-4 mt-1 mb-6">
-			January - June 2024 or Issues vs. States
-		</h2>
-	</div>
 </div>
 
 <style>
-	.td {
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-	}
-
-	.chart-container {
-		flex-grow: 5;
-		display: flex;
-		overflow: hidden;
-		margin: 1rem 1rem 0rem 1rem;
-	}
-
-    
-
-	.text-container {
-		white-space: nowrap;
-		overflow: hidden;
-	}
+.td {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.chart-container {
+    flex-grow: 5;
+    display: flex;
+    overflow: hidden;
+    margin: 1rem 1rem 0rem 1rem;
+}
 </style>
+

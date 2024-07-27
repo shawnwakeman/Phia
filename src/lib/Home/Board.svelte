@@ -12,18 +12,25 @@
 	import { derived } from "svelte/store";
 	import { Maximize, Minimize, Move, X } from "lucide-svelte";
 
-	import type { UserSettings, GridItemType } from "../../types/collection";
+	import type { UserSettings, GridItemType, ChartOptions } from "../../types/collection";
 	import BarChartBase from "./Widgets/BarChartBase.svelte";
     import LineChartBase from "./Widgets/LineChartBase.svelte";
     import PieChartBase from "./Widgets/PieChartBase.svelte";
     import HeatMapBase from "./Widgets/HeatMapBase.svelte";
+    import MetricChartBase from "./Widgets/metricBarBase.svelte";
+    import MetricLinebase from "./Widgets/metricLinebase.svelte";
+	import Matrix from "./Widgets/Matrix.svelte";
+    import Metric from "./Widgets/metrics/metric.svelte";
 	const componentMapArray = [
 		{ type: "pomodoro", component: Pomodoro },
 		{ type: "barchartbase", component: BarChartBase },
         { type: "linechartbase", component: LineChartBase },
         { type: "piechartbase", component: PieChartBase },
         { type: "heatmapbase", component: HeatMapBase },
-        
+        { type: "matrixmapbase", component: Matrix },
+        { type: "metricbarchartbase", component: MetricChartBase },
+        { type: "metriclinechartbase", component: MetricLinebase },
+        { type: "metrictbase", component: Metric }
 	];
 
 	const componentMap: { [key: string]: any } = {};
@@ -81,12 +88,18 @@
 			} else {
 				// Animate the collapse
 
+				gsap.set(element, {
+					width: parseFloat(element.style.width),
+					height: parseFloat(element.style.height),
+					left: parseFloat(element.style.left),
+					top: parseFloat(element.style.top),
+				});
 
 				gsap.to(element, {
 					width: expandedBounds.width,
 					height: expandedBounds.height,
-					x: 0,
-					y: 0,
+					left: expandedBounds.left,
+					top: expandedBounds.top,
 					duration: 0.75,
 					ease: "power1.inOut",
 					onComplete: () => {
@@ -117,15 +130,18 @@
 
 	function toggleExpand(id) {
 		if (isAnimating) return; // Prevent toggling if animation is in progress
-
+     
 		if (expandedItem === id) {
 			toggleContract(id);
 			return;
 		}
 
 		const itemToExpand = $items.find((item) => item.id === id);
+        
 		if (!itemToExpand) return;
-
+        if (!itemToExpand.type.isExpandable) return;
+       
+        
 		if (!(expandedItem === id)) {
 			console.log(expandedItem);
 
@@ -174,18 +190,15 @@
 						: window.innerHeight - 115) - 20;
 
 
-            mainWidth = mainWidth;
-            mainHeight = mainHeight;
-         
+            mainWidth = Math.round(mainWidth);
+            mainHeight = Math.round(mainHeight);
+
 			gsap.to(expandingElement, {
-				width: mainWidth,
-				height: mainHeight,
-				x: -left + 10,
-				y: -top + 10,
-                z: 0.1,
-                rotationZ: .01, 
+				width: mainWidth - 2,
+				height: mainHeight - 2,
+				left: 10,
+				top: 10,
 				duration: 0.75,
-                force3D: true,
 				ease: "power1.inOut",
 				onComplete: () => {
 					isAnimating = false; // Reset animation flag
@@ -264,6 +277,8 @@
 			gsap.set(element, {
 				width: originalState.width,
 				height: originalState.height,
+				left: originalState.left,
+				top: originalState.top,
 				x: originalState.x,
 				y: originalState.y,
 			});
@@ -285,7 +300,6 @@
 	}
 
 	onMount(() => {
-
 		window.addEventListener("resize", revertChanges);
 
 		return () => {
@@ -331,9 +345,8 @@
 	<div class="board-for-grid">
 		<Grid
 			{itemSize}
-      
-			cols="{10}"
-			rows="{10}"
+			cols="{12}"
+			rows="{12}"
 			{gap}
 			bind:controller="{$gridController}"
 			class="grid-container"
@@ -351,7 +364,6 @@
 						bind:min="{item.min}"
 						bind:max="{item.max}"
 						class="grid-item grid-item-{item.id}"
-                 
 					>
 
                    
@@ -364,23 +376,26 @@
                                 </div>
                             </div>
                             <h1 class="pl-2 text-slate-500 absolute left-0 top-0 p-1 m-1 h-10" style="pointer-events: none;">
-                                Chart
+                                {item.type.windowName}
                             </h1>
                     
                     
 						<button
 							on:click|stopPropagation="{() => toggleExpand(item.id)}"
 							class="expand absolute right-8 top-0 rounded-md hover:bg-slate-500 p-1 m-1"
-						>
-							{#if showExpandedIcon === false}
-								<Minimize
-									class="w-6 h-6 text-current group-hover:text-highlight-color"
-								/>
-							{:else}
-								<Maximize
-									class="w-6 h-6 text-current group-hover:text-highlight-color"
-								/>
-							{/if}
+						>   
+                        {#if  item.type.isExpandable}
+                                {#if showExpandedIcon === false}
+                                <Minimize
+                                    class="w-6 h-6 text-current group-hover:text-highlight-color"
+                                />
+                            {:else}
+                                <Maximize
+                                    class="w-6 h-6 text-current group-hover:text-highlight-color"
+                                />
+                            {/if}
+                        {/if}
+							
 						</button>
 
 						<button
