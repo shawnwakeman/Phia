@@ -3,14 +3,16 @@
     import { setSetting  } from "$lib/supabaseClient";
     import Board from '$lib/Home/Board.svelte';
     import { settings } from "../../lib/stores";
-
+    import Chart from "chart.js/auto";
+    Chart.register();
     import type { UserSettings } from '../../types/collection';
 	export let data: { projectIds: any; settings: UserSettings  };
-
+    console.log(data.settings);
+    
     settings.set(data.settings)
     
     import AddComponent from '$lib/Home/AddComponent.svelte';
-	import { Rows3, SquareKanban, Network } from "lucide-svelte";
+	import { SquareKanban, Network } from "lucide-svelte";
 	import { Button } from "$lib/components/ui/button/index.js";
 
     function changeState(state: boolean) {

@@ -2,7 +2,7 @@
 	import { onMount, afterUpdate, onDestroy } from "svelte";
 	import Chart from "chart.js/auto";
     import ProgressBarGoal from "./progressBarGoal.svelte";
- 
+    import { TrendingUp } from 'lucide-svelte';
 	export let item;
 	import { fade } from "svelte/transition";
 
@@ -18,6 +18,9 @@
 	let isStacked = false;
 	let isHorizontal = false;
 
+    let showingViz = true;
+	let showingName = true;
+    let showingDes = true;
 	const getDynamicMax = (data) => {
 		const maxDataValue = Math.max(...data.datasets[0].data);
 		return maxDataValue * 1.1; // Extend the max value by 20%
@@ -142,40 +145,99 @@
 	$: isEqual = !hastarget;
     let isSimple = false;
 
-function randomize() {
-    isSimple = Math.random() < 0.5;
-    console.log("isSimple:", isSimple);
-}
 
-// Call randomize function to set the initial value
-randomize();
+
+onMount(() => {
+	
+
+		const updateCanvasSize = () => {
+            console.log(container.clientWidth, container.clientHeight);
+			showingViz = container.clientWidth >= 220 && container.clientHeight >= 130;
+			showingName = container.clientWidth >= 80;
+            showingDes = container.clientWidth >= 150 || container.clientHeight >= 160;
+	
+		};
+
+		const resizeObserver = new ResizeObserver(() => {
+			updateCanvasSize();
+		});
+
+		
+		resizeObserver.observe(container);
+		
+
+		return () => {
+			
+			resizeObserver.disconnect();
+	
+		};
+	});
 
 </script>
 
 
 {#if isSimple}
-<div class="td">
-	<div class="text-container mt-2">
-		<div>
-			<h2 class="text-sm text-gray-400 ml-2 mr-2">State Completion</h2>
-			<h1 class="font-bold text-3xl ml-2 mt-1 mr-2">16%</h1>
+<div class="td" bind:this="{container}">
+	{#if showingName}
+        <h1
+        class="pl-2 text-slate-500 p-1 m-1 mr-8 text-base line-clamp-1 absolute left-0 top-0"
+            style="pointer-events: none;"
+        >
+            {item.type.windowName}
+        </h1>
+	{/if}
+	<div class="overflow-hidden">
+        <div class="flex justify-between w-full px-2 ">
+
+			<h2 class="text-sm text-gray-400 ml-2 flex items-end mb-1">State Completion</h2>
+            <h1 class="font-bold text-3xl mt-1 mr-2 align-middle ">16%</h1>
 		</div>
-	</div>
-    <div class="w-full mb-2">
-        <ProgressBarGoal progress={16} target={50} hastarget={true}/>
+
+        <div class="w-full mb-2">
+            <ProgressBarGoal progress={12} target={50} hastarget={true}/>
+            {#if showingViz}
+            <div class="ml-2 mt-2">
+                {#if true}
+                  <h2 class="text-sm text-gray-400 ml-2 mr-2 line-clamp-2">
+                    <span class="{progress < target ? 'text-red-800' : 'text-green-800'}">
+                      <strong>{Math.round(percentage)}</strong>% {progress < target ? "behind schedule" : "Ahead of schedule"}
+                    </span>
+                    and should finish on <strong>Jun 12</strong> instead of Jun 30
+                  </h2>
+                {:else}
+                  <h2 class="text-sm text-gray-400 ml-2 mr-2"> 6% of progress this month</h2>
+                {/if}
+              </div>
+            {/if}
+           
+        </div>
+
     </div>
+		
 
 	
 </div>
 {:else}
-<div class="td">
+<div class="td" bind:this="{container}">
 
-	<div class="text-container mt-2">
-        <h2 class="top-text">down 5.6% last week</h2>
+    {#if showingName}
+        <h1
+        class="pl-2 text-slate-500 p-1 m-1 mr-8 text-base line-clamp-1 absolute left-0 top-0"
+            style="pointer-events: none;"
+        >
+            {item.type.windowName}
+        </h1>
+    {/if}
+ 
+	<div class="text-container mt-2 mx-2 my-1 overflow-hidden">
+    
+        <h2 class="top-text line-clamp-1 ml-4 mr-4 flex items-center"><TrendingUp class="w-4 h-4 mr-1 align-middle justify-center" /> 5.6%</h2>
 		<div>
 			
-			<h1 class="font-bold text-4xl ml-2 mt-1 mr-2">43 min</h1>
-            <h2 class="text-sm text-gray-400 ml-2 mr-2">Avg issue completion time</h2>
+			<h1 class="font-bold text-4xl ml-2 mt-1 mr-2 line-clamp-2">43 min</h1>
+            {#if showingDes}
+            <h2 class="text-sm text-gray-400 ml-2 mr-2line-clamp-2">Avg issue completion time</h2>
+            {/if}
 		</div>
 	</div>
     
@@ -192,7 +254,7 @@ randomize();
 	.td {
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
+		
         justify-content: flex-end;
 		height: 100%;
 		padding-top: 40px;
@@ -202,8 +264,7 @@ randomize();
         position: absolute;
         top: 0;
         right: 0;
-        margin-right: 10px;
-        margin-top: 40px;
+        margin-top: 35px;
         color: gray;
         font-size: 0.875rem;
     }
@@ -213,7 +274,6 @@ randomize();
 	.progress-bar {
 		height: 12px;
 		position: relative;
-
 		display: flex;
 		width: 100%;
 
@@ -292,7 +352,7 @@ randomize();
 		justify-content: space-between;
 
 		align-items: flex-start;
-		margin: 0 1rem 1rem 1rem;
+	
 		z-index: 0;
 	}
 </style>

@@ -3,11 +3,19 @@
     import { Editor as EditorType } from '@tiptap/core';
     let saveStatus = 'Saved';
     let editor: EditorType;
+    import { onMount } from "svelte";
+    import type { Issue, Node } from "../../types/collection";
+    export let data: { nodes: Node[]; issues: Issue[] };
 
-
+	onMount(async () => {
+		console.log(data);
+	});
   </script>
+
+
+<h1>asd</h1>
   
-  <Editor
+  <!-- <Editor
   bind:editor
   onUpdate={() => {
       saveStatus = 'Unsaved';
@@ -26,4 +34,4 @@
   >
       {saveStatus}
   </div>
-</Editor>
+</Editor> -->

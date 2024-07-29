@@ -8,7 +8,7 @@
       { href: "/documents", icon: "📄", text: "Documents" }
     ];
 
-
+    
     let bottomItems = [
         { href: "/profile", icon: "👤", text: "Profile" },
         { href: "/settings", icon: "⚙️", text: "Project Settings" },

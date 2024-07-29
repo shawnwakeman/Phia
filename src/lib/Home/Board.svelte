@@ -75,6 +75,8 @@
 	let isAnimating = false;
 
 	function toggleContract(id, removeImmediately = false) {
+        console.log($gridController);
+        
 		if (expandedItem === id) {
 			// If already expanded, collapse it or remove immediately
 			showExpandedIcon = true;
@@ -129,6 +131,8 @@
 	let originalStates = {};
 
 	function toggleExpand(id) {
+        console.log($gridController);
+        
 		if (isAnimating) return; // Prevent toggling if animation is in progress
      
 		if (expandedItem === id) {
@@ -375,40 +379,46 @@
                                 >
                                 </div>
                             </div>
-                            <h1 class="pl-2 text-slate-500 absolute left-0 top-0 p-1 m-1 h-10" style="pointer-events: none;">
-                                {item.type.windowName}
-                            </h1>
-                    
-                    
-						<button
-							on:click|stopPropagation="{() => toggleExpand(item.id)}"
-							class="expand absolute right-8 top-0 rounded-md hover:bg-slate-500 p-1 m-1"
-						>   
-                        {#if  item.type.isExpandable}
-                                {#if showExpandedIcon === false}
-                                <Minimize
-                                    class="w-6 h-6 text-current group-hover:text-highlight-color"
-                                />
-                            {:else}
-                                <Maximize
-                                    class="w-6 h-6 text-current group-hover:text-highlight-color"
-                                />
-                            {/if}
-                        {/if}
-							
-						</button>
+            
+                            <button
+                                    on:click|stopPropagation="{() => toggleExpand(item.id)}"
+                                    class="expand absolute right-8 top-0 rounded-md hover:bg-slate-500 p-1 m-1"
+                                >   
+                                {#if item.type.isExpandable && !(item.w === 12 && item.h === 12)}
+                                        {#if showExpandedIcon === false}
+                                        <Minimize
+                                            class="w-6 h-6 text-current group-hover:text-highlight-color"
+                                        />
+                                    {:else}
+                                        <Maximize
+                                            class="w-6 h-6 text-current group-hover:text-highlight-color"
+                                        />
+                                    {/if}
+                                {/if}
+                                    
+                                </button>
 
-						<button
-							on:click|stopPropagation="{() => remove(item.id)}"
-							class="contract-btn absolute top-0 right-px m-1 rounded-md hover:bg-slate-500"
-						>
-							<X class="w-6 h-6 text-current group-hover:text-highlight-color m-1 " />
-                            
-						</button>
+                                <button
+                                    on:click|stopPropagation="{() => remove(item.id)}"
+                                    class="contract-btn absolute top-0 right-px m-1 rounded-md hover:bg-slate-500"
+                                >
+                                    <X class="w-6 h-6 text-current group-hover:text-highlight-color m-1 " />
+                                    
+                                </button>
 
-                       
-				
-						<svelte:component this="{componentMap[item.type.type]}" {item} />
+                              
+                        
+                                <svelte:component this="{componentMap[item.type.type]}" {item} />
+                             
+                                    <!-- <div class="w-full h-full flex align-middle justify-center">
+                                        <h1 class="text-center flex items-center justify-center h-full w-full"> 
+                                            expand to see
+                                        </h1>
+                                    </div> -->
+                                
+                          
+                               
+						
 					</GridItem>
 				</div>
 			{/each}
@@ -459,5 +469,7 @@
 		width: 100%;
 		height: 100%;
 		padding: 0.75rem;
+   
+   
 	}
 </style>

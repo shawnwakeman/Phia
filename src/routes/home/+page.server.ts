@@ -9,52 +9,8 @@ let stuff = {
   "home": {
     "grid": {
       "gridLayout": [
-        {
-          "id": "9d451950-0fe8-4695-bc0f-cd0f8270ac32",
-          "x": 0,
-          "y": 0,
-          "w": 3,
-          "h": 6,
-          "min": {
-            "w": 1,
-            "h": 1
-          },
-          "max": {
-            "w": 10,
-            "h": 10
-          },
-          "type": {
-            "type": "barchartbase",
-            "options": {
-              "axis": "time",
-              "value": 100,
-              "description": "Time spent on tasks"
-            }
-          }
-        },
-        {
-          "id": "c99a70a4-0dfb-48ed-a5e4-55d269202300",
-          "x": 3,
-          "y": 0,
-          "w": 7,
-          "h": 6,
-          "min": {
-            "w": 1,
-            "h": 1
-          },
-          "max": {
-            "w": 10,
-            "h": 10
-          },
-          "type": {
-            "type": "heatmapbase",
-            "options": {
-              "axis": "time",
-              "value": 100,
-              "description": "Time spent on tasks"
-            }
-          }
-        }
+        
+        
       ],
       "focusLayout": [],
       "usingSimple": false
@@ -67,11 +23,14 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const { session, user } = await safeGetSession();
 
-	
-	if (!user) {
-		return { projectIds: [],
-				settings: stuff, };
-	}
+	console.error(session, user);
+    if (!user) {
+        // Redirect to login page or trigger authentication process
+        return {
+            status: 302,
+            redirect: '/login'
+        };
+    }
 
 	const { data: projectUsers, error: projectUsersError } =
 		await locals.supabase
