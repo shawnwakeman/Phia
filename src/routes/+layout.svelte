@@ -2,31 +2,36 @@
 import "../app.pcss";
 import { ModeWatcher } from "mode-watcher";
 import '@fontsource-variable/inter';
+
 import { invalidate } from '$app/navigation';
 import { onMount } from 'svelte';
 
-export let data;
-$: ({ session, supabase } = data);
+export let data
 
-onMount(() => {
-    const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
-        if (newSession?.expires_at !== session?.expires_at) {
-            invalidate('supabase:auth');
-        }
-    });
+  let { supabase, session } = data
+  $: ({ supabase, session } = data)
 
-    return () => data.subscription.unsubscribe();
-});
+  onMount(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, _session) => {
+      if (_session?.expires_at !== session?.expires_at) {
+        invalidate('supabase:auth')
+      }
+    })
 
+    return () => subscription.unsubscribe()
+  })
 </script>
 
 <ModeWatcher />
 
-<slot />
-
-
+  
+  <slot></slot>
+  
 <style>
     :global(body) {
         font-family: 'Inter Variable', sans-serif;
     }   
 </style>
+

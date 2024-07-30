@@ -3,6 +3,8 @@ import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
 import type { UserSettings } from "../types/collection";
+import { fail } from "@sveltejs/kit"
+
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -196,3 +198,27 @@ export const defaultUserSettings: UserSettings = {
 		
 	},
 };
+
+
+
+
+export const Fail = (
+  error: { 
+    message: string; 
+    status?: number; 
+    name?: string;
+    phone?: string;
+    verify?: boolean;
+  }, 
+  data?: { 
+    email?: string;
+    nickname?: string;
+    phone?: string;
+    verify?: boolean;
+  }
+) => {
+  return fail(error.status ?? 400, {
+    error: error.message,
+    data: { ...data }
+  })
+}

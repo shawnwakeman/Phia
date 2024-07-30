@@ -8,9 +8,9 @@
       { href: "/documents", icon: "📄", text: "Documents" }
     ];
 
-    
+
     let bottomItems = [
-        { href: "/profile", icon: "👤", text: "Profile" },
+        { href: "/auth", icon: "👤", text: "Profile" },
         { href: "/settings", icon: "⚙️", text: "Project Settings" },
         { href: "/docs", icon: "📖", text: "Docs" }
     ];
@@ -73,7 +73,7 @@
     <ul>
       {#each items as item}
         <li>
-          <a class="sidebar-item"  href={item.href} data-sveltekit-preload-data>
+          <a class="sidebar-item" href={item.href} data-sveltekit-preload-data>
             <span class="sidebar-item-icon">{item.icon}</span>
             <span class="sidebar-item-text">{item.text}</span>
           </a>
