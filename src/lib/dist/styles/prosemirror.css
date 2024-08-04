@@ -115,7 +115,7 @@ img.selected {
 	color: #007bff;
   }
 
-
+/* will affect others like date picker
   table {
     border-collapse: collapse;
     margin: 0;
@@ -171,7 +171,7 @@ img.selected {
   &.resize-cursor {
     cursor: ew-resize;
     cursor: col-resize;
-  }
+  } */
 
 
 .color {

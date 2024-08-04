@@ -37,6 +37,9 @@
 
 <style>
 	.gradient-title {
-		color: hsl(226, 100%, 70%);
+		/* color: hsl(226, 100%, 70%); */
 	}
+
+	
+	
 </style>

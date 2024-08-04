@@ -1,5 +1,6 @@
-export const load = async ({ setHeaders }) => {
+export const load = async ({ setHeaders, perams }) => {
 
+  
   /**
    * Prevents browsers from caching pages which should be protected in all scenarios.
    * 
@@ -19,4 +20,6 @@ export const load = async ({ setHeaders }) => {
   setHeaders({
     'cache-control': 'no-store'
   })
+
+
 }

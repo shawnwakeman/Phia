@@ -5,7 +5,7 @@ import '@fontsource-variable/inter';
 
 import { invalidate } from '$app/navigation';
 import { onMount } from 'svelte';
-
+import { Toaster } from "$lib/components/ui/sonner";
 export let data
 
   let { supabase, session } = data
@@ -21,11 +21,12 @@ export let data
     })
 
     return () => subscription.unsubscribe()
+    
   })
 </script>
 
 <ModeWatcher />
-
+<Toaster />
   
   <slot></slot>
   
@@ -33,5 +34,7 @@ export let data
     :global(body) {
         font-family: 'Inter Variable', sans-serif;
     }   
+
+    
 </style>
 

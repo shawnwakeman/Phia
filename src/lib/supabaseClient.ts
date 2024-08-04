@@ -13,7 +13,7 @@ import {
 	PUBLIC_SUPABASE_ANON_KEY,
 	PUBLIC_SUPABASE_URL,
 } from "$env/static/public";
-import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createBrowserClient } from "@supabase/ssr";
 import type { UUID } from "crypto";
 
 const projectID = 1;
@@ -470,7 +470,7 @@ export async function addIssue(
 	tags,
 	due_date,
 	creator,
-	assignee
+	assignee,
 ) {
 	if (!parent_id) {
 		console.error("Parent ID is null");

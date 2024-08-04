@@ -19,15 +19,13 @@
   <style>
     .sidebar {
       width: 3.5rem;
-      height: 100vh;
       background-color: #1f2937;
       transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       padding: 0.5rem;
-      overflow-y: auto;
-      overflow-x: hidden; /* Hide horizontal scrollbar */
+      overflow: hidden;
       user-select: none;  /* user */
       z-index: 5;
      

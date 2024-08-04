@@ -153,8 +153,6 @@
 
 		let issuesTemp;
 		if (nodes && $selectedNodeStore) {
-			console.log($selectedNodeStore.id, $nodesDataStore, filteredIssues);
-
 			filteredIssues = getNestedIssues(
 				$selectedNodeStore.id,
 				$nodesDataStore,

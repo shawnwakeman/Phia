@@ -1,7 +1,7 @@
 <script lang="ts">
-	import * as Sheet from "$lib/components/ui/sheet";
-	import { Button } from "$lib/components/ui/button";
-	import { settings, gridController } from "$lib/stores";
+import * as Sheet from "$lib/components/ui/sheet";
+import { Button } from "$lib/components/ui/button";
+import { settings, gridController } from "$lib/stores";
 	import { setSetting } from "$lib/supabaseClient";
 	import { onMount } from "svelte";
 	import type { ChartOptions } from "../../types/collection";
