@@ -14,7 +14,8 @@
 	import { get } from "svelte/store";
 
 	import NodeManager from "$lib/nodeManager/index.svelte";
-
+    import { Separator } from "$lib/components/ui/separator/index.js";
+ 
 	export let data: {
 		nodes: Node[];
 		issues: Issue[];
@@ -62,16 +63,16 @@
 		<button on:click="{() => setSidebarWidth(100)}">100/0</button>
 	</div>
 
-	<div class="wrapper" id="state-wrapper">
+	<div class="wrapper border border-border" id="state-wrapper">
 		<div class="splitpanes-container centered-content">
 			<Splitpanes theme="my-theme" dblClickSplitter="{false}">
 				<Pane bind:size="{sidebarWidth}">
 					<div class="passthrough-box"></div>
 				</Pane>
 				<Pane >
-                    <div>
-                        <NodeManager />
-                    </div>
+                   
+                    <NodeManager />
+                
 					
 				</Pane>
 			</Splitpanes>
@@ -90,7 +91,7 @@
 		overflow: hidden;
 		height: 100%;
 		user-select: none;
-		background-color: #333;
+        min-width: 100%;
 	}
 
 	.wrapper {
@@ -101,6 +102,7 @@
 		margin-left: 12px;
 		margin-right: 12px;
 		margin-bottom: 12px;
+        display: flex;
 	}
 
     .centered-content {
@@ -126,6 +128,7 @@
 
 	.splitpanes-container {
 		pointer-events: none;
+     
 		z-index: 2; /* Ensure Splitpanes is above BarChart but below container */
 	}
 

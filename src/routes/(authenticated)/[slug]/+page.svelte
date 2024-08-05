@@ -629,6 +629,30 @@
 
 	<Label class="m-2">editor</Label>
 	<div class="flex gap-2 mx-5 flex-wrap p-2">
+        <h1>Color Categories</h1>
+        <div class="category">
+            <h2>Backlog</h2>
+            <div class="color-block backlog-1">#BFD0D8</div>
+            <div class="color-block backlog-2">#A6B6BD</div>
+            <div class="color-block backlog-3">#7E878C</div>
+        </div>
+        <div class="category">
+            <h2>Planned</h2>
+            <div class="color-block planned-1">#A4CEF4</div>
+            <div class="color-block planned-2">#5AA7E0</div>
+            <div class="color-block planned-3">#1677BC</div>
+        </div>
+        <div class="category">
+            <h2>In Progress</h2>
+            <div class="color-block in-progress-1">#87CCBF</div>
+            <div class="color-block in-progress-2">#45CCB8</div>
+            <div class="color-block in-progress-3">#04C4AB</div>
+        </div>
+        <div class="category">
+            <h2>Completed</h2>
+            <div class="color-block completed-1">#00D19C</div>
+            <div class="color-block completed-2">#A5D9C4</div>
+        </div>
 		<!-- <Editor
         bind:editor
         onUpdate={() => {
@@ -798,6 +822,27 @@
         --app: hsl(155, 62%, 48%);
 
 	}
+    .color-block {
+            width: 100px;
+            height: 100px;
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+            line-height: 100px;
+            color: white;
+            font-weight: bold;
+        }
+        .backlog-1 { background-color: #BFD0D8; }
+        .backlog-2 { background-color: #A6B6BD; }
+        .backlog-3 { background-color: #7E878C; }
+        .planned-1 { background-color: #A4CEF4; }
+        .planned-2 { background-color: #5AA7E0; }
+        .planned-3 { background-color: #1677BC; }
+        .in-progress-1 { background-color: #87CCBF; }
+        .in-progress-2 { background-color: #45CCB8; }
+        .in-progress-3 { background-color: #04C4AB; }
+        .completed-1 { background-color: #00D19C; }
+        .completed-2 { background-color: #A5D9C4; }
 
 	.color-box {
 		width: 150px;

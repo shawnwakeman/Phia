@@ -23,7 +23,7 @@
     
 
     export let completionApi = "/api/generate";
-    let className = "relative min-h-[500px] w-full max-w-screen-lg border-stone-200 bg-white p-12 pb-24 sm:pb-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg";
+    let className = "relative max-w-screen-lg pb-24 sm:pb-12 flex-grow overflow-auto ";
     export { className as class };
     export let defaultValue = defaultEditorContent;
     export let extensions = [];

@@ -134,13 +134,12 @@ export const defaultExtensions = [
     Placeholder.configure({
         includeChildren: true,
         placeholder: ({ node }) => {
-            if (node.type.name === 'detailsSummary') {
-                return 'Summary'
-              }
-            if (node.type.name === 'heading') {
-                return `Heading ${node.attrs.level}`;
+            if (node.type.name === 'codeBlock') {
+                return ''
             }
-            return "Add description...";
+            
+          
+            return "press '/' for commands...";
         },
     
     }),
@@ -187,11 +186,12 @@ export const defaultExtensions = [
           return ({ node, getPos, editor }) => {
             const { view } = editor;
             const dom = document.createElement('div');
-            dom.className = 'relative rounded-sm bg-stone-100 p-5 font-mono font-medium';
+            dom.className = 'relative rounded bg-muted p-5 font-mono font-medium';
             dom.setAttribute('spellcheck', 'false');
       
             const select = document.createElement('select');
-            select.className = 'absolute top-2 left-2 bg-white';
+              select.className = 'absolute top-2 left-2 bg-white rounded';
+              
             select.innerHTML = `
               <option value="">auto</option>
               <option disabled>—</option>
@@ -214,17 +214,26 @@ export const defaultExtensions = [
             const code = document.createElement('code');
             code.className = `language-${node.attrs.language || 'plain'}`;
             code.textContent = node.textContent;
-            pre.appendChild(code);
-            dom.appendChild(pre);
-      
+       
+              
             const button = document.createElement('button');
-            button.className = 'absolute top-2 right-2 text-sm bg-gray-200 px-2 py-1 rounded';
-            button.textContent = 'Copy';
+            button.className = 'absolute top-2 right-2 text-sm px-2 py-1 rounded flex items-center justify-center hover:bg-slate-500 transition-colors';
+            button.style.height = 'auto';
+            button.style.padding = '4px'; // adjust padding as needed
+            button.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+              </svg>
+            `;
             button.addEventListener('click', () => {
-              copy(node.textContent);
-            });
+                navigator.clipboard.writeText(code.textContent)
+                console.log(code.textContent);
+                
+              });
             dom.appendChild(button);
-      
+              pre.appendChild(code);
+              dom.appendChild(pre);
             return {
               dom,
               contentDOM: code,
@@ -236,7 +245,7 @@ export const defaultExtensions = [
       }).configure({
         lowlight,
         HTMLAttributes: {
-          class: 'relative rounded-sm bg-stone-100 p-5 font-mono font-medium',
+          class: 'relative rounded-sm p-5 font-mono font-medium',
           spellcheck: 'false',
         },
           languageClassPrefix: 'language-',

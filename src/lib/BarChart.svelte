@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 	import type { Node, Issue, Blocks } from "../types/collection";
 	import * as d3 from "d3";
-
+    import { mode } from "mode-watcher";
 
 	import {
 		selectedNodeStore,
@@ -166,12 +166,13 @@
 			console.log(callCount);
 			console.log(value);
 
-			value = value + 3.3;
+			
 			if (value < 1) {
 				console.log("sd");
 
 				value = 100;
 			}
+            value = value + 3.3;
 			if (value > 15) {
 				const parentDiv = document.getElementById("data");
 				const svgElement = document.getElementById("circle-packing");
@@ -352,11 +353,15 @@
 				);
 			}
 
+
+
 			// Update the visibility of the elements
 			g.selectAll("circle, text.text-node").each(function (d) {
 				const element = d3.select(this);
+                
 				if (isVisible(d)) {
 					element.style("display", "block");
+                    
 				} else {
 					element.style("display", "none");
 				}
@@ -385,8 +390,12 @@
 
 		// Append a rectangle as the background box
 		svg.call(zoom as any);
-
+    
 		const g = svg.append("g");
+        let strokeColor = "hsl(240,3.7%,15.9%)";
+        if ($mode === "light") {
+			strokeColor = "rgb(255,255,255)";
+		}
 
 		svg.append("defs")
             .append("pattern")
@@ -403,7 +412,7 @@
             .attr("y1", 0)
             .attr("x2", d => d)
             .attr("y2", 60)
-            .attr("stroke", "rgb(35,35,35)")
+            .attr("stroke", strokeColor)
             .attr("stroke-width", 2)
             .clone(true)
             .attr("x1", 0)
@@ -412,10 +421,10 @@
             .attr("y2", d => d);
 
         g.append("rect")
-            .attr("width", width * 1000)
-            .attr("height", height * 1000)
+            .attr("width", width * 10)
+            .attr("height", height * 10)
             .attr("fill", "url(#grid-pattern)")
-            .attr("transform", "translate(-2010, -4000)");
+            .attr("transform", "translate(-1000, -1000)");
 
 		if (data === null) {
 			console.error("Failed to create hierarchical data.");
@@ -484,13 +493,26 @@
 		function getColorByStatus(status) {
 			switch (status) {
 				case "Open":
-					return "#c4def4 ";
+                 
+                    // #B4C4CC - 0:1
+                    // #9BAAB0 - 0:2
+                    // #737B80 - 0:3
+					return "#B4C4CC";
 				case "Planned":
-					return "#7CADDD";
+                    // #9BC4E8 - 0:1
+                    // #54A0D6 - 0:2
+                    // #156FB0 - 0:3
+
+					return "#9BC4E8";
 				case "In Progress":
-					return "#3A72B9";
+                    // #7EBFB3 - 0:1
+                    
+					return "#156FB0";
 				case "Completed":
-					return "#0AD196";
+                    // #00C493 - 0:1
+                    // #72C7AC - 0:2
+
+					return "#00C493";
 				default:
 					return "#cccccc";
 			}
@@ -745,16 +767,33 @@
 						: `url(#gradient-${d.data.id})`;
 				})
 				.attr("stroke-width", (d) => {
-					if (d.depth === 0) {
-						// Assuming depth 0 means it's the parent node
-						return 10; // Set the stroke width for the parent separately (example: 2)
-					}
-					const depthSquared = d.depth * d.depth;
-					const adjustedDepth = depthSquared !== 0 ? 1 / depthSquared : 0; // Avoid division by zero
-					const radiusContribution = d.r * 0.1;
-					const depthContribution = adjustedDepth * 0.06;
-
-					return (radiusContribution + depthContribution) / 2;
+                    let offset = 0
+					switch (d.depth) {
+                        case 0:
+                        return 4; // Stroke width for depth 0 (parent)
+                        case 1:
+                        offset = 2.5; // Stroke width for depth 1
+                        case 2:
+                        offset = 1; // Stroke width for depth 2
+                        case 3:
+                        offset = 0.75; // Stroke width for depth 3
+                        case 4:
+                        offset = 0.5; // Stroke width for depth 4
+                        case 5:
+                        offset = 0.25; // Stroke width for depth 5
+                        case 6:
+                        offset = 1; // Stroke width for depth 6
+                        case 7:
+                        offset = 0.75; // Stroke width for depth 7
+                        case 8:
+                        offset = 0.5; // Stroke width for depth 8
+                        case 9:
+                        offset = 0.25; // Stroke width for depth 9
+                        case 10:
+                        offset = 0.1; // Stroke width for depth 10
+                        default:
+                        return ((d.r * 0.025)); // Default stroke width for depths greater than 10
+                    }
 				})
 				.attr("stroke", (d) => {
 					const hasTargetState = getMatchingTargetState(d.data.id);
@@ -1084,11 +1123,12 @@
 	}
 
 	:global(.circle-selected) {
-		stroke: rgb(0, 255, 255);
+
+   
 		transition:
-			fill 0.3s ease,
-			stroke-width 0.3s ease;
-		filter: drop-shadow(0 0 0.75rem rgb(20, 90, 220));
+			all 0.3s ease-in;
+		filter: drop-shadow(0 0 0.75rem rgba(6, 51, 43, 0.696));
+       
 	}
 
 	#circle-packing {
@@ -1103,7 +1143,12 @@
 		user-select: none;
 	}
 
-	:global(.hoverable:hover) {
-		stroke: rgb(240, 88, 0);
-	}
+    :global(.hoverable) {
+        transition: stroke 0.2s ease-in; /* Add this line */
+    }
+
+    :global(.hoverable:hover) {
+        stroke: rgba(255, 255, 255, 0.541);
+       
+    }
 </style>

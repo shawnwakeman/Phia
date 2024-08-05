@@ -1,34 +1,36 @@
 <script lang="ts">
+    import { Home, BarChart2, AlertCircle, Square, FileText, User, Settings, BookOpen } from 'lucide-svelte';
+    import { Button } from "$lib/components/ui/button/index.js";
+
     let items = [
-        { href: "/", icon: "🏠", text: "asd" },
-      { href: "/home", icon: "🏠", text: "Home" },
-      { href: "/state", icon: "📊", text: "State" },
-      { href: "/issues", icon: "❗", text: "Issues" },
-      { href: "/blocks", icon: "🔲", text: "Blocks" },
-      { href: "/documents", icon: "📄", text: "Documents" }
+        { href: "/", icon: Home, text: "Home" },
+        { href: "/state", icon: BarChart2, text: "State" },
+        { href: "/issues", icon: AlertCircle, text: "Issues" },
+        { href: "/blocks", icon: Square, text: "Blocks" },
+        { href: "/documents", icon: FileText, text: "Documents" }
     ];
 
-
     let bottomItems = [
-        { href: "/auth", icon: "👤", text: "Profile" },
-        { href: "/settings", icon: "⚙️", text: "Project Settings" },
-        { href: "/docs", icon: "📖", text: "Docs" }
+        { href: "/auth", icon: User, text: "Profile" },
+        { href: "/settings", icon: Settings, text: "Project Settings" },
+        { href: "/docs", icon: BookOpen, text: "Docs" }
     ];
   </script>
   
   <style>
     .sidebar {
-      width: 3.5rem;
-      background-color: #1f2937;
-      transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 0.5rem;
-      overflow: hidden;
-      user-select: none;  /* user */
-      z-index: 5;
-     
+        width: 3.5rem;
+        transition: width 0.3s ease-in-out;
+        will-change: width; /* Added will-change property */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 0.5rem;
+        overflow: hidden;
+        user-select: none;
+        z-index: 5;
+        flex-shrink: 0; /* Prevents the sidebar from shrinking */
+        
     }
   
     .sidebar:hover {
@@ -42,7 +44,7 @@
       display: flex;
       align-items: center;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease-in-out;
       position: relative;
     }
   
@@ -58,7 +60,7 @@
   
     .sidebar-item-text {
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity 0.2s ease-in-out;
       white-space: nowrap;
     }
   
@@ -68,23 +70,32 @@
   </style>
   
   <div class="sidebar" id="sidebar-div">
-    <ul>
-      {#each items as item}
-        <li>
-          <a class="sidebar-item" href={item.href} data-sveltekit-preload-data>
-            <span class="sidebar-item-icon">{item.icon}</span>
-            <span class="sidebar-item-text">{item.text}</span>
-          </a>
-        </li>
-      {/each}
-    </ul>
+    <div>
+        <a class="sidebar-item"  href={""} data-sveltekit-preload-data>
+            <span class="sidebar-item-icon"> <BarChart2 class="" /></span>
+            <span class="sidebar-item-text">{"PHia"}</span>
+        </a>
+    
+    
+        <ul>
+            {#each items as { href, icon: Icon, text }}
+            <li>
+                <a class="sidebar-item"  href={href} data-sveltekit-preload-data>
+                    <span class="sidebar-item-icon"> <Icon class="" /></span>
+                    <span class="sidebar-item-text">{text}</span>
+                </a>
+            </li>
+          {/each}
+        </ul>
+    </div>
+   
 
     <ul>
-        {#each bottomItems as item}
+        {#each bottomItems as { href, icon: Icon, text }}
           <li>
-            <a class="sidebar-item"  href={item.href} data-sveltekit-preload-data>
-              <span class="sidebar-item-icon">{item.icon}</span>
-              <span class="sidebar-item-text">{item.text}</span>
+            <a class="sidebar-item"  href={href} data-sveltekit-preload-data>
+              <span class="sidebar-item-icon"> <Icon class="" /></span>
+              <span class="sidebar-item-text">{text}</span>
             </a>
           </li>
         {/each}

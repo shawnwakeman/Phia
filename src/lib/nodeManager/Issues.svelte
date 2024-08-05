@@ -40,20 +40,9 @@
 </div>
 
 <style>
-	html,
-	body {
-		height: 100%;
-		margin: 0;
-	}
 
-	.main {
-		display: flex;
 
-		height: 100vh;
 
-		overflow: hidden;
-		background-color: rgb(31, 41, 55);
-	}
 
 	.content-issues {
 		display: flex;

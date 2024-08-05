@@ -19,7 +19,7 @@ const config = {
 				input: "hsl(var(--input) / <alpha-value>)",
 				ring: "hsl(var(--ring) / <alpha-value>)",
 				background: "hsl(var(--background) / <alpha-value>)",
-				white: "var(--novel-white)",
+				white: "hsl(var(--foreground) / <alpha-value>)",
 
 				stone: {
 					50: "var(--novel-stone-50)",
@@ -42,18 +42,15 @@ const config = {
 				primary: {
 					DEFAULT: "hsl(var(--primary) / <alpha-value>)",
 					foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
-					
 				},
-				
+
 				mainSecondary: {
 					DEFAULT: "hsl(var(--mainSecondary) / <alpha-value>)",
 					foreground: "hsl(var(--mainSecondary-foreground) / <alpha-value>)",
-					
 				},
 				mainAccent: {
 					DEFAULT: "hsl(var(--mainAccent) / <alpha-value>)",
 					foreground: "hsl(var(--mainAccent-foreground) / <alpha-value>)",
-					
 				},
 				secondary: {
 					DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
@@ -79,8 +76,6 @@ const config = {
 					DEFAULT: "hsl(var(--card) / <alpha-value>)",
 					foreground: "hsl(var(--card-foreground) / <alpha-value>)",
 				},
-
-				
 			},
 			borderRadius: {
 				lg: "var(--radius)",

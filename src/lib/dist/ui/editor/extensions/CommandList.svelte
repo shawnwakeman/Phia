@@ -9,12 +9,13 @@ export let range;
 let selectedIndex = 0;
 
 const selectItem = (index) => {
+   
+    
   const item = items[index];
   if (item) {
-    if (item.title === "Continue writing") {
-
-      command(item);
-    }
+    
+    
+    command(item);
   }
 };
 const navigationKeys = ["ArrowUp", "ArrowDown", "Enter"];
@@ -27,7 +28,9 @@ const onKeyDown = (e) => {
   } else if (e.key === "ArrowDown") {
     selectedIndex = (selectedIndex + 1) % items.length;
   } else if (e.key === "Enter") {
-    selectItem(selectedIndex);
+        console.log("enter");
+        
+        selectItem(selectedIndex);
   }
   const item = container.querySelector(`[data-index="${selectedIndex}"]`);
   if (item)

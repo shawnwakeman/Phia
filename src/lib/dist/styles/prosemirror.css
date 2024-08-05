@@ -1,6 +1,6 @@
 .ProseMirror {
 	height: 100%;
-  pointer-events: auto;
+	pointer-events: auto;
 }
 
 .ProseMirror .is-editor-empty:first-child::before {
@@ -28,82 +28,78 @@
 		cursor: pointer;
 		filter: brightness(90%);
 	}
-
-
 }
 img.selected {
-    outline: 2px solid blue; /* Example style for the selected state */
+	outline: 2px solid blue; /* Example style for the selected state */
 }
 
 .file-container.selected {
-    outline: 2px solid blue; /* Example style for the selected state */
+	outline: 2px solid blue; /* Example style for the selected state */
 }
 
-
 .remote-cursor {
-  position: absolute;
-  pointer-events: none;
-  z-index: 1000;
-  transition: all 0.1s ease;
+	position: absolute;
+	pointer-events: none;
+	z-index: 1000;
+	transition: all 0.1s ease;
 }
 
 .details {
-    display: flex;
-    gap: 0.25rem;
-    margin: 1.5rem 0;
-    border: 1px solid #fbbc88;
-    border-radius: 0.5rem;
-    padding: 0.5rem;
+	display: flex;
+	gap: 0.25rem;
+	margin: 1.5rem 0;
+	border: 1px solid #fbbc88;
+	border-radius: 0.5rem;
+	padding: 0.5rem;
 
-    summary {
-      font-weight: 700;
-    }
+	summary {
+		font-weight: 700;
+	}
 
-    > button {
-      align-items: center;
-      background: transparent;
-      border-radius: 4px;
-      display: flex;
-      font-size: 0.625rem;
-      height: 1.25rem;
-      justify-content: center;
-      line-height: 1;
-      margin-top: 0.5rem;
-      padding: 0;
-      width: 1.25rem;
+	> button {
+		align-items: center;
+		background: transparent;
+		border-radius: 4px;
+		display: flex;
+		font-size: 0.625rem;
+		height: 1.25rem;
+		justify-content: center;
+		line-height: 1;
+		margin-top: 0.5rem;
+		padding: 0;
+		width: 1.25rem;
 
-      &:hover {
-        background-color: #fbbc88;
-      }
+		&:hover {
+			background-color: #fbbc88;
+		}
 
-      &::before {
-        content: '\25B6';
-      }
+		&::before {
+			content: "\25B6";
+		}
+	}
 
-    }
+	&.is-open > button::before {
+		transform: rotate(90deg);
+	}
 
-    &.is-open > button::before {
-      transform: rotate(90deg);
-    }
+	> div {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		width: 100%;
 
-    > div {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      width: 100%;
+		> [data-type="detailsContent"] > :last-child {
+			margin-bottom: 0.5rem;
+		}
+	}
 
-      > [data-type="detailsContent"] > :last-child {
-        margin-bottom: 0.5rem;
-      }
-    }
-
-    .details {
-      margin: 0.5rem 0;
-    }
-  }
-  summary::marker {
+	.details {
+		margin: 0.5rem 0;
+	}
+}
+summary::marker {
 	content: none;
-  }
+}
 
 .fancy-embed-link {
 	display: block;
@@ -113,7 +109,7 @@ img.selected {
 	border-radius: 4px;
 	text-decoration: none;
 	color: #007bff;
-  }
+}
 
 /* will affect others like date picker
   table {
@@ -173,29 +169,26 @@ img.selected {
     cursor: col-resize;
   } */
 
-
 .color {
-    white-space: nowrap;
+	white-space: nowrap;
 
-    &::before {
-      background-color: var(#f0f0f0);
-      border: 1px solid rgba(128, 128, 128, 0.3);
-      border-radius: 2px;
-      content: " ";
-      display: inline-block;
-      height: 1em;
-      margin-bottom: 0.15em;
-      margin-right: 0.1em;
-      vertical-align: middle;
-      width: 1em;
-    }
-  }
-
-
+	&::before {
+		background-color: var(#f0f0f0);
+		border: 1px solid rgba(128, 128, 128, 0.3);
+		border-radius: 2px;
+		content: " ";
+		display: inline-block;
+		height: 1em;
+		margin-bottom: 0.15em;
+		margin-right: 0.1em;
+		vertical-align: middle;
+		width: 1em;
+	}
+}
 
 .hljs-comment,
 .hljs-quote {
-  color: #616161;
+    color: #5c6370; /* Grey for comments and quotes */
 }
 
 .hljs-variable,
@@ -207,7 +200,17 @@ img.selected {
 .hljs-link,
 .hljs-selector-id,
 .hljs-selector-class {
-  color: #f98181;
+    color: #e06c75; /* Red for variables, attributes, tags, names, regex, links, selectors */
+}
+
+.hljs-function {
+    color: #61afef; /* Blue for function calls */
+}
+
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet {
+    color: #98c379; /* Green for strings, symbols, bullets */
 }
 
 .hljs-number,
@@ -217,57 +220,60 @@ img.selected {
 .hljs-literal,
 .hljs-type,
 .hljs-params {
-  color: #fbbc88;
-}
-
-.hljs-string,
-.hljs-symbol,
-.hljs-bullet {
-  color: #b9f18d;
+    color: #d19a66; /* Orange for numbers, meta, built-in, literals, types, params */
 }
 
 .hljs-title,
 .hljs-section {
-  color: #faf594;
+    color: #e5c07b; /* Yellow for titles and sections */
 }
 
+.hljs-keyword {
+    color: #c678dd; /* Purple for keywords */
+}
 
+.hljs-operator,
+.hljs-punctuation {
+    color: #56b6c2; /* Cyan for operators and punctuation */
+}
 
+.hljs-bracket {
+    color: #e5c07b; /* Yellow for brackets */
+}
 .has-focus {
-    border-radius: 3px;
-    box-shadow: 0 0 0 2px #6cf75a;
-  }
+	border-radius: 3px;
+	box-shadow: 0 0 0 2px #6cf75a;
+}
 
 /* For selected nodes */
 .ProseMirror-selectednode {
-    outline: 3px solid #6cf75a; /* Adjust color and style as needed */
-    filter: brightness(90%);
+	outline: 3px solid #6cf75a; /* Adjust color and style as needed */
+	filter: brightness(90%);
 }
 
 /* Ensure selected nodes have a specific style */
 &.ProseMirror-selectednode {
-    outline: 3px solid #6cf75a;
-    filter: brightness(90%);
+	outline: 3px solid #6cf75a;
+	filter: brightness(90%);
 }
 
 /* Add focus style for drag selection */
 .ProseMirror-focusednode {
-    outline: 3px solid #6cf75a; /* Adjust color and style as needed */
-    filter: brightness(90%);
+	outline: 3px solid #6cf75a; /* Adjust color and style as needed */
+	filter: brightness(90%);
 }
 
 /* Add style for mouse drag selection */
 .ProseMirror-draggingnode {
-    outline: 3px solid #6cf75a; /* Adjust color and style as needed */
-    filter: brightness(90%);
+	outline: 3px solid #6cf75a; /* Adjust color and style as needed */
+	filter: brightness(90%);
 }
-
 
 .img-placeholder {
 	position: relative;
 
 	&:before {
-		content: '';
+		content: "";
 		box-sizing: border-box;
 		position: absolute;
 		top: 50%;
@@ -286,10 +292,10 @@ img.selected {
 	border-radius: 0.25rem;
 	background-color: #040d1f;
 	padding: 1rem;
-	font-family: 'Roboto Mono', monospace;
-  }
-  
-  .copy-button {
+	font-family: "Roboto Mono", monospace;
+}
+
+.copy-button {
 	position: absolute;
 	top: 0.5rem;
 	right: 0.5rem; /* Change from left to right */
@@ -301,17 +307,11 @@ img.selected {
 	border-radius: 0.25rem;
 
 	transition: opacity 0.3s;
-  }
+}
 
-  
-  .code-block {
+.code-block {
 	padding: 1rem;
-  }
-  
-
-
-
-
+}
 
 @keyframes spinning {
 	to {
@@ -321,18 +321,18 @@ img.selected {
 
 /* Custom TODO list checkboxes – shoutout to this awesome tutorial: https://moderncss.dev/pure-css-custom-checkbox-style/ */
 
-ul[data-type='taskList'] li > label {
+ul[data-type="taskList"] li > label {
 	margin-right: 0.2rem;
 	user-select: none;
 }
 
 @media screen and (max-width: 768px) {
-	ul[data-type='taskList'] li > label {
+	ul[data-type="taskList"] li > label {
 		margin-right: 0.5rem;
 	}
 }
 
-ul[data-type='taskList'] li > label input[type='checkbox'] {
+ul[data-type="taskList"] li > label input[type="checkbox"] {
 	-webkit-appearance: none;
 	appearance: none;
 	background-color: var(--novel-white);
@@ -341,6 +341,7 @@ ul[data-type='taskList'] li > label input[type='checkbox'] {
 	width: 1.2em;
 	height: 1.2em;
 	position: relative;
+	border-radius: 6px;
 	top: 5px;
 	border: 2px solid var(--novel-stone-900);
 	margin-right: 0.3rem;
@@ -356,7 +357,7 @@ ul[data-type='taskList'] li > label input[type='checkbox'] {
 	}
 
 	&::before {
-		content: '';
+		content: "";
 		width: 0.65em;
 		height: 0.65em;
 		transform: scale(0);
@@ -371,7 +372,7 @@ ul[data-type='taskList'] li > label input[type='checkbox'] {
 	}
 }
 
-ul[data-type='taskList'] li[data-checked='true'] > div > p {
+ul[data-type="taskList"] li[data-checked="true"] > div > p {
 	color: var(--novel-stone-400);
 	text-decoration: line-through;
 	text-decoration-thickness: 2px;

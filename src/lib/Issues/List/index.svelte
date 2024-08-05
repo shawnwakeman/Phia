@@ -223,6 +223,7 @@
 		padding-bottom: 50px;
 		padding-top: 20px;
 		overflow-y: auto;
+        overflow-x: hidden;
 		align-items: center;
 		justify-content: center;
 	}
