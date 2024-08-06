@@ -10,6 +10,7 @@
 		issuesDataStore,
 		sidebarWidthStore,
 		targetStatesStore,
+        supabaseStore,
 	} from "$lib/stores";
 	import { get } from "svelte/store";
 
@@ -21,6 +22,7 @@
 		issues: Issue[];
 		rootNode: Node;
 		targetStates: TargetStates[];
+
 	};
 	import Sidebar from "$lib/Sidebar.svelte";
 
@@ -36,7 +38,7 @@
 	selectedNodeId.set(data.rootNode.id);
 	selectedNodeStore.set(data.rootNode);
 	targetStatesStore.set(data.targetStates);
-
+ 
 	onMount(() => {
 		updateSelectedNodeStore();
 	});
@@ -103,6 +105,7 @@
 		margin-right: 12px;
 		margin-bottom: 12px;
         display: flex;
+
 	}
 
     .centered-content {

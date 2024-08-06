@@ -1,3 +1,4 @@
+
 import type { Database } from "../types/database.types";
 import type { Issue, UserSettings } from "../types/collection";
 import {
@@ -18,10 +19,20 @@ import type { UUID } from "crypto";
 
 const projectID = 1;
 
-export const supabase = createBrowserClient<Database>(
-	PUBLIC_SUPABASE_URL,
-	PUBLIC_SUPABASE_ANON_KEY
-);
+import { getContext } from 'svelte';
+
+export let supabase;
+
+export function useSupabaseClient() {
+  const supabaseClient = getContext('supabaseClient');
+  if (!supabaseClient) {
+    throw new Error("Supabase client not initialized.");
+  }
+  supabase = supabaseClient
+}
+
+
+
 
 export async function signInWithGithub() {
 	const { data, error } = await supabase.auth.signInWithOAuth({
@@ -381,7 +392,8 @@ export async function saveSummary(
 		);
 
 	if (error) {
-		console.error("Error saving summary:", error);
+
+		console.error("Error saving summary:", error, supabase);
 	} else {
 		console.log("Summary saved:", data);
 	}
@@ -414,6 +426,8 @@ export async function fetchSummary(nodeId: number, table: string) {
 		type: "doc",
 		content: [{}],
 	};
+	console.log();
+	
 	const { data, error } = await supabase
 		.from(table)
 		.select("summary")

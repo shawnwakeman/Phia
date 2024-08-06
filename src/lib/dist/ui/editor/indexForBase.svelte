@@ -64,7 +64,7 @@
         content.set(json);
       }
       if (selectedNodeStore) {
-        console.log("aksjdhasjkhdlkajshdkjashdkjhaslkdjh");
+
         await saveSummary($selectedNodeStore.id, editor2.getJSON(), sessionId, "summaries_base");
         
       }
@@ -78,7 +78,7 @@
       initializeEditor();
       // Subscribe to changes in the selectedNodeStore
 
-        console.log("ASdsda");
+    
       selectedNodeStore.subscribe( async value => {
         const documentid = value.id;
         if (editor) {
@@ -150,7 +150,7 @@
                 const currentContent = editor.getJSON();
                 const updatedContent = patch(currentContent, payload.new.changes);
                 editor.commands.setContent(updatedContent);
-                console.log(editor.content);
+           
             }
 
               

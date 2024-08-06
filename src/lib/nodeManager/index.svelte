@@ -8,7 +8,7 @@
     let saveStatus = 'Saved';
     let editor: EditorType;
 
-
+    import { Maximize2 } from 'lucide-svelte';
     let isFullScreen = false;
     let editorContainer: HTMLDivElement;
 
@@ -34,18 +34,18 @@
 
   
     <div class=" {isFullScreen ? 'py-5' : ''}" bind:this={editorContainer}>
-        <div class={`feature-container ${isFullScreen ? 'full-screen' : ''}`} >
-            <h1>Summary</h1>
-            <div>
+        <div class={`feature-container editor-container ${isFullScreen ? 'full-screen' : ''}`} >
+            <h1 class="text-xl font-bold text-muted-foreground">Summary</h1>
+            <div class="absolute right-5 top-5 flex items-center">
                 <button on:click={toggleFullScreen}>
-                    {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+                        <Maximize2 class="h-5 w-5 mr-2 text-muted-foreground"/>
                   </button>
-                  <div class="absolute right-5 top-5 z-10 mb-5 rounded-lg bg-stone-100 px-2 py-1 text-sm text-stone-400">
+                  <div class=" z-10 rounded-lg bg-muted text-sm text-muted-foreground px-2 p-1">
                     {saveStatus}
                   </div>
             </div>
        
-            <div class="editor-container" >
+            <div class="editor-container overflow-auto mt-5 min-h-80 {isFullScreen ? 'h-full' : 'max-h-96'}" >
               <Editor
                 bind:editor
                 onUpdate={() => {
@@ -54,7 +54,7 @@
                 onDebouncedUpdate={async () => {
                   saveStatus = 'Saving...';
                   setTimeout(() => {
-                    saveStatus = 'Saved';
+                
                   }, 500);
                 }}
               ></Editor>
@@ -63,7 +63,7 @@
           </div>
            
 
-    </div>
+        </div>
   
   
         
@@ -105,7 +105,7 @@
     }
 
     .editor-container {
-        height: auto;
+       
         transition: height 0.3s ease-in-out;
     }
 

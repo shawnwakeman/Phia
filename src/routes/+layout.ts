@@ -1,6 +1,5 @@
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
 import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ssr'
-
 export const load = async ({ fetch, data, depends }) => {
   depends('supabase:auth')
 

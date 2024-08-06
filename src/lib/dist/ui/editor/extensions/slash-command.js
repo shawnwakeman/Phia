@@ -3,6 +3,7 @@ import Suggestion from '@tiptap/suggestion';
 import tippy from 'tippy.js';
 import { CheckSquare, Code, Heading1, FileImage, Minus, Table, File, ListCollapse, Heading2, Heading3, List, ListOrdered, MessageSquarePlus, Text, TextQuote } from 'lucide-svelte';
 import CommandList from './CommandList.svelte';
+import { showingTableEditor } from '../../../../stores';
 // import { toast } from 'sonner';
 // import va from '@vercel/analytics';
 import { startFileUpload } from '../plugins/upload-images.js';
@@ -39,15 +40,6 @@ const getSuggestionItems = ({ query }) => {
             icon: Text,
             command: ({ editor, range }) => {
                 editor.chain().focus().deleteRange(range).toggleNode('paragraph', 'paragraph').run();
-            }
-        },
-        {
-            title: 'To-do List',
-            description: 'Track tasks with a to-do list.',
-            searchTerms: ['todo', 'task', 'list', 'check', 'checkbox'],
-            icon: CheckSquare,
-            command: ({ editor, range }) => {
-                editor.chain().focus().deleteRange(range).toggleTaskList().run();
             }
         },
         {
@@ -95,6 +87,18 @@ const getSuggestionItems = ({ query }) => {
                 editor.chain().focus().deleteRange(range).toggleOrderedList().run();
             }
         },
+        
+        {
+            title: 'To-do List',
+            description: 'Track tasks with a to-do list.',
+            searchTerms: ['todo', 'task', 'list', 'check', 'checkbox'],
+            icon: CheckSquare,
+            command: ({ editor, range }) => {
+                editor.chain().focus().deleteRange(range).toggleTaskList().run();
+            }
+        },
+        
+       
         {
             title: 'Quote',
             description: 'Capture a quote.',
@@ -177,7 +181,14 @@ const getSuggestionItems = ({ query }) => {
             description: 'create a table',
             searchTerms: ['table'],
             icon: Table,
-            command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+            command: ({ editor, range }) => {
+                showingTableEditor.set(true);
+                editor.chain().focus()
+                .deleteRange(range).run() // Clear the current range
+               
+              
+               
+            }
         },
 
 

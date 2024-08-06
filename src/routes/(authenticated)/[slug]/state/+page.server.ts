@@ -58,8 +58,7 @@ export const load = async ({ depends, locals: { supabase } }) => {
       console.error('Error fetching target states:', targetStatesError);
       return;
     }
-
-          
+  	
     return {
         nodes: nodes, // Use the local nodes variable which may have been updated
         issues: issues ?? [],

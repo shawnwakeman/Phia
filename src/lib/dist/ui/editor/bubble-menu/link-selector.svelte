@@ -30,8 +30,11 @@ let inputRef;
 				const input = anyify(e.target)[0];
                 console.log(input.value);
                 
-				const url = getUrlFromString(input.value);
-				url && editor.chain().focus().setLink({ href: url }).run();
+                const url = getUrlFromString(input.value);
+                if (url) {
+                    editor.chain().focus().setLink({ href: url }).run();
+            
+                }
 				isOpen = false;
 			}}
 			class="fixed top-full z-[99999] mt-1 flex w-60 overflow-hidden rounded border border-stone-200 bg-white p-1 shadow-xl animate-in fade-in slide-in-from-top-1"

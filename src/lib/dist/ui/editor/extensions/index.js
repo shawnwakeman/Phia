@@ -16,7 +16,7 @@ import SlashCommand from './slash-command.js';
 import UpdatedImage from './updated-image.js';
 import FileNode from './FileNode.js';
 import { SvelteCounterExtension } from './Table.js';
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import CodeBlockLowlight from '@tiptap/extension-code-block'
 import { common, createLowlight } from 'lowlight'
 import Typography from '@tiptap/extension-typography'
 import { ColorHighlighter } from './ColorHighlighter.js'
@@ -25,6 +25,7 @@ import { Plugin, PluginKey } from 'prosemirror-state'
 import {Details as details} from '@tiptap-pro/extension-details'
 import DetailsContent from '@tiptap-pro/extension-details-content'
 import DetailsSummary from '@tiptap-pro/extension-details-summary'
+import Gapcursor from '@tiptap/extension-gapcursor'
 import Table from '@tiptap/extension-table'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
@@ -33,7 +34,26 @@ import TableRow from '@tiptap/extension-table-row'
 
 const lowlight = createLowlight(common)
 
-
+const CustomTableCell = TableCell.extend({
+    addAttributes() {
+      return {
+        // extend the existing attributes …
+        ...this.parent?.(),
+  
+        // and add a new one …
+        backgroundColor: {
+          default: null,
+          parseHTML: element => element.getAttribute('data-background-color'),
+          renderHTML: attributes => {
+            return {
+              'data-background-color': attributes.backgroundColor,
+              style: `background-color: ${attributes.backgroundColor}`,
+            }
+          },
+        },
+      }
+    },
+  })
 
 
 
@@ -77,6 +97,7 @@ export const defaultExtensions = [
    
     }),
     Typography,
+    Gapcursor,
     ColorHighlighter,
     SmilieReplacer,
     Table.configure({
@@ -84,7 +105,7 @@ export const defaultExtensions = [
       }),
     TableRow,
     TableHeader,
-    TableCell,
+    CustomTableCell,
     
 
     // patch to fix horizontal rule bug: https://github.com/ueberdosis/tiptap/pull/3859#issuecomment-1536799740
@@ -133,16 +154,39 @@ export const defaultExtensions = [
 
     Placeholder.configure({
         includeChildren: true,
-        placeholder: ({ node }) => {
-            if (node.type.name === 'codeBlock') {
-                return ''
+        placeholder: ({ node, editor }) => {
+          // Check if the node is inside a table
+          let isInTable = false;
+            editor.state.doc.nodesBetween(0, editor.state.doc.content.size, (n) => {
+         
+              console.log(node.type);
+                console.log(n.type.name);
+                if (n.type.name === 'taskItem' || n.type.name === 'orderedList' || n.type.name === 'bulletList') {
+                    isInTable = true;
+                }
+                if (n.type.name === 'table') {
+                    isInTable = true;
+                }
+          });
+          if (node.type.name === 'heading') {
+                return `Heading ${node.attrs.level}`;
             }
+      
+          if (isInTable) {
+            return '';
+          }
             
-          
+     
+      
+          if (node.type.name === 'codeBlock') {
+            return '';
+          }
+          if (node.type.name === 'paragraph') {
             return "press '/' for commands...";
+          }
+          return " ";
         },
-    
-    }),
+      }),
     SlashCommand,
     TiptapUnderline,
     TextStyle,
@@ -159,7 +203,7 @@ export const defaultExtensions = [
     }),
     TaskItem.configure({
         HTMLAttributes: {
-            class: 'flex items-start my-4'
+            class: 'flex items-start my-1.5'
         },
         nested: true
     }),
@@ -182,6 +226,7 @@ export const defaultExtensions = [
         code: true,
         defining: true,
         isolating: true,
+        
         addNodeView() {
           return ({ node, getPos, editor }) => {
             const { view } = editor;
@@ -189,26 +234,7 @@ export const defaultExtensions = [
             dom.className = 'relative rounded bg-muted p-5 font-mono font-medium';
             dom.setAttribute('spellcheck', 'false');
       
-            const select = document.createElement('select');
-              select.className = 'absolute top-2 left-2 bg-white rounded';
-              
-            select.innerHTML = `
-              <option value="">auto</option>
-              <option disabled>—</option>
-              ${lowlight.listLanguages().map(lang => `<option value="${lang}">${lang}</option>`).join('')}
-            `;
-            select.value = node.attrs.language || '';
-            select.addEventListener('change', (event) => {
-              if (typeof getPos === 'function') {
-                const pos = getPos();
-                view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, {
-                  ...node.attrs,
-                  language: event.target.value,
-                }));
-                editor.commands.focus();
-              }
-            });
-            dom.appendChild(select);
+           
       
             const pre = document.createElement('pre');
             const code = document.createElement('code');
@@ -234,16 +260,18 @@ export const defaultExtensions = [
             dom.appendChild(button);
               pre.appendChild(code);
               dom.appendChild(pre);
+
+              
             return {
               dom,
               contentDOM: code,
             };
           };
+            
         },
 
       
       }).configure({
-        lowlight,
         HTMLAttributes: {
           class: 'relative rounded-sm p-5 font-mono font-medium',
           spellcheck: 'false',
@@ -254,3 +282,5 @@ export const defaultExtensions = [
     
 
 ];
+
+

@@ -78,7 +78,7 @@
 
         if ($currentSelectedIssue) {
             initializeEditor()
-            console.log($currentSelectedIssue);
+
             const documentid = $currentSelectedIssue.id;
             if (editor) {
 
@@ -159,7 +159,7 @@
                 const currentContent = editor.getJSON();
                 const updatedContent = patch(currentContent, payload.new.changes);
                 editor.commands.setContent(updatedContent);
-                console.log(editor.content);
+               
             }
 
               

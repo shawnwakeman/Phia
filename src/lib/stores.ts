@@ -4,6 +4,8 @@ import { writable, derived } from "svelte/store";
 import type { Node, Issue, Blocks, TargetStates, UserSettings } from "../types/collection";
 import type { GridController } from "./Home/svelte-grid-extended";
 // Initialize the selectedNode store with a default value or null if no default is desired
+export const supabaseStore = writable(null);
+
 export const selectedNodeStore = writable<Node | null>(null);
 export const navigateNodeStore = writable<Node | null>(null);
 
@@ -64,10 +66,12 @@ export const filteredIssuesForSnapshot = derived(
 	}
 );
 
+
+
 export const selectionAnchor = writable<Issue | null>(null);
 
 export const createdIssueEditor = writable<boolean>(false);
-
+export const showingTableEditor = writable<boolean>(false);
 export const filterStoreTM = writable({
 	rowByField: "state",
 	orderByField: "id",

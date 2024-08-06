@@ -6,10 +6,17 @@ import '@fontsource-variable/inter';
 import { invalidate } from '$app/navigation';
 import { onMount } from 'svelte';
 import { Toaster } from "$lib/components/ui/sonner";
+import { setContext } from 'svelte';
+import { useSupabaseClient } from '$lib/supabaseClient';
 export let data
 
   let { supabase, session } = data
   $: ({ supabase, session } = data)
+  
+  
+  setContext('supabaseClient', supabase);
+
+  useSupabaseClient()
 
   onMount(() => {
     const {
@@ -19,6 +26,7 @@ export let data
         invalidate('supabase:auth')
       }
     })
+
 
     return () => subscription.unsubscribe()
     
