@@ -140,13 +140,22 @@
 					filter: `node_id=eq.${documentid}`,
 				},
 				(payload) => {
-					if (payload.new.sessionID !== sessionId) {
-						console.log("Applying changes to editor content");
-						const currentContent = editor.getJSON();
-						const updatedContent = patch(currentContent, payload.new.changes);
-						editor.commands.setContent(updatedContent);
-					
-					}
+                    if (payload.new.sessionID !== sessionId) {
+                    console.log("Applying changes to editor content");
+
+                    // Save the current cursor position
+                    const currentPos = editor.view.state.selection;
+
+                    const currentContent = editor.getJSON();
+                    const updatedContent = patch(currentContent, payload.new.changes);
+                    
+                    editor.commands.setContent(updatedContent);
+
+                    // Restore the cursor position
+                    editor.view.dispatch(
+                        editor.view.state.tr.setSelection(currentPos)
+                    );
+                }
 				}
 			)
 			.subscribe();
