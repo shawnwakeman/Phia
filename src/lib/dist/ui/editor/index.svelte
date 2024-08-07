@@ -2,7 +2,6 @@
 	import "../../styles/index.css";
 	import "../../styles/prosemirror.css";
 	import "../../styles/tailwind.css";
-	import { getPrevText } from "../../editor.js";
 	import { createLocalStorageStore } from "../../stores/localStorage.js";
 	import { createDebouncedCallback, noop } from "../../utils.js";
 	import { Editor } from "@tiptap/core";
@@ -16,184 +15,165 @@
 	import EditorBubbleMenu from "./bubble-menu/index.svelte";
 	import { supabase, fetchSummary, saveSummary, saveSummaryChanges } from "$lib/supabaseClient";
 	import { selectedNodeStore, showingTableEditor } from "../../../stores";
-	import { get } from "svelte/store";
-	import { create, diff, patch } from "jsondiffpatch";
-	import { v4 as uuidv4 } from "uuid";
+
 	import { Switch } from "$lib/components/ui/switch";
 	import { Button } from "$lib/components/ui/button";
 	import { Label } from "$lib/components/ui/label";
+
+
+    import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
+    import Collaboration from '@tiptap/extension-collaboration'
+    import { SupabaseProvider } from "./y-supabase";
+	import * as Y from "yjs";
+
+    
+
+
 	export let completionApi = "/api/generate";
 	let className = "relative max-w-screen-lg pb-24 sm:pb-12";
 	export { className as class };
-	export let defaultValue = defaultEditorContent;
+
 	export let extensions = [];
 	export let editorProps = {};
-	export let onUpdate = noop;
-	export let onDebouncedUpdate = noop;
 	export let debounceDuration = 750;
-	export let storageKey = "novel__content";
-	export let disableLocalStorage = true;
+
+
 	export let editor = void 0;
 
 	let element;
 
-	let unsubscribe; // To store the unsubscribe function for the Supabase channel
 
-	const diffpatcher = create();
-	let lastSentState = null;
-	let sessionId = uuidv4();
 
-	const content = createLocalStorageStore(storageKey, defaultValue);
-	let hydrated = false;
-	$: if (editor && !hydrated) {
-		const value = disableLocalStorage ? defaultValue : $content;
-		if (value) {
-			// editor.commands.setContent(value);
-		}
-		hydrated = true;
-	}
+    function getRandomColor() {
+    const colors = [
+        '#b0bec5', '#78909c', '#546e7a', // Greys
+        '#a5d6a7', '#81c784', '#66bb6a', // Greens
+        '#90caf9', '#64b5f6', '#42a5f5'  // Blues
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+    }
+    let yDoc;
+    let provider;
+    let unsubscribe;
 
-	const debouncedUpdates = createDebouncedCallback(async ({ editor: editor2 }) => {
-		if (!disableLocalStorage) {
-			const json = editor2.getJSON();
-			content.set(json);
-		}
-		if (selectedNodeStore) {
-		
-			await saveSummary($selectedNodeStore.id, editor2.getJSON(), sessionId, "summaries");
-		}
+    let session
+    let color = getRandomColor();
 
-		onDebouncedUpdate(editor2);
-	}, debounceDuration);
-
-	let prevoiusId = 0;
 	onMount(() => {
-		initializeEditor();
-		// Subscribe to changes in the selectedNodeStore
+        (async () => {
+            try {
+                const { data, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                session = data;
+              
+                unsubscribe = selectedNodeStore.subscribe(async (value) => {
+                    if (value && value.id) {
+                        switchDocument(value.id);
+                    }
+                });
+            } catch (error) {
+                console.error('Error getting session:', error);
+            }
+        })();
 
-	
-		selectedNodeStore.subscribe(async (value) => {
-			const documentid = value.id;
-			if (editor) {
-				if (prevoiusId !== 0) {
-					await saveSummary(prevoiusId, editor.getJSON(), sessionId, "summaries");
-				}
 
-				const summary = await fetchSummary(value.id, "summaries");
-				editor.commands.setContent(summary);
-				updateEditorSubscription(documentid);
-				prevoiusId = value.id;
-			}
-		});
-		return () => {
-			if (editor) editor.destroy();
-			if (unsubscribe) unsubscribe(); // Clean up the Supabase subscription
-		};
+
+
+
+        return () => {
+            if (editor) editor.destroy();
+            if (unsubscribe) unsubscribe(); // Clean up the Supabase subscription
+        };
 	});
 
+
+
+
+
 	function initializeEditor() {
+
 		editor = new Editor({
 			element,
-			onTransaction: () => {
-				editor = editor;
-			},
 
-			extensions: [...defaultExtensions, ...extensions],
+
+			extensions: [
+				...defaultExtensions,
+				...extensions,
+				Collaboration.configure({
+					document: yDoc, // Configure Y.Doc for collaboration
+				}),
+                CollaborationCursor.configure({
+                    provider,
+                    user: {
+                    name: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
+                    color: color,
+                    },
+                }),
+			],
 			editorProps: {
 				...defaultEditorProps,
 				...editorProps,
 			},
-			onUpdate: async (e) => {
-				const currentState = editor.getJSON();
-				const changes = diff(lastSentState, currentState);
-				if (changes) {
-					await saveSummaryChanges(
-						$selectedNodeStore.id,
-						changes,
-						sessionId,
-						"summaries"
-					);
-					lastSentState = currentState;
-				}
 
-				onUpdate(e.editor);
-				debouncedUpdates(e);
-
-				// Update Supabase with new content
-			},
-			autofocus: "end",
+			autofocus: false,
 		});
 	}
 
-	function updateEditorSubscription(documentid) {
-		if (unsubscribe) unsubscribe(); // Unsubscribe from the previous channel if exists
 
-		// Subscribe to changes in Supabase
-		const channel = supabase
-			.channel("custom-filter-channel")
-			.on(
-				"postgres_changes",
-				{
-					event: "*",
-					schema: "public",
-					table: "summaries",
-					filter: `node_id=eq.${documentid}`,
-				},
-				(payload) => {
-                    if (payload.new.sessionID !== sessionId) {
-                    console.log("Applying changes to editor content");
+    async function switchDocument(nodeId) {
+        // Destroy the existing provider and document
+        if (provider) {
+            provider.disconnect();
+        }
 
-                    // Save the current cursor position
-                    const currentPos = editor.view.state.selection;
+        // Create a new Y.Doc and provider
+        yDoc = new Y.Doc();
+        provider = new SupabaseProvider(supabase, {
+            name: nodeId.toString(),
+            document: yDoc,
+            databaseDetails: {
+            schema: 'public',
+            table: 'summaries',
+            updateColumns: { name: 'node_id', content: 'summary', stateVector: 'delta' },
+            conflictColumns: 'node_id',
+            },
+        });
 
-                    const currentContent = editor.getJSON();
-                    const updatedContent = patch(currentContent, payload.new.changes);
-                    
-                    editor.commands.setContent(updatedContent);
+        // Reinitialize the editor with the new document
+        if (editor) {
+            editor.destroy();
+        }
 
-                    // Restore the cursor position
-                    editor.view.dispatch(
-                        editor.view.state.tr.setSelection(currentPos)
-                    );
-                }
-				}
-			)
-			.subscribe();
+            initializeEditor();
+    }
+	
+	let rows = 3;
+	let columns = 3;
+	let headerRow = false;
 
-		unsubscribe = () => {
-			channel.unsubscribe();
-		};
+	function createTable() {
+		rows = Math.max(0, Math.min(100, rows));
+		columns = Math.max(0, Math.min(100, columns));
+
+		editor
+			.chain()
+			.focus()
+
+			.insertTable({ rows: rows, cols: columns, withHeaderRow: headerRow }) // Insert the table at the original position
+			.run();
+
+		showingTableEditor.set(false);
+		// Your logic to create the table using rows, columns, and headerRow
 	}
 
-    let rows = 3;
-    let columns = 3;
-    let headerRow = false;
-
-    function createTable() {
-        rows = Math.max(0, Math.min(100, rows));
-        columns = Math.max(0, Math.min(100, columns));
-        
-
-        editor.chain().focus()
-          
-       
-            .insertTable({ rows: rows, cols: columns, withHeaderRow: headerRow }) // Insert the table at the original position
-            .run();
-
-            showingTableEditor.set(false);
-        // Your logic to create the table using rows, columns, and headerRow
-    }
-
-    function handleKeyDown(event) {
-        if (event.key === 'Enter') {
-            createTable();
-        }
-    }
+	function handleKeyDown(event) {
+		if (event.key === "Enter") {
+			createTable();
+		}
+	}
 </script>
 
-<div>
-	<div id="editor" bind:this="{element}"></div>
-</div>
+
 
 {#if editor && editor.isEditable}
 	<EditorBubbleMenu {editor} />
@@ -208,56 +188,55 @@
 
 <Toasts />
 
-<Dialog.Root open={$showingTableEditor}>
-    <Dialog.Content class="max-w-lg h-56 feature-container">
-        <Dialog.Header>
-            <Dialog.Title>Create Table</Dialog.Title>
-            <div class="flex flex-col space-between">
-                <div class="flex w-full my-3">
-                    <div class="flex-1 mx-2">
-                        <label for="rows">Rows</label>
-                        <div class="input-container border" id="rows">
-                            <input
-                                type="number"
-                                class="custom-number-input"
-                                max="10"
-                                min="0"
-                                step="1"
-                                bind:value={rows}
-                                on:keydown={handleKeyDown}
-                            />
-                        </div>
-                    </div>
+<Dialog.Root open="{$showingTableEditor}">
+	<Dialog.Content class="max-w-lg h-56 feature-container">
+		<Dialog.Header>
+			<Dialog.Title>Create Table</Dialog.Title>
+			<div class="flex flex-col space-between">
+				<div class="flex w-full my-3">
+					<div class="flex-1 mx-2">
+						<label for="rows">Rows</label>
+						<div class="input-container border" id="rows">
+							<input
+								type="number"
+								class="custom-number-input"
+								max="10"
+								min="0"
+								step="1"
+								bind:value="{rows}"
+								on:keydown="{handleKeyDown}"
+							/>
+						</div>
+					</div>
 
-                    <div class="flex-1 mx-2">
-                        <label for="columns">Columns</label>
-                        <div class="input-container border" id="columns">
-                            <input
-                                type="number"
-                                class="custom-number-input"
-                                max="10"
-                                min="0"
-                                step="1"
-                                bind:value={columns}
-                                on:keydown={handleKeyDown}
-                            />
-                        </div>
-                    </div>
-                </div>
+					<div class="flex-1 mx-2">
+						<label for="columns">Columns</label>
+						<div class="input-container border" id="columns">
+							<input
+								type="number"
+								class="custom-number-input"
+								max="10"
+								min="0"
+								step="1"
+								bind:value="{columns}"
+								on:keydown="{handleKeyDown}"
+							/>
+						</div>
+					</div>
+				</div>
 
-                <div class="flex w-full justify-between items-center my-3">
-                    <div class="flex flex-col ml-2">
-                        <Switch bind:checked={headerRow} />
-                        <label class="ml-1" for="headerRowSwitch">Header Row</label>
-                    </div>
+				<div class="flex w-full justify-between items-center my-3">
+					<div class="flex flex-col ml-2">
+						<Switch bind:checked="{headerRow}" />
+						<Label class="ml-1" for="headerRowSwitch">Header Row</Label>
+					</div>
 
-                    <Button on:click={createTable}>Create Table</Button>
-                </div>
-            </div>
-        </Dialog.Header>
-    </Dialog.Content>
+					<Button on:click="{createTable}">Create Table</Button>
+				</div>
+			</div>
+		</Dialog.Header>
+	</Dialog.Content>
 </Dialog.Root>
-
 
 <style>
 	input[type="number"]::-webkit-outer-spin-button,
@@ -273,10 +252,9 @@
 	.input-container {
 		display: flex;
 		align-items: center;
-	
+
 		padding: 5px;
 		border-radius: 8px;
-	
 	}
 
 	.input-container:focus-within {
@@ -284,7 +262,6 @@
 	}
 
 	.custom-number-input {
-		
 		color: white;
 		font-size: 18px; /* Bigger number */
 		border: none; /* Remove default input border */

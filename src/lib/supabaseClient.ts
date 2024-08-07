@@ -16,19 +16,19 @@ import {
 } from "$env/static/public";
 import { createBrowserClient } from "@supabase/ssr";
 import type { UUID } from "crypto";
-
+import type { SupabaseClient } from '@supabase/supabase-js';
 const projectID = 1;
 
 import { getContext } from 'svelte';
 
-export let supabase;
+export let supabase: SupabaseClient;
 
 export function useSupabaseClient() {
-  const supabaseClient = getContext('supabaseClient');
+  const supabaseClient = getContext<SupabaseClient>('supabaseClient');
   if (!supabaseClient) {
     throw new Error("Supabase client not initialized.");
   }
-  supabase = supabaseClient
+  supabase = supabaseClient;
 }
 
 

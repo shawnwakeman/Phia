@@ -14,9 +14,10 @@ import { Markdown } from 'tiptap-markdown';
 import UploadFilesPlugin  from '../plugins/upload-images.js';
 import SlashCommand from './slash-command.js';
 import UpdatedImage from './updated-image.js';
+TiptapImage
 import FileNode from './FileNode.js';
 import { SvelteCounterExtension } from './Table.js';
-import CodeBlockLowlight from '@tiptap/extension-code-block'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
 import Typography from '@tiptap/extension-typography'
 import { ColorHighlighter } from './ColorHighlighter.js'
@@ -30,6 +31,7 @@ import Table from '@tiptap/extension-table'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
+
 
 
 const lowlight = createLowlight(common)
@@ -82,7 +84,7 @@ export const defaultExtensions = [
             }
         },
         codeBlock: false,
-
+        history: false, 
         code: {
             HTMLAttributes: {
                 class: 'rounded-md bg-stone-200 px-1.5 py-1 font-mono font-medium text-stone-900',
@@ -106,8 +108,7 @@ export const defaultExtensions = [
     TableRow,
     TableHeader,
     CustomTableCell,
-    
-
+   
     // patch to fix horizontal rule bug: https://github.com/ueberdosis/tiptap/pull/3859#issuecomment-1536799740
     HorizontalRule.extend({
         addInputRules() {
@@ -159,8 +160,8 @@ export const defaultExtensions = [
           let isInTable = false;
             editor.state.doc.nodesBetween(0, editor.state.doc.content.size, (n) => {
          
-              console.log(node.type);
-                console.log(n.type.name);
+           
+             
                 if (n.type.name === 'taskItem' || n.type.name === 'orderedList' || n.type.name === 'bulletList') {
                     isInTable = true;
                 }
@@ -234,7 +235,25 @@ export const defaultExtensions = [
             dom.className = 'relative rounded bg-muted p-5 font-mono font-medium';
             dom.setAttribute('spellcheck', 'false');
       
-           
+            const select = document.createElement('select');
+            select.className = 'absolute top-2 left-2 bg-white rounded';
+            select.innerHTML = `
+              <option value="">auto</option>
+              <option disabled>—</option>
+              ${lowlight.listLanguages().map(lang => `<option value="${lang}">${lang}</option>`).join('')}
+            `;
+            select.value = node.attrs.language || '';
+            select.addEventListener('change', (event) => {
+              if (typeof getPos === 'function') {
+                const pos = getPos();
+                view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, {
+                  ...node.attrs,
+                  language: event.target.value,
+                }));
+                editor.commands.focus();
+              }
+            });
+            dom.appendChild(select);
       
             const pre = document.createElement('pre');
             const code = document.createElement('code');
@@ -271,7 +290,8 @@ export const defaultExtensions = [
         },
 
       
-      }).configure({
+    }).configure({
+      lowlight,
         HTMLAttributes: {
           class: 'relative rounded-sm p-5 font-mono font-medium',
           spellcheck: 'false',
@@ -279,6 +299,7 @@ export const defaultExtensions = [
           languageClassPrefix: 'language-',
          
       }),
+
     
 
 ];

@@ -37,6 +37,35 @@
 	.file-container.selected {
 		outline: 2px solid blue; /* Example style for the selected state */
 	}
+
+	.collaboration-cursor__caret {
+		border-left: 1px solid #0d0d0d;
+		border-right: 1px solid #0d0d0d;
+		margin-left: -1px;
+		margin-right: -1px;
+		pointer-events: none;
+		position: relative;
+		word-break: normal;
+	  }
+	
+	  /* Render the username above the caret */
+	  .collaboration-cursor__label {
+		border-radius: 3px 3px 3px 0;
+		color: theme("colors.background");
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 600;
+		left: -1px;
+		line-height: normal;
+		padding: 0.1rem 0.3rem;
+		position: absolute;
+		top: -1.4em;
+		overflow: visible; /* Ensures the content inside the label is visible */
+		white-space: nowrap; /* Prevents the label text from breaking to a new line */
+		z-index: 10; /* Ensures the label is on top of other elements */
+	  }
+
+	  
 	
 	.remote-cursor {
 		position: absolute;
@@ -45,7 +74,11 @@
 		transition: all 0.1s ease;
 	}
 	p {
-		margin: 0.5rem;
+		margin-top: 0.75rem;
+		margin-left: 0.5rem;
+		margin-right: 0.5rem;
+		margin-bottom: 0.4rem;
+	
 	}
 	
 	.details {
