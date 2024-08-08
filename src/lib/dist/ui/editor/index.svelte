@@ -83,6 +83,7 @@
         return () => {
             if (editor) editor.destroy();
             if (unsubscribe) unsubscribe(); // Clean up the Supabase subscription
+            if (provider) provider.destroy(); // Clean up the Supabase subscription
         };
 	});
 
@@ -134,12 +135,16 @@
             databaseDetails: {
             schema: 'public',
             table: 'summaries',
-            updateColumns: { name: 'node_id', content: 'summary', stateVector: 'delta' },
+            updateColumns: { name: 'node_id', content: 'summary' },
             conflictColumns: 'node_id',
             },
         });
 
-        // Reinitialize the editor with the new document
+
+        provider.on('disconnect', (providerInstance) => {
+            console.log('Disconnected:', providerInstance);
+        });
+                // Reinitialize the editor with the new document
         if (editor) {
             editor.destroy();
         }

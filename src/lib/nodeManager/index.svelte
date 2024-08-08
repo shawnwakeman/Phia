@@ -39,7 +39,7 @@
 
 			<Separator />
 			<div
-				class="editor-container overflow-auto min-h-80 px-4 pt-6 mr-0.5 {isFullScreen
+				class="editor-container overflow-y-auto overflow-x-hidden min-h-80 px-4  mr-0.5 {isFullScreen
 					? 'h-full'
 					: 'max-h-96'}"
          
