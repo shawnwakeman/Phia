@@ -2,6 +2,7 @@ import { RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import debounce from "debounce";
 import { EventEmitter } from "eventemitter3";
 import { fromUint8Array, toUint8Array } from "js-base64";
+
 import {
 	Awareness,
 	removeAwarenessStates,
@@ -53,11 +54,11 @@ export class SupabaseProvider extends EventEmitter {
 	private channel: RealtimeChannel | null = null;
 	private awareness: Awareness | null = null;
 	private version: number = 0;
-    
 	public callbacks: { [key: string]: Function[] } = {};
 
 	constructor(supabase: SupabaseClient, config: SupabaseProviderConfiguration) {
-		super();
+        super();
+        
 		this.setConfiguration(config);
 		this.configuration.document = config.document ? config.document : new Y.Doc();
 		this.awareness = config.awareness
@@ -68,7 +69,7 @@ export class SupabaseProvider extends EventEmitter {
 		this.on("connect", this.onConnect);
 		this.on("disconnect", this.onDisconnect);
 		this.document.on("update", debounce(this.documentUpdateHandler.bind(this), 50));
-		this.awareness?.on("update", debounce(this.onAwarenessUpdate.bind(this), 50));
+		this.awareness.on("update", debounce(this.onAwarenessUpdate.bind(this), 50));
 		this.connect();
 
 		if (typeof window !== "undefined") {
@@ -90,6 +91,7 @@ export class SupabaseProvider extends EventEmitter {
 		if (origin === this) {
 			return;
 		}
+
 		const stateVectorO = Y.encodeStateVector(this.document);
 
 		if (this.channel) {
@@ -118,45 +120,41 @@ export class SupabaseProvider extends EventEmitter {
 		}
 	}
 
-	removeSelfFromAwarenessOnUnload() {
+    removeSelfFromAwarenessOnUnload() {
+     
 		removeAwarenessStates(this.awareness!, [this.document.clientID], "window unload");
 	}
 
 	private async onConnect() {
+		// let stateReceived = false;
 
-        
-  
-        const filePath = `editors_storage/nodes/node_${this.configuration.name}`;
 
-        const { data, error } = await this.supabase.storage
-        .from('editors_storage')
-        .download(filePath);
+		const { data, error } = await this.supabase
+			.from(this.configuration.databaseDetails.table)
+			.select<
+				string,
+				{ [key: string]: string }
+			>(`${this.configuration.databaseDetails.updateColumns.content}`)
+			.eq(this.configuration.databaseDetails.updateColumns.name, this.configuration.name)
+			.single();
 
-        // if (error) {
-        //     console.error("Error downloading file:", error);
-        //     return;
-        // }
-       
-        console.log(data);
-        
-      
-        const arrayBuffer = await data.arrayBuffer();
-        const documentUpdate = new Uint8Array(arrayBuffer);
-        console.log(documentUpdate);
-        
-        Y.applyUpdate(this.document, documentUpdate, this);
+		if (error) {
+			console.error(error);
+			return;
+		}
 
-		//   if (data && data[this.configuration.databaseDetails.updateColumns.content]) {
-		//     try {
-		//           console.log(data[this.configuration.databaseDetails.updateColumns.content]);
+		if (data && data[this.configuration.databaseDetails.updateColumns.content]) {
+			try {
+				const dbDocument = toUint8Array(
+					data[this.configuration.databaseDetails.updateColumns.content]
+				);
 
-		//           const dbDocument = toUint8Array(data[this.configuration.databaseDetails.updateColumns.content]);
-		//           this.version++;
-		//           Y.applyUpdate(this.document, dbDocument);
-		//       } catch (error) {
-		//           console.error(error);
-		//       }
-		//   }
+				Y.applyUpdate(this.document, dbDocument);
+			} catch (error) {
+				console.error(error);
+			}
+		}
+
 
 		this.emit("status", [{ status: "connected" }]);
 
@@ -172,9 +170,10 @@ export class SupabaseProvider extends EventEmitter {
 	}
 
 	private startSync() {
-		this.channel!.on("broadcast", { event: "update" }, (event) => {
-			this.onReceiveUpdate(event);
-		})
+        this.channel!
+            .on("broadcast", { event: "update" }, (event) => {
+                this.onReceiveUpdate(event);
+            })
 			.on("broadcast", { event: "diff" }, (event) => {
 				this.onRecieiveDiffs(event);
 			})
@@ -182,22 +181,27 @@ export class SupabaseProvider extends EventEmitter {
 				const update = toUint8Array(payload.awareness);
 				applyAwarenessUpdate(this.awareness!, update, this);
 			})
+			.on("broadcast", { event: "requestCurrentState" }, (event) => {
+				this.onrequestCurrentState(event);
+			})
+			.on("broadcast", { event: "currentStateResponse" }, (event) => {
+				this.oncurrentStateResponse(event);
+            })
+            .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+                console.log('Newly left presences: ', leftPresences)
+              })
 			.subscribe((status, err) => {
 				switch (status) {
 					case "SUBSCRIBED":
-                        this.emit("connect", this);
-                        console.log("SUBSCRIBED");
+						this.emit("connect", this);
 						break;
 					case "CHANNEL_ERROR":
-                        // this.emit('error', this);
-                        console.log("CHANNEL_ERROR");
+						this.emit('error', this);
 						break;
-                    case "TIMED_OUT":
-                        this.persistData();
+					case "TIMED_OUT":
 						this.emit("disconnect", this);
 						break;
-                    case "CLOSED":
-                        this.persistData();
+					case "CLOSED":
 						this.emit("disconnect", this);
 						break;
 					default:
@@ -207,22 +211,25 @@ export class SupabaseProvider extends EventEmitter {
 	}
 
 	private onReceiveUpdate({ event, payload }: { event: string; [key: string]: any }) {
-        
-        
+		console.log("onReceiveUpdate", event, payload);
 
 		if (payload.diffO) {
 			try {
 				this.version++;
 				Y.applyUpdate(this.document, toUint8Array(payload.diffO), this);
+				console.log("update applied", this.document);
 			} catch (error) {
 				console.error("Error applying update:", error);
 			}
 			return;
 		}
+		console.log(event, payload);
+		console.log("Document before update:", this.document);
 
 		try {
 			this.version++;
 			Y.applyUpdate(this.document, toUint8Array(payload.diffR), this);
+			console.log("update applied", this.document);
 		} catch (error) {
 			console.error("Error applying update:", error);
 		}
@@ -244,7 +251,41 @@ export class SupabaseProvider extends EventEmitter {
 		}
 	}
 
+	public persistData() {
+		const dbDocument = fromUint8Array(Y.encodeStateAsUpdate(this.document));
+
+		return dbDocument;
+	}
+
+	private onrequestCurrentState({ event, payload }: { event: string; [key: string]: any }) {
+		try {
+			const stateVector = Y.encodeStateAsUpdate(this.document);
+			if (this.channel) {
+				this.channel.send({
+					type: "broadcast",
+					event: "currentStateResponse",
+					payload: fromUint8Array(stateVector),
+				});
+			}
+
+			console.log("Current state sent in response to request.");
+		} catch (error) {
+			console.error("Error sending current state:", error);
+		}
+	}
+
+	private oncurrentStateResponse({ event, payload }: { event: string; [key: string]: any }) {
+		try {
+			const editorState = toUint8Array(payload);
+			Y.applyUpdate(this.document, editorState);
+			console.log("Received and applied state from another editor.");
+		} catch (error) {
+			console.error("Error applying state from another editor:", error);
+		}
+	}
+
 	private onRecieiveDiffs({ event, payload }: { event: string; [key: string]: any }) {
+
 		const stateVectorR = fromUint8Array(Y.encodeStateVector(this.document));
 
 		const diffR = fromUint8Array(Y.encodeStateAsUpdate(this.document, toUint8Array(payload)));
@@ -262,44 +303,16 @@ export class SupabaseProvider extends EventEmitter {
 		}
 	}
 
-    private disconnect() {
-
-        console.log(this.document);
-        
-    
+	private disconnect() {
 		if (this.channel) {
 			this.supabase.removeChannel(this.channel);
 			this.channel = null;
 		}
-    }
-    
-    private persistData() {
+	}
 
-
-        const dbDocument = Y.encodeStateAsUpdate(this.document);
-
-        const file = new Blob([dbDocument], { type: "application/octet-stream" });
-    
-        const filePath = `/nodes/node_${this.configuration.name}`;
-    
-        this.supabase.storage
-            .from('editors_storage')
-            .update(filePath, file, { cacheControl: "3600", upsert: true })
-            .then(({ data, error }) => {
-                if (error) {
-                    console.error("Error uploading file:", error);
-                } else {
-                    console.log("Data persisted successfully.", file);
-                }
-            });
-
-
-    }
-
-    
-
-    public onDisconnect() { 
-        console.log("Disconnected");
+    public onDisconnect() {
+        
+   
         
 		this.emit("status", [{ status: "disconnected" }]);
 
@@ -316,7 +329,7 @@ export class SupabaseProvider extends EventEmitter {
 		this.disconnect();
 		this.document.off("update", this.documentUpdateHandler);
 		this.awareness?.off("update", this.onAwarenessUpdate);
-
+       
 		if (typeof window !== "undefined") {
 			window.removeEventListener("beforeunload", this.removeSelfFromAwarenessOnUnload);
 		} else if (typeof process !== "undefined") {
@@ -328,20 +341,5 @@ export class SupabaseProvider extends EventEmitter {
 		}
 	}
 
-	public async switchDocument(newName: string) {
-		// Disconnect from the current document
-		this.disconnect();
 
-		// Create a new Y.Doc instance
-
-		const newYDoc = new Y.Doc();
-		// Update the provider configuration with the new document and name
-		this.setConfiguration({
-			name: newName,
-			document: newYDoc,
-		});
-
-		// Connect to the new document
-		this.connect();
-	}
 }

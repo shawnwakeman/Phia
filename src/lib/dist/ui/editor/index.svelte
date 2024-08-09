@@ -13,14 +13,14 @@
 	import { defaultEditorProps } from "./props.js";
 	import Toasts, { addToast } from "../toasts.svelte";
 	import EditorBubbleMenu from "./bubble-menu/index.svelte";
-	import { supabase, fetchSummary, saveSummary, saveSummaryChanges } from "$lib/supabaseClient";
+	import { supabase } from "$lib/supabaseClient";
 	import { selectedNodeStore, showingTableEditor } from "../../../stores";
 
 	import { Switch } from "$lib/components/ui/switch";
 	import { Button } from "$lib/components/ui/button";
 	import { Label } from "$lib/components/ui/label";
 
-
+    import debounce from 'debounce';
     import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
     import Collaboration from '@tiptap/extension-collaboration'
     import { SupabaseProvider } from "./y-supabase";
@@ -36,7 +36,7 @@
 	export let extensions = [];
 	export let editorProps = {};
 	export let debounceDuration = 750;
-
+    let lastNode = null;
 
 	export let editor = void 0;
 
@@ -59,31 +59,61 @@
     let session
     let color = getRandomColor();
 
-	onMount(() => {
-        (async () => {
-            try {
-                const { data, error } = await supabase.auth.getSession();
-                if (error) throw error;
-                session = data;
-              
-                unsubscribe = selectedNodeStore.subscribe(async (value) => {
-                    if (value && value.id) {
-                        switchDocument(value.id);
+	onMount(async () => {
+        try {
+            // Fetch the session
+            const { data, error } = await supabase.auth.getSession();
+            if (error) throw error;
+            session = data;
+
+            let isFirstLoad = true;
+
+            unsubscribe = selectedNodeStore.subscribe(async (value) => {
+                if (value && value.id) {
+                    if (isFirstLoad || lastNode !== value.id) {
+                        await switchDocument(lastNode, value.id);
+                        lastNode = value.id;
+                        isFirstLoad = false;
                     }
-                });
-            } catch (error) {
-                console.error('Error getting session:', error);
-            }
-        })();
+                }
+            });
+        } catch (error) {
+            console.error("Error in onMount:", error);
+        }
 
+        window.addEventListener('beforeunload', async (event) => {
+            // Call your async function
+         
+            
+            if (provider && lastNode) {
+              
+                
+                let exportedData = provider.persistData();
+                if (provider) provider.destroy();
+                provider = null
+                if (!exportedData) {
+                    console.warn("No data to persist for node", lastNode);
+                    return;
+                }
 
+                await supabase
+                    .from('summaries')
+                    .upsert({
+                        'node_id': lastNode.toString(),
+                        'summary': exportedData,
+                    }, { onConflict: 'node_id' });
+        }
 
+                
+          
+        });
 
-
+        // Clean up function to be run when component is destroyed
         return () => {
             if (editor) editor.destroy();
-            if (unsubscribe) unsubscribe(); // Clean up the Supabase subscription
-            if (provider) provider.destroy(); // Clean up the Supabase subscription
+            if (unsubscribe) unsubscribe();
+            if (provider) provider.destroy();
+            
         };
 	});
 
@@ -121,10 +151,26 @@
 	}
 
 
-    async function switchDocument(nodeId) {
-        // Destroy the existing provider and document
-        if (provider) {
-            provider.disconnect();
+    async function switchDocument(lastNode, nodeId) {
+    try {
+        // Persist the current document if a provider and lastNode exist
+        if (provider && lastNode) {
+            console.log("Switching document from", lastNode, "to", nodeId);
+            
+            let exportedData = provider.persistData();
+            if (provider) provider.destroy();
+            provider = null
+            if (!exportedData) {
+                console.warn("No data to persist for node", lastNode);
+                return;
+            }
+
+            await supabase
+                .from('summaries')
+                .upsert({
+                    'node_id': lastNode.toString(),
+                    'summary': exportedData,
+                }, { onConflict: 'node_id' });
         }
 
         // Create a new Y.Doc and provider
@@ -133,24 +179,23 @@
             name: nodeId.toString(),
             document: yDoc,
             databaseDetails: {
-            schema: 'public',
-            table: 'summaries',
-            updateColumns: { name: 'node_id', content: 'summary' },
-            conflictColumns: 'node_id',
+                schema: 'public',
+                table: 'summaries',
+                updateColumns: { name: 'node_id', content: 'summary' },
+                conflictColumns: 'node_id',
             },
         });
 
-
-        provider.on('disconnect', (providerInstance) => {
-            console.log('Disconnected:', providerInstance);
-        });
-                // Reinitialize the editor with the new document
+        // Reinitialize the editor with the new document
         if (editor) {
             editor.destroy();
         }
+        initializeEditor();
 
-            initializeEditor();
+    } catch (error) {
+        console.error("Error in switchDocument:", error);
     }
+}
 	
 	let rows = 3;
 	let columns = 3;

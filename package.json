@@ -113,6 +113,7 @@
     "tailwind-variants": "^0.2.1",
     "tippy.js": "^6.3.7",
     "tiptap-markdown": "^0.8.10",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "y-websocket": "^2.0.4"
   }
 }
