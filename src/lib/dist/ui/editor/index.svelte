@@ -26,6 +26,7 @@
     import { SupabaseProvider } from "./y-supabase";
 	import * as Y from "yjs";
 
+
     
 
 
@@ -59,63 +60,70 @@
     let session
     let color = getRandomColor();
 
-	onMount(async () => {
-        try {
-            // Fetch the session
-            const { data, error } = await supabase.auth.getSession();
-            if (error) throw error;
-            session = data;
+	onMount(() => {
+        // We handle the async part inside onMount, but the return should be synchronous
+        const initialize = async () => {
+            try {
+                // Fetch the session
+                const { data, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                session = data;
 
-            let isFirstLoad = true;
+                let isFirstLoad = true;
 
-            unsubscribe = selectedNodeStore.subscribe(async (value) => {
-                if (value && value.id) {
-                    if (isFirstLoad || lastNode !== value.id) {
-                        await switchDocument(lastNode, value.id);
-                        lastNode = value.id;
-                        isFirstLoad = false;
+                unsubscribe = selectedNodeStore.subscribe(async (value) => {
+                    if (value && value.id) {
+                        if (isFirstLoad || lastNode !== value.id) {
+                            await initializeDocument(lastNode, value.id);
+                            lastNode = value.id;
+                            isFirstLoad = false;
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error in onMount:", error);
+            }
+
+          
+            window.addEventListener('beforeunload', async (event) => {
+
+            
+                if (provider && lastNode) {
+             
+
+                    try {
+                        let exportedData = provider.persistData();
+                        if (provider) provider.destroy();
+                        provider = null;
+
+                        if (!exportedData) {
+                            console.warn("No data to persist for node", lastNode);
+                            return;
+                        }
+
+                        await supabase
+                            .from('summaries')
+                            .upsert({
+                                'node_id': lastNode.toString(),
+                                'summary': exportedData,
+                            }, { onConflict: 'node_id' });
+                    } catch (error) {
+                        console.error("Error during beforeunload:", error);
                     }
                 }
             });
-        } catch (error) {
-            console.error("Error in onMount:", error);
-        }
+        };
 
-        window.addEventListener('beforeunload', async (event) => {
-            // Call your async function
-         
-            
-            if (provider && lastNode) {
-              
-                
-                let exportedData = provider.persistData();
-                if (provider) provider.destroy();
-                provider = null
-                if (!exportedData) {
-                    console.warn("No data to persist for node", lastNode);
-                    return;
-                }
+        // Call the async initialization
+        initialize();
 
-                await supabase
-                    .from('summaries')
-                    .upsert({
-                        'node_id': lastNode.toString(),
-                        'summary': exportedData,
-                    }, { onConflict: 'node_id' });
-        }
-
-                
-          
-        });
-
-        // Clean up function to be run when component is destroyed
+        // Return the cleanup function synchronously
         return () => {
             if (editor) editor.destroy();
             if (unsubscribe) unsubscribe();
             if (provider) provider.destroy();
-            
         };
-	});
+    });
 
 
 
@@ -151,7 +159,7 @@
 	}
 
 
-    async function switchDocument(lastNode, nodeId) {
+    async function initializeDocument(lastNode, nodeId) {
     try {
         // Persist the current document if a provider and lastNode exist
         if (provider && lastNode) {

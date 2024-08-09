@@ -42,7 +42,7 @@ export class SupabaseProvider extends EventEmitter {
 	private awareness: Awareness | null = null;
 	private version: number = 0;
 	public callbacks: { [key: string]: Function[] } = {};
-
+	private presenceData = {}
 	constructor(supabase: SupabaseClient, config: SupabaseProviderConfiguration) {
 		super();
 
@@ -53,8 +53,8 @@ export class SupabaseProvider extends EventEmitter {
 
 		this.on("connect", this.onConnect);
 		this.on("disconnect", this.onDisconnect);
-		this.document.on("update", debounce(this.documentUpdateHandler.bind(this), 50));
-        this.awareness.on("update", debounce(this.onAwarenessUpdate.bind(this), 50));
+		this.document.on("update", debounce(this.documentUpdateHandler.bind(this), 100));
+        this.awareness.on("update", debounce(this.onAwarenessUpdate.bind(this), 100));
         
         this.connect();
         
@@ -72,14 +72,17 @@ export class SupabaseProvider extends EventEmitter {
 		return this.configuration.document;
 	}
 
-	private documentUpdateHandler(update: Uint8Array, origin?: any) {
+	private async documentUpdateHandler(update: Uint8Array, origin?: any) {
 		if (origin === this) {
 			return;
 		}
+	
 
-		const stateVectorO = fromUint8Array(Y.encodeStateVector(this.document));
-
-		if (this.channel) {
+	
+		const userCount = Object.keys(this.presenceData).length;
+	
+		if (userCount > 1 && this.channel) {
+			const stateVectorO = fromUint8Array(Y.encodeStateVector(this.document));
 			try {
 				this.channel.send({
 					type: "broadcast",
@@ -91,13 +94,28 @@ export class SupabaseProvider extends EventEmitter {
 			}
 		}
 	}
+	
 
-	private onAwarenessUpdate({ added, updated, removed }: any, origin: any) {
-		const changedClients = added.concat(updated).concat(removed);
-		const awarenessUpdate = encodeAwarenessUpdate(this.awareness!, changedClients);
-		console.log(this.awareness?.states);
+	private async onAwarenessUpdate({ added, updated, removed }: any, origin: any) {
+    // Combine added, updated, and removed clients
+			const changedClients = added.concat(updated).concat(removed);
+			
+			// Filter out inactive clients
+			const activeClients = changedClients.filter((client: any) => {
+				// Replace this check with your actual condition for active clients
+				return this.awareness.getStates().has(client) && !this.awareness.getStates().get(client).inactive;
+			});
 
-		if (this.channel) {
+			// Encode awareness update only for active clients
+			const awarenessUpdate = encodeAwarenessUpdate(this.awareness!, activeClients);
+
+
+	
+		const userCount = Object.keys(this.presenceData).length;
+	
+		console.log("User count:", userCount);
+		
+		if (userCount > 1 && this.channel) {
 			this.channel.send({
 				type: "broadcast",
 				event: "awareness",
@@ -108,15 +126,19 @@ export class SupabaseProvider extends EventEmitter {
 
 	private onrequestCurrentState({ event, payload }: { event: string; [key: string]: any }) {
 		try {
-			const stateVector = Y.encodeStateAsUpdate(this.document);
-			if (this.channel) {
-				this.channel.send({
-					type: "broadcast",
-					event: "currentStateResponse",
-					payload: fromUint8Array(stateVector),
-				});
-			}
+			const stateVectorO = fromUint8Array(Y.encodeStateVector(this.document));
 
+            if (this.channel) {
+                try {
+                    this.channel.send({
+                        type: "broadcast",
+                        event: "diff",
+                        payload: { stateVectorO: stateVectorO },
+                    });
+                } catch (error) {
+                    console.error("Error broadcasting diff:", error);
+                }
+            }
 			console.log("Current state sent in response to request.");
 		} catch (error) {
 			console.error("Error sending current state:", error);
@@ -138,7 +160,22 @@ export class SupabaseProvider extends EventEmitter {
 	}
 
 	private async onConnect() {
-		// let stateReceived = false;
+        // let stateReceived = false;
+        
+        if (this.channel) {
+            console.log("asking for current state");
+            
+            try {
+                this.channel.send({
+                    type: "broadcast",
+                    event: "requestCurrentState",
+                    payload: {}
+                });
+            } catch (error) {
+                console.error("Error broadcasting diff:", error);
+            }
+        }
+
 
 		const { data, error } = await this.supabase
 			.from(this.configuration.databaseDetails.table)
@@ -149,17 +186,20 @@ export class SupabaseProvider extends EventEmitter {
 			.eq(this.configuration.databaseDetails.updateColumns.name, this.configuration.name)
 			.limit(1);
 
-		if (error) {
-			console.error(error);
-			return;
-		}
+            if (error) {
+                console.error(error);
+                return;
+            }
 
-		if (data.length === 0) {
-			console.log(data);
-			const emptyDocument = toUint8Array("AAA=");
-			Y.applyUpdate(this.document, emptyDocument); // or any default state you wish to apply
-			this.documentUpdateHandler(emptyDocument, this);
-		} else {
+	
+            // or any default state you wish to apply
+            // && !(data[0][this.configuration.databaseDetails.updateColumns.content] !== "AAA=")
+          
+
+
+
+		
+        if ((data.length !== 0 && data[0][this.configuration.databaseDetails.updateColumns.content] !== "AAA=" )) {
 			console.log(data[0][this.configuration.databaseDetails.updateColumns.content]);
 
 			const dbDocument = toUint8Array(
@@ -198,31 +238,36 @@ export class SupabaseProvider extends EventEmitter {
                 if (this.awareness) {
                     applyAwarenessUpdate(this.awareness!, update, this);
                 }
-				
 			})
-			.on("broadcast", { event: "requestCurrentState" }, (event) => {
+			.on('presence', { event: 'sync' }, () => {
+				console.log('Synced presence state: ', this.channel!.presenceState())
+				this.presenceData = this.channel!.presenceState()
+			  })
+            .on("broadcast", { event: "requestCurrentState" }, (event) => {
 				this.onrequestCurrentState(event);
 			})
 			.on("broadcast", { event: "currentStateResponse" }, (event) => {
 				this.oncurrentStateResponse(event);
 			})
-			.on("presence", { event: "leave" }, ({ leftPresences }) => {
-				console.log("Newly left presences: ", leftPresences);
-			})
 
-			.subscribe((status, err) => {
+			.subscribe(async (status) => {
 				switch (status) {
 					case "SUBSCRIBED":
-						this.emit("connect", this);
+                        this.emit("connect", this);
+                        console.log("Connected to channel", this.configuration.name);
+                        await this.channel!.track({ online_at: new Date().toISOString() })
 						break;
 					case "CHANNEL_ERROR":
-						this.emit("disconnect", this);
+                        this.emit("connect", this);
+                        console.log("Failed to connect to channel", this.configuration.name);
 						break;
 					case "TIMED_OUT":
-						this.emit("disconnect", this);
+                        this.emit("connect", this);
+                        console.log("Timed out connecting to channel", this.configuration.name);
 						break;
 					case "CLOSED":
-						this.emit("disconnect", this);
+                        this.emit("disconnect", this);
+                        console.log("Disconnected from channel", this.configuration.name);
 						break;
 					default:
 						break;
@@ -231,7 +276,7 @@ export class SupabaseProvider extends EventEmitter {
 	}
 
 	private onReceiveUpdate({ event, payload }: { event: string; [key: string]: any }) {
-		console.log("onReceiveUpdate", event, payload);
+		
 
 		if (payload.diffO) {
 			try {
