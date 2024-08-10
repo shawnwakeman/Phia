@@ -3,18 +3,29 @@ import debounce from "debounce";
 import { EventEmitter } from "eventemitter3";
 import { fromUint8Array, toUint8Array } from "js-base64";
 
-import {
-	Awareness,
-	removeAwarenessStates,
-	encodeAwarenessUpdate,
-	applyAwarenessUpdate,
-} from "y-protocols/awareness";
+
 import * as Y from "yjs";
+import * as bc from 'lib0/broadcastchannel'
+import * as time from 'lib0/time'
+import * as encoding from 'lib0/encoding'
+import * as decoding from 'lib0/decoding'
+import * as syncProtocol from 'y-protocols/sync'
+import * as authProtocol from 'y-protocols/auth'
+import * as awarenessProtocol from 'y-protocols/awareness'
+import { ObservableV2 } from 'lib0/observable'
+import * as math from 'lib0/math'
+import * as url from 'lib0/url'
+import * as env from 'lib0/environment'
+
+export const messageSync = 0
+export const messageQueryAwareness = 3
+export const messageAwareness = 1
+export const messageAuth = 2
 
 export interface SupabaseProviderConfiguration {
 	name: string;
 	document: Y.Doc;
-	awareness?: Awareness;
+	awareness?: awarenessProtocol.Awareness;
 	databaseDetails: {
 		schema: string;
 		table: string;
@@ -39,16 +50,16 @@ export class SupabaseProvider extends EventEmitter {
 
 	private supabase: SupabaseClient;
 	private channel: RealtimeChannel | null = null;
-	private awareness: Awareness | null = null;
+	private awareness: awarenessProtocol.Awareness | null = null;
 	private version: number = 0;
 	public callbacks: { [key: string]: Function[] } = {};
-	private presenceData = {}
+	public presenceData = {}
 	constructor(supabase: SupabaseClient, config: SupabaseProviderConfiguration) {
 		super();
 
 		this.setConfiguration(config);
 		this.configuration.document = config.document ? config.document : new Y.Doc();
-		this.awareness = new Awareness(this.configuration.document);
+		this.awareness = new awarenessProtocol.Awareness(this.configuration.document);
 		this.supabase = supabase;
 
 		this.on("connect", this.onConnect);
@@ -97,23 +108,16 @@ export class SupabaseProvider extends EventEmitter {
 	
 
 	private async onAwarenessUpdate({ added, updated, removed }: any, origin: any) {
-    // Combine added, updated, and removed clients
-			const changedClients = added.concat(updated).concat(removed);
-			
-			// Filter out inactive clients
-			const activeClients = changedClients.filter((client: any) => {
-				// Replace this check with your actual condition for active clients
-				return this.awareness.getStates().has(client) && !this.awareness.getStates().get(client).inactive;
-			});
 
-			// Encode awareness update only for active clients
-			const awarenessUpdate = encodeAwarenessUpdate(this.awareness!, activeClients);
+		const changedClients = added.concat(updated).concat(removed);
+
+		const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(this.awareness!, changedClients);
 
 
 	
 		const userCount = Object.keys(this.presenceData).length;
 	
-		console.log("User count:", userCount);
+		
 		
 		if (userCount > 1 && this.channel) {
 			this.channel.send({
@@ -145,21 +149,13 @@ export class SupabaseProvider extends EventEmitter {
 		}
 	}
 
-	private oncurrentStateResponse({ event, payload }: { event: string; [key: string]: any }) {
-		try {
-			const editorState = toUint8Array(payload);
-			Y.applyUpdate(this.document, editorState);
-			console.log("Received and applied state from another editor.");
-		} catch (error) {
-			console.error("Error applying state from another editor:", error);
-		}
-	}
+	
 
 	removeSelfFromAwarenessOnUnload() {
-		removeAwarenessStates(this.awareness!, [this.document.clientID], "window unload");
+		awarenessProtocol.removeAwarenessStates(this.awareness!, [this.document.clientID], "window unload");
 	}
 
-	private async onConnect() {
+	public async onConnect() {
         // let stateReceived = false;
         
         if (this.channel) {
@@ -216,7 +212,7 @@ export class SupabaseProvider extends EventEmitter {
 		this.emit("status", [{ status: "connected" }]);
 
 		if (this.awareness && this.awareness.getLocalState() !== null) {
-			const awarenessUpdate = encodeAwarenessUpdate(this.awareness, [this.document.clientID]);
+			const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.document.clientID]);
 			this.emit("awareness", awarenessUpdate);
 		}
 	}
@@ -236,7 +232,7 @@ export class SupabaseProvider extends EventEmitter {
 			.on("broadcast", { event: "awareness" }, ({ payload }) => {
                 const update = toUint8Array(payload.awareness);
                 if (this.awareness) {
-                    applyAwarenessUpdate(this.awareness!, update, this);
+                    awarenessProtocol.applyAwarenessUpdate(this.awareness!, update, this);
                 }
 			})
 			.on('presence', { event: 'sync' }, () => {
@@ -245,9 +241,6 @@ export class SupabaseProvider extends EventEmitter {
 			  })
             .on("broadcast", { event: "requestCurrentState" }, (event) => {
 				this.onrequestCurrentState(event);
-			})
-			.on("broadcast", { event: "currentStateResponse" }, (event) => {
-				this.oncurrentStateResponse(event);
 			})
 
 			.subscribe(async (status) => {
@@ -355,19 +348,21 @@ export class SupabaseProvider extends EventEmitter {
 			const states = Array.from(this.awareness.getStates().keys()).filter(
 				(client) => client !== this.document.clientID
 			);
-			removeAwarenessStates(this.awareness, states, this);
+			awarenessProtocol.removeAwarenessStates(this.awareness, states, this);
 		}
 	}
 
-    public destroy() {
+	public destroy() {
+		
+		// if last user within timout remove channel
   
         if (this.awareness) {
             const localClientID = this.document.clientID;
-            removeAwarenessStates(this.awareness, [localClientID], "destroy");
+            awarenessProtocol.removeAwarenessStates(this.awareness, [localClientID], "destroy");
         }
-
+		this.removeSelfFromAwarenessOnUnload();
         if (this.channel && this.awareness) {
-            const awarenessUpdate = encodeAwarenessUpdate(this.awareness, [this.document.clientID]);
+            const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.document.clientID]);
             this.channel.send({
                 type: "broadcast",
                 event: "awareness",
@@ -375,7 +370,7 @@ export class SupabaseProvider extends EventEmitter {
             });
         }
 
-        this.removeSelfFromAwarenessOnUnload();
+      
         this.removeAllListeners();
         this.disconnect();
 

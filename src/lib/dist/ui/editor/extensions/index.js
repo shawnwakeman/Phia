@@ -14,7 +14,6 @@ import { Markdown } from 'tiptap-markdown';
 import UploadFilesPlugin  from '../plugins/upload-images.js';
 import SlashCommand from './slash-command.js';
 import UpdatedImage from './updated-image.js';
-TiptapImage
 import FileNode from './FileNode.js';
 import { SvelteCounterExtension } from './Table.js';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
@@ -22,11 +21,9 @@ import { common, createLowlight } from 'lowlight'
 import Typography from '@tiptap/extension-typography'
 import { ColorHighlighter } from './ColorHighlighter.js'
 import { SmilieReplacer } from './SmilieReplacer.js'
-import { Plugin, PluginKey } from 'prosemirror-state'
 import {Details as details} from '@tiptap-pro/extension-details'
 import DetailsContent from '@tiptap-pro/extension-details-content'
 import DetailsSummary from '@tiptap-pro/extension-details-summary'
-import Gapcursor from '@tiptap/extension-gapcursor'
 import Table from '@tiptap/extension-table'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
@@ -99,7 +96,6 @@ export const defaultExtensions = [
    
     }),
     Typography,
-    Gapcursor,
     ColorHighlighter,
     SmilieReplacer,
     Table.configure({
