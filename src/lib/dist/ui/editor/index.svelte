@@ -100,43 +100,51 @@
             }
 
           
-            window.addEventListener('beforeunload', async (event) => {
 
-            
-                if (provider && lastNode) {
-             
-
-                    try {
-                        let exportedData = provider.persistData();
-                        if (provider) provider.destroy();
-                        provider = null;
-
-                        if (!exportedData) {
-                            console.warn("No data to persist for node", lastNode);
-            
-                        }
-
-                        await supabase
-                            .from('summaries')
-                            .upsert({
-                                'node_id': lastNode.toString(),
-                                'summary': exportedData,
-                            }, { onConflict: 'node_id' });
-                    } catch (error) {
-                        console.error("Error during beforeunload:", error);
-                    }
-                }
-            });
         };
 
+        const cleanup = async () => {
+            console.log("Cleanup");
+            
+            if (provider && lastNode) {
+                try {
+                    let exportedData = provider.persistData();
+                    if (provider) provider.destroy();
+                    provider = null;
+
+                    if (!exportedData) {
+                        console.warn("No data to persist for node", lastNode);
+                    }
+
+                    await supabase
+                        .from('summaries')
+                        .upsert({
+                            'node_id': lastNode.toString(),
+                            'summary': exportedData,
+                        }, { onConflict: 'node_id' });
+                } catch (error) {
+                    console.error("Error during cleanup:", error);
+                }
+            }
+        };
         // Call the async initialization
         initialize();
 
         // Return the cleanup function synchronously
+        window.addEventListener('beforeunload', cleanup);
+        window.addEventListener('pagehide', cleanup);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                cleanup();
+            }
+        });
+
+        // Return the cleanup function synchronously
         return () => {
-            if (editor) editor.destroy();
             if (unsubscribe) unsubscribe();
-            if (provider) provider.destroy();
+            window.removeEventListener('beforeunload', cleanup);
+            window.removeEventListener('pagehide', cleanup);
+            document.removeEventListener('visibilitychange', cleanup);
         };
     });
 
