@@ -25,7 +25,9 @@
     import Collaboration from '@tiptap/extension-collaboration'
     import { SupabaseProvider } from "./y-supabase";
 	import * as Y from "yjs";
+    import { writable } from 'svelte/store';
 
+    export const usersStore = writable([]);
 
     // doc.on('destroy', function(doc: Y.Doc))
 
@@ -209,6 +211,8 @@
                     'summary': exportedData,
                 }, { onConflict: 'node_id' });
         }
+  
+
 
         // Create a new Y.Doc and provider
         yDoc = new Y.Doc();
@@ -223,7 +227,16 @@
                 conflictColumns: 'node_id',
             },
         });
+        provider.on('users-update', (status) => {
+            const usersArray = Object.values(status).flat();
+            const uniqueUsers = Array.from(
+                new Map(usersArray.map(user => [user.userName, user])).values()
+            );
+            usersStore.set(uniqueUsers);
 
+   
+
+        });
         // Reinitialize the editor with the new document
         if (editor) {
             editor.destroy();
@@ -261,6 +274,12 @@
 	}
 </script>
 
+
+<ul>
+    {#each $usersStore as user}
+        <li>{user.userName} - {user.presence_ref}</li>
+    {/each}
+</ul>
 
 
 {#if editor && editor.isEditable}

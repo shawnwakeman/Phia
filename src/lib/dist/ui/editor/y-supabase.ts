@@ -49,13 +49,15 @@ export class SupabaseProvider extends EventEmitter {
 		this.configuration.document = config.document ? config.document : new Y.Doc();
 		this.awareness = new awarenessProtocol.Awareness(this.configuration.document);
 		this.supabase = supabase;
+		this.connect();
+
 
 		this.on("connect", this.onConnect);
 		this.on("disconnect", this.onDisconnect);
 		this.document.on("update", this.documentUpdateHandler.bind(this));
 		this.awareness.on("update", debounce(this.onAwarenessUpdate.bind(this), 50));
 
-		this.connect();
+
 
 		// doc.on('destroy', function(doc: Y.Doc))
 	}
@@ -271,7 +273,7 @@ export class SupabaseProvider extends EventEmitter {
 			})
 			.on("presence", { event: "sync" }, () => {
 				console.log("Synced presence state: ", this.channel!.presenceState());
-				this.emit("users-update");
+				this.emit("users-update", this.channel!.presenceState());
 				this.presenceData = this.channel!.presenceState();
 			})
 			.on("presence", { event: "join" }, ({ key, newPresences }) => {
