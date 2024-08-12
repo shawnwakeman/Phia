@@ -27,7 +27,8 @@
 	import * as Y from "yjs";
 
 
-    
+    // doc.on('destroy', function(doc: Y.Doc))
+
 
 
 	export let completionApi = "/api/generate";
@@ -46,17 +47,25 @@
 
 
     function getRandomColor() {
-    const colors = [
-        '#b0bec5', '#78909c', '#546e7a', // Greys
-        '#a5d6a7', '#81c784', '#66bb6a', // Greens
-        '#90caf9', '#64b5f6', '#42a5f5'  // Blues
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
+        const colors = [
+            '#ff8a80', '#ff5252', '#ff1744', // Reds
+            '#ff80ab', '#ff4081', '#f50057', // Pinks
+            '#ea80fc', '#e040fb', '#d500f9', // Purples
+            '#b388ff', '#7c4dff', '#651fff', // Deep Purples
+            '#8c9eff', '#536dfe', '#3d5afe', // Indigo
+            '#82b1ff', '#448aff', '#2979ff', // Light Blues
+            '#18ffff', '#00e5ff', '#00b8d4', // Cyan
+            '#69f0ae', '#00e676', '#00c853', // Light Greens
+            '#ffd740', '#ffc400', '#ffab00', // Yellows
+            '#ffab91', '#ff8a65', '#ff7043'  // Oranges
+        ];
+
+        return colors[Math.floor(Math.random() * colors.length)];
     }
     let yDoc;
     let provider;
     let unsubscribe;
-
+    let users
     let session
     let color = getRandomColor();
 
@@ -127,7 +136,17 @@
 
 
 
+    function updateLabelPosition(cursor, label) {
+    const cursorRect = cursor.getBoundingClientRect();
+    const editorRect = editor.view.dom.getBoundingClientRect();
 
+    // Set the position of the label above the cursor
+    label.style.position = 'absolute';
+    label.style.top = `${cursorRect.top - editorRect.top - label.offsetHeight}px`;
+    label.style.left = `${cursorRect.left - editorRect.left}px`;
+    label.style.zIndex = '1000'; // Ensure it's above everything
+    label.style.pointerEvents = 'none'; // Prevent interaction with the label
+    }
 
 	function initializeEditor() {
 
@@ -138,16 +157,26 @@
 			extensions: [
 				...defaultExtensions,
 				...extensions,
-				Collaboration.configure({
-					document: yDoc, // Configure Y.Doc for collaboration
-				}),
                 CollaborationCursor.configure({
                     provider,
                     user: {
                     name: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
                     color: color,
+           
                     },
+                    render: user => {
+                      const cursor = document.createElement('span')
+                      cursor.classList.add('collaboration-cursor__caret')
+                      cursor.setAttribute('style', `border-color: ${user.color}`)
+                                        
+                   
+                      return cursor
+                     }
                 }),
+				Collaboration.configure({
+					document: yDoc, // Configure Y.Doc for collaboration
+				}),
+               
 			],
 			editorProps: {
 				...defaultEditorProps,
@@ -186,6 +215,7 @@
         provider = new SupabaseProvider(supabase, {
             name: nodeId.toString(),
             document: yDoc,
+            userName: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
             databaseDetails: {
                 schema: 'public',
                 table: 'summaries',

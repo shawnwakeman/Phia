@@ -38,13 +38,26 @@
 		outline: 2px solid blue; /* Example style for the selected state */
 	}
 
-	.collaboration-cursor__caret {
-		border-left: 1px solid #0d0d0d;
-		border-right: 1px solid #0d0d0d;
+	:first-child {
+		margin-top: 0;
+	  }
+	
+	  /* Placeholder (at the top) */
+
+	
+	  p {
+		word-break: break-all;
+	  }
+	
+	  /* Give a remote user a caret */
+	  .collaboration-cursor__caret {
+		border-left: 1.5px solid #0d0d0d;
+		border-right: 1.5px solid #0d0d0d;
 		margin-left: -1px;
 		margin-right: -1px;
 		pointer-events: none;
 		position: relative;
+		border-radius: 1px;
 		word-break: normal;
 	  }
 	
@@ -60,19 +73,17 @@
 		padding: 0.1rem 0.3rem;
 		position: absolute;
 		top: -1.4em;
-		overflow: visible; /* Ensures the content inside the label is visible */
-		white-space: nowrap; /* Prevents the label text from breaking to a new line */
-		z-index: 10; /* Ensures the label is on top of other elements */
+
+		user-select: none; /* Standard syntax */
+		white-space: nowrap;
 	  }
+	  
+
+	
 
 	  
 	
-	.remote-cursor {
-		position: absolute;
-		pointer-events: none;
-		z-index: 1000;
-		transition: all 0.1s ease;
-	}
+
 	p {
 		margin-top: 0.75rem;
 		margin-left: 0.5rem;
