@@ -90,6 +90,10 @@
                             isFirstLoad = false;
                         }
                     }
+
+          
+
+
                 });
             } catch (error) {
                 console.error("Error in onMount:", error);
@@ -109,7 +113,7 @@
 
                         if (!exportedData) {
                             console.warn("No data to persist for node", lastNode);
-                            return;
+            
                         }
 
                         await supabase
@@ -219,7 +223,10 @@
         provider = new SupabaseProvider(supabase, {
             name: nodeId.toString(),
             document: yDoc,
-            userName: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
+            userData: {
+                name: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
+                color: color,
+            },
             databaseDetails: {
                 schema: 'public',
                 table: 'summaries',
@@ -229,10 +236,8 @@
         });
         provider.on('users-update', (status) => {
             const usersArray = Object.values(status).flat();
-            const uniqueUsers = Array.from(
-                new Map(usersArray.map(user => [user.userName, user])).values()
-            );
-            usersStore.set(uniqueUsers);
+
+            usersStore.set(usersArray);
 
    
 
@@ -275,11 +280,11 @@
 </script>
 
 
-<ul>
+<!-- <ul>
     {#each $usersStore as user}
-        <li>{user.userName} - {user.presence_ref}</li>
+        <li>{user.userData.name} - {user.userData.color}</li>
     {/each}
-</ul>
+</ul> -->
 
 
 {#if editor && editor.isEditable}

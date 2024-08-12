@@ -165,15 +165,15 @@ export const defaultExtensions = [
                     isInTable = true;
                 }
           });
-          if (node.type.name === 'heading') {
-                return `Heading ${node.attrs.level}`;
-            }
+   
       
           if (isInTable) {
             return '';
           }
             
-     
+          if (node.type.name === 'heading') {
+            return `Heading ${node.attrs.level}`;
+        }
       
           if (node.type.name === 'codeBlock') {
             return '';
