@@ -132,14 +132,17 @@
 
         // Return the cleanup function synchronously
         window.addEventListener('beforeunload', cleanup);
-        window.addEventListener('pagehide', cleanup);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
-                cleanup();
-            } else {
-                // Optionally reinitialize anything necessary when visibility changes back to 'visible'
-                initialize();
-            }
+            if (provider) provider.pauseRealtime();
+            
+        } else {
+            // Optionally reinitialize anything necessary when visibility changes back to 'visible'
+          
+            if (provider) provider.resumeRealtime();
+      
+            
+        }
         });
 
         // Return the cleanup function synchronously

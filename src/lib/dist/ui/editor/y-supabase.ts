@@ -11,6 +11,7 @@ import {
 	encodeAwarenessUpdate,
 	applyAwarenessUpdate,
 } from "y-protocols/awareness";
+import { th } from "date-fns/locale";
 
 interface DatabaseDetails {
 	schema: string;
@@ -86,6 +87,7 @@ export class SupabaseProvider extends EventEmitter {
 
 	private async documentUpdateHandler(update: Uint8Array, origin?: any) {
 		if (origin === this) return;
+		if (this.isConnected === false) return;
 
 		try {
 			Y.applyUpdate(this.document, update, origin);
@@ -95,8 +97,7 @@ export class SupabaseProvider extends EventEmitter {
 		}
 
 		if (Object.keys(this.presenceData).length > 1 && this.channel) {
-			console.log("Broadcasting diff...");
-			
+		
 			const change = fromUint8Array(update);
 			try {
 				await this.channel.send({
@@ -111,13 +112,16 @@ export class SupabaseProvider extends EventEmitter {
 	}
 
 	private async onAwarenessUpdate({ added, updated, removed }: any, origin: any) {
+		if (origin === this) return;
 		const changedClients = added.concat(updated).concat(removed);
 		const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(
 			this.awareness!,
 			changedClients
 		);
-
+	
+		
 		if (Object.keys(this.presenceData).length > 1 && this.channel) {
+			
 			await this.channel.send({
 				type: "broadcast",
 				event: "awareness",
@@ -135,7 +139,11 @@ export class SupabaseProvider extends EventEmitter {
 		);
 	}
 
-	startSync() {
+	public startSync() {
+
+		if (this.isConnected === false) return;
+	
+		
 		const stateVectorO = fromUint8Array(Y.encodeStateVector(this.document));
 
 		if (this.channel) {
@@ -152,8 +160,6 @@ export class SupabaseProvider extends EventEmitter {
 	}
 
 	onSyncResponse({ event, payload }: { event: string; [key: string]: any }) {
-		const stateVectorR = fromUint8Array(Y.encodeStateVector(this.document));
-
 		const diffR = fromUint8Array(
 			Y.encodeStateAsUpdate(this.document, toUint8Array(payload.stateVectorO))
 		);
@@ -163,7 +169,7 @@ export class SupabaseProvider extends EventEmitter {
 				this.channel!.send({
 					type: "broadcast",
 					event: "finalSync",
-					payload: { stateVectorR, diffR },
+					payload: { diffR },
 				});
 			} catch (error) {
 				console.error("Error broadcasting update:", error);
@@ -189,7 +195,8 @@ export class SupabaseProvider extends EventEmitter {
 			console.error(error);
 			return;
 		}
-
+		
+		
 		if (
 			data.length !== 0 &&
 			data[0][this.configuration.databaseDetails.updateColumns.content] !== "AAA="
@@ -203,15 +210,12 @@ export class SupabaseProvider extends EventEmitter {
 		}
 
 		this.emit("status", [{ status: "connected" }]);
-
-		if (this.awareness && this.awareness.getLocalState() !== null) {
-			const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(this.awareness, [
-				this.document.clientID,
-			]);
-			this.emit("awareness", awarenessUpdate);
-		}
-		this.startSync()
 		this.isConnected = true;
+	
+		this.startSync();
+
+	
+
 	}
 
 	private connect() {
@@ -219,12 +223,30 @@ export class SupabaseProvider extends EventEmitter {
 		this.initRealtime();
 	}
 
+	
+	public async pauseRealtime() {
+        if (this.channel && this.isConnected) {
+			this.disconnect()
+		}
+	}
+
+    public async resumeRealtime() {
+		if (this.channel && !this.isConnected) {
+			
+			this.initRealtime() 
+			
+		} else {
+			this.connect()
+		}
+    }
+
 	private initRealtime() {
 		this.channel!
 			.on("broadcast", { event: "documentUpdated" }, (event) => {
 				this.onRecieiveDocumentUpdate(event);
 			})
 			.on("broadcast", { event: "awareness" }, ({ payload }) => {
+
 				awarenessProtocol.applyAwarenessUpdate(
 					this.awareness!,
 					toUint8Array(payload.awareness),
@@ -232,11 +254,25 @@ export class SupabaseProvider extends EventEmitter {
 				);
 			})
 			.on("broadcast", { event: "syncStep2" }, (event) => {
+				
 				this.onSyncResponse(event);
 			})
+		
 			.on("broadcast", { event: "finalSync" }, (event) => {
 				this.onSyncCompletion(event);
 			})
+			.on('presence', { event: 'join' }, ({ key, newPresences }) => {
+				if (this.channel && this.awareness) {
+					const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(this.awareness, [
+						this.document.clientID,
+					]);
+					this.channel.send({
+						type: "broadcast",
+						event: "awareness",
+						payload: { awareness: fromUint8Array(awarenessUpdate) },
+					});
+				}
+			  })
 			.on("presence", { event: "sync" }, () => {
 				this.emit("users-update", this.channel!.presenceState());
 				this.presenceData = this.channel!.presenceState();
@@ -246,21 +282,21 @@ export class SupabaseProvider extends EventEmitter {
 			.subscribe(async (status) => {
 				switch (status) {
 					case "SUBSCRIBED":
-						this.emit("connect", this);
+						if (!this.isConnected) {
+							this.emit("connect", this);
+						}
+						
 						await this.channel!.track({ userData: this.configuration.userData });
 						break;
-					case "CHANNEL_ERROR":
-						this.emit("connect", this);
-						break;
-					case "TIMED_OUT":
-						this.emit("connect", this);
-						break;
-					case "CLOSED":
-						this.emit("disconnect", this);
-						break;
-					default:
-						break;
-				}
+						case 'CHANNEL_ERROR':
+						case 'TIMED_OUT':
+						case 'CLOSED':
+							this.isConnected = false;
+							this.emit('disconnect', this);
+							break;
+						default:
+							break;
+			}
 			});
 	}
 
@@ -280,6 +316,7 @@ export class SupabaseProvider extends EventEmitter {
 
 	private disconnect() {
 		if (this.channel) {
+			this.channel.unsubscribe();
 			this.supabase.removeChannel(this.channel);
 			this.channel = null;
 		}
