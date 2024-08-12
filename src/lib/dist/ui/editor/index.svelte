@@ -136,6 +136,9 @@
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
                 cleanup();
+            } else {
+                // Optionally reinitialize anything necessary when visibility changes back to 'visible'
+                initialize();
             }
         });
 

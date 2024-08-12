@@ -95,6 +95,8 @@ export class SupabaseProvider extends EventEmitter {
 		}
 
 		if (Object.keys(this.presenceData).length > 1 && this.channel) {
+			console.log("Broadcasting diff...");
+			
 			const change = fromUint8Array(update);
 			try {
 				await this.channel.send({
