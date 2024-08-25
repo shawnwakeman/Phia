@@ -28,8 +28,7 @@ import Table from '@tiptap/extension-table'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
-
-
+import { TrailingNode } from './trailingNode.ts'
 
 const lowlight = createLowlight(common)
 
@@ -97,7 +96,8 @@ export const defaultExtensions = [
     }),
     Typography,
     ColorHighlighter,
-    SmilieReplacer,
+  SmilieReplacer,
+  TrailingNode,
     Table.configure({
         resizable: true,
       }),

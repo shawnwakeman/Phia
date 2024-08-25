@@ -314,55 +314,6 @@
 
 <Toasts />
 
-<Dialog.Root open="{$showingTableEditor}">
-	<Dialog.Content class="max-w-lg h-56 feature-container">
-		<Dialog.Header>
-			<Dialog.Title>Create Table</Dialog.Title>
-			<div class="flex flex-col space-between">
-				<div class="flex w-full my-3">
-					<div class="flex-1 mx-2">
-						<label for="rows">Rows</label>
-						<div class="input-container border" id="rows">
-							<input
-								type="number"
-								class="custom-number-input"
-								max="10"
-								min="0"
-								step="1"
-								bind:value="{rows}"
-								on:keydown="{handleKeyDown}"
-							/>
-						</div>
-					</div>
-
-					<div class="flex-1 mx-2">
-						<label for="columns">Columns</label>
-						<div class="input-container border" id="columns">
-							<input
-								type="number"
-								class="custom-number-input"
-								max="10"
-								min="0"
-								step="1"
-								bind:value="{columns}"
-								on:keydown="{handleKeyDown}"
-							/>
-						</div>
-					</div>
-				</div>
-
-				<div class="flex w-full justify-between items-center my-3">
-					<div class="flex flex-col ml-2">
-						<Switch bind:checked="{headerRow}" />
-						<Label class="ml-1" for="headerRowSwitch">Header Row</Label>
-					</div>
-
-					<Button on:click="{createTable}">Create Table</Button>
-				</div>
-			</div>
-		</Dialog.Header>
-	</Dialog.Content>
-</Dialog.Root>
 
 <style>
 	input[type="number"]::-webkit-outer-spin-button,

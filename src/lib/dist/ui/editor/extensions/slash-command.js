@@ -182,9 +182,9 @@ const getSuggestionItems = ({ query }) => {
             searchTerms: ['table'],
             icon: Table,
             command: ({ editor, range }) => {
-                showingTableEditor.set(true);
+              
                 editor.chain().focus()
-                .deleteRange(range).run() // Clear the current range
+                .deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run() // Clear the current range
                
               
                

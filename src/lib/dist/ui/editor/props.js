@@ -23,7 +23,7 @@ export const defaultEditorProps = {
             ensureSpaceForFiles(view, pos, files.length);
     
             files.forEach((file, index) => {
-                startFileUpload(file, view, pos + index); // Adjust the position increment if needed
+                startFileUpload(file, view, pos + index - 1); // Adjust the position increment if needed
             });
     
             return true;
@@ -47,22 +47,10 @@ export const defaultEditorProps = {
             ensureSpaceForFiles(view, pos, files.length);
     
             files.forEach((file, index) => {
-                startFileUpload(file, view, pos + index); // Adjust the position increment if needed
+                startFileUpload(file, view, pos + index - 1); // Adjust the position increment if needed
             });
     
             return true;
-        } else {
-            // Insert a hard break before pasting
-            setTimeout(() => {
-                // After the paste is complete, insert a hard break
-                view.dispatch(view.state.tr.insert(
-                    view.state.selection.to, 
-                    view.state.schema.nodes.hard_break.create()
-                ));
-            }, 0);
-            
-            // Allow the default paste behavior to occur after inserting the hard break
-            return false;
         }
   
     }
@@ -72,7 +60,7 @@ export const defaultEditorProps = {
 
 function ensureSpaceForFiles(view, pos, numFiles) {
     const { tr } = view.state;
-    const extraLines = "\n".repeat(numFiles); // Adjust the multiplier as needed
+    const extraLines = "\n".repeat(numFiles - 1); // Adjust the multiplier as needed
     tr.insertText(extraLines, pos);
     view.dispatch(tr);
 }

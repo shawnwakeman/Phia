@@ -39,7 +39,11 @@ export class SupabaseProvider extends EventEmitter {
 	private awareness: Awareness;
 	private isConnected: boolean = false;
 	public presenceData: any = {};
-
+	private updateBuffer: Uint8Array[] = [];
+	private debounceTimeout: number | null = null;
+	private debounceCooldown: boolean = false;
+	private debounceTimeoutA: number | null = null;
+	private debounceCooldownA: boolean = false;
 	public configuration: SupabaseProviderConfiguration = {
 		name: "",
 		// @ts-ignore
@@ -73,7 +77,7 @@ export class SupabaseProvider extends EventEmitter {
 		this.on("disconnect", this.onDisconnect);
 
 		this.document.on("update", this.documentUpdateHandler.bind(this));
-		this.awareness.on("update", debounce(this.onAwarenessUpdate.bind(this), 50));
+		this.awareness.on("update", this.onAwarenessUpdate.bind(this));
 		this.document.on("destroy", this.destroy);
 	}
 
@@ -83,6 +87,62 @@ export class SupabaseProvider extends EventEmitter {
 
 	get document() {
 		return this.configuration.document;
+	}
+
+	
+
+	private async debounceApplyUpdate(update: Uint8Array, origin?: any) {
+		// Add the update to the buffer
+		this.updateBuffer.push(update);
+	
+		// Clear any existing debounce timeout
+		if (this.debounceTimeout) {
+			clearTimeout(this.debounceTimeout);
+			this.debounceTimeout = null;
+		}
+	
+		// If there is no cooldown (debounceTimeout is null or the buffer was just cleared), execute immediately
+		if (!this.debounceCooldown) {
+			this.executeUpdateBuffer();
+			this.debounceCooldown = true;
+	
+			// Reset the cooldown after the debounce delay
+			this.debounceTimeout = window.setTimeout(() => {
+				this.debounceCooldown = false;
+	
+			}, 100); // Adjust the debounce delay as needed (300ms in this example)
+		} else {
+			// Set a new debounce timeout for subsequent updates
+			this.debounceTimeout = window.setTimeout(() => {
+				this.executeUpdateBuffer();
+				this.debounceCooldown = false;
+			}, 100); // Adjust the debounce delay as needed (300ms in this example)
+		}
+	}
+	
+	private async executeUpdateBuffer() {
+
+
+		// Merge all updates in the buffer 
+
+		const mergedUpdate = Y.mergeUpdates(this.updateBuffer);
+
+		// Clear the buffer
+		this.updateBuffer = [];
+	
+		// Handle broadcasting if needed
+		if (Object.keys(this.presenceData).length > 1 && this.channel) {
+			const change = fromUint8Array(mergedUpdate);
+			try {
+				await this.channel.send({
+					type: "broadcast",
+					event: "documentUpdated",
+					payload: { update: change },
+				});
+			} catch (error) {
+				console.error("Error broadcasting diff:", error);
+			}
+		}
 	}
 
 	private async documentUpdateHandler(update: Uint8Array, origin?: any) {
@@ -96,22 +156,14 @@ export class SupabaseProvider extends EventEmitter {
 			return;
 		}
 
-		if (Object.keys(this.presenceData).length > 1 && this.channel) {
-		
-			const change = fromUint8Array(update);
-			try {
-				await this.channel.send({
-					type: "broadcast",
-					event: "documentUpdated",
-					payload: { update: change },
-				});
-			} catch (error) {
-				console.error("Error broadcasting diff:", error);
-			}
-		}
+		this.debounceApplyUpdate(update, origin);
 	}
 
-	private async onAwarenessUpdate({ added, updated, removed }: any, origin: any) {
+
+	private async executeAwarenessUpdate({ added, updated, removed }: any, origin: any) {
+		// Add the update to the buffer
+	
+		// Clear any existing debounce timeout
 		if (origin === this) return;
 		const changedClients = added.concat(updated).concat(removed);
 		const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(
@@ -128,6 +180,33 @@ export class SupabaseProvider extends EventEmitter {
 				payload: { awareness: fromUint8Array(awarenessUpdate) },
 			});
 		}
+	}
+	
+	private async onAwarenessUpdate({ added, updated, removed }: any, origin: any) {
+
+		if (this.debounceTimeoutA) {
+			clearTimeout(this.debounceTimeoutA);
+			this.debounceTimeoutA = null;
+		}
+	
+		// If there is no cooldown (debounceTimeoutA is null or the buffer was just cleared), execute immediately
+		if (!this.debounceCooldownA) {
+			this.executeAwarenessUpdate({ added, updated, removed }, origin);
+			this.debounceCooldownA = true;
+	
+			// Reset the cooldown after the debounce delay
+			this.debounceTimeoutA = window.setTimeout(() => {
+				this.debounceCooldownA = false;
+	
+			}, 100); // Adjust the debounce delay as needed (300ms in this example)
+		} else {
+			// Set a new debounce timeout for subsequent updates
+			this.debounceTimeoutA = window.setTimeout(() => {
+				this.executeAwarenessUpdate({ added, updated, removed }, origin);
+				this.debounceCooldownA = false;
+			}, 100); // Adjust the debounce delay as needed (300ms in this example)
+		}
+		
 	}
 
 
@@ -227,16 +306,20 @@ export class SupabaseProvider extends EventEmitter {
 	public async pauseRealtime() {
         if (this.channel && this.isConnected) {
 			this.disconnect()
+			console.log("ss realtime");
 		}
+		console.log("ss realtime");
 	}
 
     public async resumeRealtime() {
 		if (this.channel && !this.isConnected) {
+			console.log("Resuming realtime");
 			
-			this.initRealtime() 
+	
 			
 		} else {
 			this.connect()
+			console.log("Resuming realtime");
 		}
     }
 
@@ -316,6 +399,8 @@ export class SupabaseProvider extends EventEmitter {
 
 	private disconnect() {
 		if (this.channel) {
+			console.log("Disconnecting realtime");
+			
 			this.channel.unsubscribe();
 			this.supabase.removeChannel(this.channel);
 			this.channel = null;
