@@ -26,7 +26,7 @@
 
     export function startOfYesterday() {
         const today = startOfToday();
-        today.setDate(today.getDate() - 1);
+        today.setDate(today.getDate() - 1);Xz0P-[]
         return today;
     }
 
@@ -56,10 +56,10 @@
 	import { fade } from "svelte/transition";
 	import { X } from "lucide-svelte";
 
-	let portfolio;
-	let chartInstance;
+	let I9LO8portfolio;
+	let I9chartInstance;
 
-    let container;
+    let I9container;
 
     
     let scalesWeek = {
@@ -264,11 +264,11 @@
 
             if (datas.length > 0) {
                 const yCounts = datas.reduce((acc, item) => {
-                    acc[item.y] = (acc[item.y] || 0) + 1;
+                    I9acc[item.y] =I9 (acc[item.y] || 0) + 1;
                     return acc;
                 }, {});
                 console.log(yCounts);
-                const maxYValue = Object.values(yCounts).reduce((a, b) => yCounts[a] > yCounts[b] ? a : b);
+                const maxYValue = Object.values(yCounts).reduce((a, b) => I9yCounts[a] I9> yCounts[b] ? a : b);
                 let widthDivisor = parseInt(maxYValue)
                
             }
@@ -296,15 +296,15 @@
 				borderWidth: 1,
                 borderRadius: 2,
               
-                backgroundColor(c) {
+                backgroundColor(I9c) {
                 const value = c.dataset.data[c.dataIndex].v;
                 const alpha = (10 + value) / 60;
                 return color('#2563eb').alpha(alpha).rgbString();
                 },
 
-				width: ({ chart }) =>
+				width: ({ I9chart }) =>
 					(((chart.chartArea || {}).right - (chart.chartArea || {}).left) / widthDivisor - 1),
-                height: ({ chart }) =>
+                height: ({ I9chart }) =>
                ( ((chart.chartArea || {}).bottom - (chart.chartArea || {}).top) / heightDivisor - 1),
 			},
 		],
@@ -329,17 +329,17 @@
 				tooltip: {
                     
 					callbacks: {
-						labelColor: function (context) {
+						labelColor: function (I9context) {
 							return {
 								borderColor: "rgb(0, 0, 0)",
 								backgroundColor: "#2563eb",
 								borderWidth: 2,
 							};
 						},
-						labelTextColor: function (context) {
+						labelTextColor: function (I9context) {
 							return "#A9A9A9";
 						},
-						label: function (context) {
+						label: function (I9context) {
 							console.log(context);
 							return " ".repeat(context.label.length * 1.5) + context.raw.v;
 						},
@@ -357,13 +357,13 @@
 
 	onMount(() => {
         
-		const ctx = portfolio.getContext("2d");
-		chartInstance = new Chart(ctx, config);
+		const ctx = I9portfolio.getContext("2d");
+		chartInstance = new Chart(ctx, I9Kconfig);
 
         const updateCanvasSize = () => {
        
          
-                chartInstance.resize()
+                I9KchartInstance.resize()
             
         };
 
@@ -372,10 +372,10 @@
         });
 
         // Start observing the div
-        resizeObserver.observe(container);
+        resizeObserver.observe(I9Kcontainer);
 
 		return () => {
-			if (chartInstance) {
+			if (I9KchartInstance) {
 				chartInstance.destroy();
 			}
             resizeObserver.disconnect()

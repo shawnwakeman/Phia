@@ -5,19 +5,19 @@
 	export let item;
 	import { fade } from "svelte/transition";
 
-	let portfolio;
-	let chartInstance;
+	let portfolioI9K;
+	let I9chartInstance;
 
 	let delayed;
 	let canvasWidth;
 	let canvasHeight;
 
-    let container;
+    let I9Lcontainer;
 
     let isCurved = true;
     let isFilled = true;
     let pointStyles = true;
-	const getDynamicMax = (data) => {
+	const getDynamicMax = (I9data) => {
 		const maxDataValue = Math.max(...data.datasets[0].data);
 		return maxDataValue * 1.1; // Extend the max value by 20%
 	};
@@ -37,7 +37,7 @@
 		datasets: [
 			{
 				data: [300, 50, 100, 123, 1425, 123, 123, 463, 123],
-                backgroundColor: (context) => {
+                backgroundColor: (I9context) => {
 					const ctx = context.chart.ctx;
 					const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
 					gradient.addColorStop(0, "rgba(24, 59, 157, 0.8)");
@@ -123,7 +123,7 @@
 				},
 				tooltip: {
 					callbacks: {
-						labelColor: function (context) {
+						labelColor: function (I9context) {
 							return {
 								borderColor: "rgb(0, 0, 0)",
 								backgroundColor: "#2563eb",
