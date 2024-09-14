@@ -1,8 +1,9 @@
 import { Editor, Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import tippy from 'tippy.js';
-import { CheckSquare, Code, Heading1, Heading2, Heading3, List, ListOrdered, MessageSquarePlus, Text, TextQuote } from 'lucide-svelte';
+import { CheckSquare, Code, Heading1, FileImage, Minus, Table, File, ListCollapse, Heading2, Heading3, List, ListOrdered, MessageSquarePlus, Text, TextQuote } from 'lucide-svelte';
 import CommandList from './CommandList.svelte';
+import { showingTableEditor } from '../../../../stores';
 // import { toast } from 'sonner';
 // import va from '@vercel/analytics';
 import { startFileUpload } from '../plugins/upload-images.js';
@@ -31,21 +32,7 @@ const Command = Extension.create({
 });
 const getSuggestionItems = ({ query }) => {
     return [
-        {
-            title: 'Continue writing',
-            description: 'Use AI to expand your thoughts.',
-            searchTerms: ['gpt'],
-            icon: Magic
-        },
-        // {
-        // 	title: 'Send Feedback',
-        // 	description: 'Let us know how we can improve.',
-        // 	icon: MessageSquarePlus,
-        // 	command: ({ editor, range }: CommandProps) => {
-        // 		editor.chain().focus().deleteRange(range).run();
-        // 		window.open('/feedback', '_blank');
-        // 	}
-        // },
+
         {
             title: 'Text',
             description: 'Just start typing with plain text.',
@@ -53,15 +40,6 @@ const getSuggestionItems = ({ query }) => {
             icon: Text,
             command: ({ editor, range }) => {
                 editor.chain().focus().deleteRange(range).toggleNode('paragraph', 'paragraph').run();
-            }
-        },
-        {
-            title: 'To-do List',
-            description: 'Track tasks with a to-do list.',
-            searchTerms: ['todo', 'task', 'list', 'check', 'checkbox'],
-            icon: CheckSquare,
-            command: ({ editor, range }) => {
-                editor.chain().focus().deleteRange(range).toggleTaskList().run();
             }
         },
         {
@@ -109,6 +87,18 @@ const getSuggestionItems = ({ query }) => {
                 editor.chain().focus().deleteRange(range).toggleOrderedList().run();
             }
         },
+        
+        {
+            title: 'To-do List',
+            description: 'Track tasks with a to-do list.',
+            searchTerms: ['todo', 'task', 'list', 'check', 'checkbox'],
+            icon: CheckSquare,
+            command: ({ editor, range }) => {
+                editor.chain().focus().deleteRange(range).toggleTaskList().run();
+            }
+        },
+        
+       
         {
             title: 'Quote',
             description: 'Capture a quote.',
@@ -125,7 +115,7 @@ const getSuggestionItems = ({ query }) => {
         {
             title: 'Code',
             description: 'Capture a code snippet.',
-            searchTerms: ['codeblock'],
+            searchTerms: ['codeblock', 'language', 'snippet', 'code'],
             icon: Code,
             command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
         },
@@ -133,8 +123,8 @@ const getSuggestionItems = ({ query }) => {
         {
         	title: 'Image',
         	description: 'Upload an image from your computer.',
-        	searchTerms: ['photo', 'picture', 'media'],
-        	icon: Code,
+        	searchTerms: ['photo', 'picture', 'media', 'picture', 'image'],
+        	icon: FileImage,
         	command: ({ editor, range }) => {
         		editor.chain().focus().deleteRange(range).run();
         		// upload image
@@ -153,9 +143,9 @@ const getSuggestionItems = ({ query }) => {
         },
         {
         	title: 'File',
-        	description: 'Upload an image from your computer.',
-        	searchTerms: ['photo', 'picture', 'media'],
-        	icon: Code,
+        	description: 'Upload a file from your computer.',
+        	searchTerms: ['photo', 'file', 'media'],
+        	icon: File,
         	command: ({ editor, range }) => {
         		editor.chain().focus().deleteRange(range).run();
         		// upload image
@@ -174,24 +164,31 @@ const getSuggestionItems = ({ query }) => {
         },
         {
             title: 'Collapsable',
-            description: 'Capture a code snippet.',
-            searchTerms: ['collapsable'],
-            icon: Code,
+            description: 'Create collapsable sections.',
+            searchTerms: ['collapsable', 'collapse'],
+            icon: ListCollapse,
             command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setDetails().run()
         },
         {
             title: 'Divider',
             description: 'Capture a code snippet.',
-            searchTerms: ['divider'],
-            icon: Code,
+            searchTerms: ['divider', 'line', 'rule'],
+            icon: Minus,
             command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setHorizontalRule().run()
         },
         {
             title: 'Table',
-            description: 'Capture a code snippet.',
+            description: 'create a table',
             searchTerms: ['table'],
-            icon: Code,
-            command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+            icon: Table,
+            command: ({ editor, range }) => {
+              
+                editor.chain().focus()
+                .deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run() // Clear the current range
+               
+              
+               
+            }
         },
 
 

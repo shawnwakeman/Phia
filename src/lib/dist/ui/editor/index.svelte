@@ -1,187 +1,357 @@
 <script>
-    import "../../styles/index.css";
-    import "../../styles/prosemirror.css";
-    import "../../styles/tailwind.css";
-    import { getPrevText } from "../../editor.js";
-    import { createLocalStorageStore } from "../../stores/localStorage.js";
-    import { createDebouncedCallback, noop } from "../../utils.js";
-    import { Editor } from "@tiptap/core";
+	import "../../styles/index.css";
+	import "../../styles/prosemirror.css";
+	import "../../styles/tailwind.css";
+	import { createLocalStorageStore } from "../../stores/localStorage.js";
+	import { createDebouncedCallback, noop } from "../../utils.js";
+	import { Editor } from "@tiptap/core";
+	import * as Dialog from "$lib/components/ui/dialog";
+	import ImageResizer from "./extensions/ImageResizer.svelte";
+	import { onMount } from "svelte";
+	import { defaultEditorContent } from "./default-content.js";
+	import { defaultExtensions } from "./extensions/index.js";
+	import { defaultEditorProps } from "./props.js";
+	import Toasts, { addToast } from "../toasts.svelte";
+	import EditorBubbleMenu from "./bubble-menu/index.svelte";
+	import { supabase } from "$lib/supabaseClient";
+	import { selectedNodeStore, showingTableEditor } from "../../../stores";
 
-    import ImageResizer from "./extensions/ImageResizer.svelte";
-    import { onMount } from "svelte";
-    import { defaultEditorContent } from "./default-content.js";
-    import { defaultExtensions } from "./extensions/index.js";
-    import { defaultEditorProps } from "./props.js";
-    import Toasts, { addToast } from "../toasts.svelte";
-    import EditorBubbleMenu from "./bubble-menu/index.svelte";
-    import { supabase, fetchSummary, saveSummary, saveSummaryChanges  } from "$lib/supabaseClient";
-    import { selectedNodeStore, currentSelectedIssue } from '../../../stores';
-    import { get } from 'svelte/store';
-    import { create, diff, patch } from 'jsondiffpatch';
-    import { v4 as uuidv4 } from 'uuid';
+	import { Switch } from "$lib/components/ui/switch";
+	import { Button } from "$lib/components/ui/button";
+	import { Label } from "$lib/components/ui/label";
 
-    
+    import debounce from 'debounce';
+    import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
+    import Collaboration from '@tiptap/extension-collaboration'
+    import { SupabaseProvider } from "./y-supabase";
+	import * as Y from "yjs";
+    import { writable } from 'svelte/store';
 
-    export let completionApi = "/api/generate";
-    let className = "relative min-h-[500px] w-full max-w-screen-lg border-stone-200 bg-white p-12 pb-24 sm:pb-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg";
-    export { className as class };
-    export let defaultValue = defaultEditorContent;
-    export let extensions = [];
-    export let editorProps = {};
-    export let onUpdate = noop;
-    export let onDebouncedUpdate = noop;
-    export let debounceDuration = 750;
-    export let storageKey = "novel__content";
-    export let disableLocalStorage = true;
-    export let editor = void 0;
+    export const usersStore = writable([]);
 
-    let element;
-  
-    let unsubscribe; // To store the unsubscribe function for the Supabase channel
+    // doc.on('destroy', function(doc: Y.Doc))
 
 
 
-    const diffpatcher = create();
-    let lastSentState = null;
-    let sessionId = uuidv4()
-  
+	export let completionApi = "/api/generate";
+	let className = "relative max-w-screen-lg pb-24 sm:pb-12";
+	export { className as class };
 
-  
-    const content = createLocalStorageStore(storageKey, defaultValue);
-    let hydrated = false;
-    $: if (editor && !hydrated) {
-      const value = disableLocalStorage ? defaultValue : $content;
-      if (value) {
-        // editor.commands.setContent(value);
-      }
-      hydrated = true;
+	export let extensions = [];
+	export let editorProps = {};
+	export let debounceDuration = 750;
+    let lastNode = null;
+
+	export let editor = void 0;
+
+	let element;
+
+
+
+    function getRandomColor() {
+        const colors = [
+            '#ff8a80', '#ff5252', '#ff1744', // Reds
+            '#ff80ab', '#ff4081', '#f50057', // Pinks
+            '#ea80fc', '#e040fb', '#d500f9', // Purples
+            '#b388ff', '#7c4dff', '#651fff', // Deep Purples
+            '#8c9eff', '#536dfe', '#3d5afe', // Indigo
+            '#82b1ff', '#448aff', '#2979ff', // Light Blues
+            '#18ffff', '#00e5ff', '#00b8d4', // Cyan
+            '#69f0ae', '#00e676', '#00c853', // Light Greens
+            '#ffd740', '#ffc400', '#ffab00', // Yellows
+            '#ffab91', '#ff8a65', '#ff7043'  // Oranges
+        ];
+
+        return colors[Math.floor(Math.random() * colors.length)];
     }
-    
+    let yDoc;
+    let provider;
+    let unsubscribe;
+    let users
+    let session
+    let color = getRandomColor();
 
-    const debouncedUpdates = createDebouncedCallback(async ({ editor: editor2 }) => {
-      if (!disableLocalStorage) {
-        const json = editor2.getJSON();
-        content.set(json);
-      }
-      if (selectedNodeStore) {
-        console.log("aksjdhasjkhdlkajshdkjashdkjhaslkdjh");
-        await saveSummary($selectedNodeStore.id, editor2.getJSON(), sessionId, "summaries");
-        
-      }
-      
-      onDebouncedUpdate(editor2);
-    }, debounceDuration);
+	onMount(() => {
+        // We handle the async part inside onMount, but the return should be synchronous
+        const initialize = async () => {
+            try {
+                // Fetch the session
+                const { data, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                session = data;
 
-    let prevoiusId = 0
-    onMount(() => {
-    
-      initializeEditor();
-      // Subscribe to changes in the selectedNodeStore
+                let isFirstLoad = true;
 
-        console.log("ASdsda");
-      selectedNodeStore.subscribe( async value => {
-        const documentid = value.id;
-        if (editor) {
-            if (prevoiusId !== 0) {
-                await saveSummary(prevoiusId, editor.getJSON(), sessionId, "summaries");
+                unsubscribe = selectedNodeStore.subscribe(async (value) => {
+                    if (value && value.id) {
+                        if (isFirstLoad || lastNode !== value.id) {
+                            await initializeDocument(lastNode, value.id);
+                            lastNode = value.id;
+                            isFirstLoad = false;
+                        }
+                    }
+
+          
+
+
+                });
+            } catch (error) {
+                console.error("Error in onMount:", error);
             }
-         
-            const summary = await fetchSummary(value.id, "summaries");
-            editor.commands.setContent(summary)
-            updateEditorSubscription(documentid);
-            prevoiusId = value.id
+
+          
+
+        };
+
+        const cleanup = async () => {
+            console.log("Cleanup");
+            
+            if (provider && lastNode) {
+                try {
+                    let exportedData = provider.persistData();
+                    if (provider) provider.destroy();
+                    provider = null;
+
+                    if (!exportedData) {
+                        console.warn("No data to persist for node", lastNode);
+                    }
+
+                    await supabase
+                        .from('summaries')
+                        .upsert({
+                            'node_id': lastNode.toString(),
+                            'summary': exportedData,
+                        }, { onConflict: 'node_id' });
+                } catch (error) {
+                    console.error("Error during cleanup:", error);
+                }
+            }
+        };
+        // Call the async initialization
+        initialize();
+
+        // Return the cleanup function synchronously
+        window.addEventListener('beforeunload', cleanup);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+            if (provider) provider.pauseRealtime();
+            
+        } else {
+            // Optionally reinitialize anything necessary when visibility changes back to 'visible'
+          
+            if (provider) provider.resumeRealtime();
+      
+            
         }
-      });
-      return () => {
-        if (editor) editor.destroy();
-        if (unsubscribe) unsubscribe(); // Clean up the Supabase subscription
-      };
+        });
+
+        // Return the cleanup function synchronously
+        return () => {
+            if (unsubscribe) unsubscribe();
+            window.removeEventListener('beforeunload', cleanup);
+            window.removeEventListener('pagehide', cleanup);
+            document.removeEventListener('visibilitychange', cleanup);
+        };
     });
-  
-    function initializeEditor() {
-      editor = new Editor({
-        element,
-        onTransaction: () => {
-          editor = editor;
-        },
-        extensions: [...defaultExtensions, ...extensions],
-        editorProps: {
-          ...defaultEditorProps,
-          ...editorProps
-        },
-        onUpdate: async  (e) => {
-          
-            const currentState = editor.getJSON();
-            const changes = diff(lastSentState, currentState);
-            if (changes) {
-                await saveSummaryChanges($selectedNodeStore.id, changes, sessionId, "summaries");
-                lastSentState = currentState;
-            }
-      
-            onUpdate(e.editor);
-            debouncedUpdates(e);
-    
-  
-          // Update Supabase with new content
-        
-        },
-        autofocus: "end",
-      });
-    }
-  
-    function updateEditorSubscription(documentid) {
-      if (unsubscribe) unsubscribe(); // Unsubscribe from the previous channel if exists
-  
-      // Subscribe to changes in Supabase
-      const channel = supabase.channel('custom-filter-channel')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'summaries',
-          filter: `node_id=eq.${documentid}`
-        }, (payload) => {
-          
-            
-            
-            
 
-            if (payload.new.sessionID !== sessionId) {
-                console.log('Applying changes to editor content');
-                const currentContent = editor.getJSON();
-                const updatedContent = patch(currentContent, payload.new.changes);
-                editor.commands.setContent(updatedContent);
-                console.log(editor.content);
-            }
 
-              
-       
-        })
-    .subscribe();
-    
-  
-      unsubscribe = () => {
-        channel.unsubscribe();
-      };
+
+    function updateLabelPosition(cursor, label) {
+    const cursorRect = cursor.getBoundingClientRect();
+    const editorRect = editor.view.dom.getBoundingClientRect();
+
+    // Set the position of the label above the cursor
+    label.style.position = 'absolute';
+    label.style.top = `${cursorRect.top - editorRect.top - label.offsetHeight}px`;
+    label.style.left = `${cursorRect.left - editorRect.left}px`;
+    label.style.zIndex = '1000'; // Ensure it's above everything
+    label.style.pointerEvents = 'none'; // Prevent interaction with the label
     }
 
+	function initializeEditor() {
 
-  </script>
+		editor = new Editor({
+			element,
+
+
+			extensions: [
+				...defaultExtensions,
+				...extensions,
+                CollaborationCursor.configure({
+                    provider,
+                    user: {
+                    name: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
+                    color: color,
+           
+                    },
+                    render: user => {
+                      const cursor = document.createElement('span')
+                      cursor.classList.add('collaboration-cursor__caret')
+                      cursor.setAttribute('style', `border-color: ${user.color}`)
+                                        
+                   
+                      return cursor
+                     }
+                }),
+				Collaboration.configure({
+					document: yDoc, // Configure Y.Doc for collaboration
+				}),
+               
+			],
+			editorProps: {
+				...defaultEditorProps,
+				...editorProps,
+			},
+
+			autofocus: false,
+		});
+	}
+
+
+    async function initializeDocument(lastNode, nodeId) {
+    try {
+        // Persist the current document if a provider and lastNode exist
+        if (provider && lastNode) {
+            console.log("Switching document from", lastNode, "to", nodeId);
+            
+            let exportedData = provider.persistData();
+            if (provider) provider.destroy();
+            provider = null
+            if (!exportedData) {
+                console.warn("No data to persist for node", lastNode);
+                return;
+            }
+
+            await supabase
+                .from('summaries')
+                .upsert({
+                    'node_id': lastNode.toString(),
+                    'summary': exportedData,
+                }, { onConflict: 'node_id' });
+        }
   
-  <div>
-    <div id="editor" bind:this={element}></div>
-  
-  </div>
-  
-  {#if editor && editor.isEditable}
-    <EditorBubbleMenu {editor} />
-  {/if}
-  
-  <div id="editor" class={className} bind:this={element}>
-    <slot />
-    {#if editor?.isActive('image')}
-      <ImageResizer {editor} />
-    {/if}
-  </div>
-  
-  <Toasts />
-  
+
+
+        // Create a new Y.Doc and provider
+        yDoc = new Y.Doc();
+        provider = new SupabaseProvider(supabase, {
+            name: nodeId.toString(),
+            document: yDoc,
+            userData: {
+                name: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
+                color: color,
+            },
+            databaseDetails: {
+                schema: 'public',
+                table: 'summaries',
+                updateColumns: { name: 'node_id', content: 'summary' },
+                conflictColumns: 'node_id',
+            },
+        });
+        provider.on('users-update', (status) => {
+            const usersArray = Object.values(status).flat();
+
+            usersStore.set(usersArray);
+
+   
+
+        });
+        // Reinitialize the editor with the new document
+        if (editor) {
+            editor.destroy();
+        }
+        initializeEditor();
+
+    } catch (error) {
+        console.error("Error in switchDocument:", error);
+    }
+}
+	
+	let rows = 3;
+	let columns = 3;
+	let headerRow = false;
+
+	function createTable() {
+		rows = Math.max(0, Math.min(100, rows));
+		columns = Math.max(0, Math.min(100, columns));
+
+		editor
+			.chain()
+			.focus()
+
+			.insertTable({ rows: rows, cols: columns, withHeaderRow: headerRow }) // Insert the table at the original position
+			.run();
+
+		showingTableEditor.set(false);
+		// Your logic to create the table using rows, columns, and headerRow
+	}
+
+	function handleKeyDown(event) {
+		if (event.key === "Enter") {
+			createTable();
+		}
+	}
+</script>
+
+
+<!-- <ul>
+    {#each $usersStore as user}
+        <li>{user.userData.name} - {user.userData.color}</li>
+    {/each}
+</ul> -->
+
+
+{#if editor && editor.isEditable}
+	<EditorBubbleMenu {editor} />
+{/if}
+
+<div id="editor" class="{className}" bind:this="{element}">
+	<slot />
+	{#if editor?.isActive("image")}
+		<ImageResizer {editor} />
+	{/if}
+</div>
+
+<Toasts />
+
+
+<style>
+	input[type="number"]::-webkit-outer-spin-button,
+	input[type="number"]::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+
+	input[type="number"] {
+		-moz-appearance: textfield; /* Hide the arrows in Firefox */
+	}
+
+	.input-container {
+		display: flex;
+		align-items: center;
+
+		padding: 5px;
+		border-radius: 8px;
+	}
+
+	.input-container:focus-within {
+		border: 1px solid white; /* Change border color when the input is focused */
+	}
+
+	.custom-number-input {
+		color: white;
+		font-size: 18px; /* Bigger number */
+		border: none; /* Remove default input border */
+		margin-left: 5px;
+		flex-grow: 1;
+		padding-right: 5px;
+		outline: none; /* Remove default outline */
+	}
+
+	.input-label {
+		color: darkgrey;
+		font-size: 14px;
+		line-height: 24px; /* Match the font size of the number input */
+		margin-right: 5px;
+	}
+</style>

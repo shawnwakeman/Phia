@@ -1,7 +1,7 @@
 <script lang="ts">
-	import * as Sheet from "$lib/components/ui/sheet";
-	import { Button } from "$lib/components/ui/button";
-	import { settings, gridController } from "$lib/stores";
+import * as Sheet from "$lib/components/ui/sheet";
+import { Button } from "$lib/components/ui/button";
+import { settings, gridController } from "$lib/stores";
 	import { setSetting } from "$lib/supabaseClient";
 	import { onMount } from "svelte";
 	import type { ChartOptions } from "../../types/collection";
@@ -15,6 +15,7 @@
             description: "asdadsasddass",
 			min: { w: 4, h: 6},
             max: { w: 10, h: 10 },
+            
             isExpandable: true,
 		},
 		{
@@ -23,7 +24,7 @@
             header: "Chart of bars",
             querry: "",
             description: "asdadsasddass",
-			min: { w: 2, h: 3},
+			min: { w: 2, h: 2},
             max: { w: 12, h: 12 },
             isExpandable: true,
 		},
@@ -33,7 +34,7 @@
             header: "Line Chart Of some Data",
             querry: "",
             description: "hjgjhg JSAHGDKJHas JKAHSDG JK kJASHDG",
-            min: { w: 2, h: 4},
+            min: { w: 2, h: 2},
             max: { w: 12, h: 12 },
             isExpandable: true,
 		},
@@ -43,7 +44,7 @@
             header: "Chart of Pie",
             querry: "",
             description: "asdasd as das das as",
-            min: { w: 2, h: 4},
+            min: { w: 2, h: 2},
             max: { w: 12, h: 12 },
             isExpandable: true,
 		},
@@ -53,7 +54,7 @@
             header: "kool heat map",
             querry: "",
             description: "asdasd asdasd asd as",
-			min: { w: 5, h: 3},
+            min: { w: 2, h: 2},
             max: { w: 12, h: 12 },
             isExpandable: true,
         },
@@ -63,13 +64,13 @@
             header: "Chart of barsa asdfasd",
             querry: "",
             description: "asdadsasddass",
-            min: { w: 2, h: 4},
+            min: { w: 2, h: 2},
             max: { w: 12, h: 12 },
             isExpandable: true,
         },
 		{ 
             type: "metricbarchartbase", 
-            windowName: "Bar Chart metric",
+            windowName: "Bar Metric",
             header: "Chart of bars",
             querry: "",
             description: "asdadsasddass",
@@ -96,7 +97,17 @@
 			min: { w: 2, h: 2},
             max: { w: 12, h: 12 },
             isExpandable: false,
-        }
+        },
+        { 
+            type: "metrictbase", 
+            windowName: "Metric",
+            header: "Chart of bars",
+            querry: "",
+            description: "asdadsasddass",
+			min: { w: 2, h: 2},
+            max: { w: 12, h: 12 },
+            isExpandable: false,
+        },
 	];
 
 	function addNewItem(defaultItem) {
@@ -108,8 +119,8 @@
 			items = $settings.home.grid.gridLayout;
 		}
 
-		const min = defaultItem.min;
-		const max = defaultItem.max;
+		let min = defaultItem.min;
+		let max = defaultItem.max;
         console.log(min);
         
 		const newItem: ChartOptions = {
@@ -123,7 +134,27 @@
             isExpandable: defaultItem.isExpandable
 		
 		};
-		const newPosition = $gridController.getFirstAvailablePosition(min.w, min.h);
+		let newPosition = $gridController.getFirstAvailablePosition(min.w + 3, min.h + 3);
+        let startMinW = min.w + 3
+        let startMinH = min.h + 3
+
+        if (newPosition === null) {
+            newPosition = $gridController.getFirstAvailablePosition(min.w + 2, min.h + 2);
+            startMinH = min.h + 2
+            startMinW = min.w + 2
+        }
+        if (newPosition === null) {
+            newPosition = $gridController.getFirstAvailablePosition(min.w + 1, min.h + 1);
+            startMinH = min.h + 1
+            startMinW = min.w + 1
+        }
+        if (newPosition === null) {
+            newPosition = $gridController.getFirstAvailablePosition(min.w, min.h);
+            startMinH = min.h
+            startMinW = min.w
+        }
+        
+  
 		items = newPosition
 			? [
 					...items,
@@ -131,8 +162,8 @@
 						id: crypto.randomUUID(),
 						x: newPosition.x,
 						y: newPosition.y,
-						w: min.w,
-						h: min.h,
+						w: startMinW,
+						h: startMinH,
 						min,
 						max,
 						type: newItem,

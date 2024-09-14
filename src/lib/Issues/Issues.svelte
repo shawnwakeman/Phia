@@ -1,7 +1,7 @@
 <script lang="ts">
     import Kaban from '$lib/Issues/Kaban/Kaban.svelte'
     import Treemap from '$lib/Issues/Treemap.svelte'
-    import TreemapOptions from '../../lib/Issues/TreemapDisplayOptions.svelte'
+    import TreemapOptions from '$lib/Issues/TreemapDisplayOptions.svelte'
     import List from '$lib/Issues/List/index.svelte'
     import ListOptions from '$lib/Issues/List/ListDisplayOptions.svelte'
     import type { Issue, Node } from "../../types/collection";

@@ -23,7 +23,7 @@
   });
 </script>
 
-<div class="w-full px-5">
+<div class="w-full px-4">
   <div class="{`progress-bar ${isEqual ? 'bg-blue-300' : progress < target ? 'bg-red-300' : 'bg-green-300'}`}">
     <div
       id="progress"
@@ -43,18 +43,7 @@
     ></div>
   </div>
 </div>
-<div class="ml-3 mt-2">
-  {#if !isEqual}
-    <h2 class="text-sm text-gray-400 ml-2 mr-2">
-      <span class="{progress < target ? 'text-red-800' : 'text-green-800'}">
-        <strong>{Math.round(percentage)}</strong>% {progress < target ? "behind schedule" : "Ahead of schedule"}
-      </span>
-      and should finish on <strong>Jun 12</strong> instead of Jun 30
-    </h2>
-  {:else}
-    <h2 class="text-sm text-gray-400 ml-2 mr-2"> 6% of progress this month</h2>
-  {/if}
-</div>
+
 
 <style>
   .progress-bar {

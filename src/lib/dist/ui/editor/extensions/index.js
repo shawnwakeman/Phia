@@ -21,7 +21,6 @@ import { common, createLowlight } from 'lowlight'
 import Typography from '@tiptap/extension-typography'
 import { ColorHighlighter } from './ColorHighlighter.js'
 import { SmilieReplacer } from './SmilieReplacer.js'
-import { Plugin, PluginKey } from 'prosemirror-state'
 import {Details as details} from '@tiptap-pro/extension-details'
 import DetailsContent from '@tiptap-pro/extension-details-content'
 import DetailsSummary from '@tiptap-pro/extension-details-summary'
@@ -29,11 +28,30 @@ import Table from '@tiptap/extension-table'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
-
+import { TrailingNode } from './trailingNode.ts'
 
 const lowlight = createLowlight(common)
 
-
+const CustomTableCell = TableCell.extend({
+    addAttributes() {
+      return {
+        // extend the existing attributes …
+        ...this.parent?.(),
+  
+        // and add a new one …
+        backgroundColor: {
+          default: null,
+          parseHTML: element => element.getAttribute('data-background-color'),
+          renderHTML: attributes => {
+            return {
+              'data-background-color': attributes.backgroundColor,
+              style: `background-color: ${attributes.backgroundColor}`,
+            }
+          },
+        },
+      }
+    },
+  })
 
 
 
@@ -62,7 +80,7 @@ export const defaultExtensions = [
             }
         },
         codeBlock: false,
-
+        history: false, 
         code: {
             HTMLAttributes: {
                 class: 'rounded-md bg-stone-200 px-1.5 py-1 font-mono font-medium text-stone-900',
@@ -78,15 +96,15 @@ export const defaultExtensions = [
     }),
     Typography,
     ColorHighlighter,
-    SmilieReplacer,
+  SmilieReplacer,
+  TrailingNode,
     Table.configure({
         resizable: true,
       }),
     TableRow,
     TableHeader,
-    TableCell,
-    
-
+    CustomTableCell,
+   
     // patch to fix horizontal rule bug: https://github.com/ueberdosis/tiptap/pull/3859#issuecomment-1536799740
     HorizontalRule.extend({
         addInputRules() {
@@ -133,17 +151,39 @@ export const defaultExtensions = [
 
     Placeholder.configure({
         includeChildren: true,
-        placeholder: ({ node }) => {
-            if (node.type.name === 'detailsSummary') {
-                return 'Summary'
-              }
-            if (node.type.name === 'heading') {
-                return `Heading ${node.attrs.level}`;
-            }
-            return "Add description...";
+        placeholder: ({ node, editor }) => {
+          // Check if the node is inside a table
+          let isInTable = false;
+            editor.state.doc.nodesBetween(0, editor.state.doc.content.size, (n) => {
+         
+           
+             
+                if (n.type.name === 'taskItem' || n.type.name === 'orderedList' || n.type.name === 'bulletList') {
+                    isInTable = true;
+                }
+                if (n.type.name === 'table') {
+                    isInTable = true;
+                }
+          });
+   
+      
+          if (isInTable) {
+            return '';
+          }
+            
+          if (node.type.name === 'heading') {
+            return `Heading ${node.attrs.level}`;
+        }
+      
+          if (node.type.name === 'codeBlock') {
+            return '';
+          }
+          if (node.type.name === 'paragraph') {
+            return "press '/' for commands...";
+          }
+          return " ";
         },
-    
-    }),
+      }),
     SlashCommand,
     TiptapUnderline,
     TextStyle,
@@ -160,7 +200,7 @@ export const defaultExtensions = [
     }),
     TaskItem.configure({
         HTMLAttributes: {
-            class: 'flex items-start my-4'
+            class: 'flex items-start my-1.5'
         },
         nested: true
     }),
@@ -183,15 +223,16 @@ export const defaultExtensions = [
         code: true,
         defining: true,
         isolating: true,
+        
         addNodeView() {
           return ({ node, getPos, editor }) => {
             const { view } = editor;
             const dom = document.createElement('div');
-            dom.className = 'relative rounded-sm bg-stone-100 p-5 font-mono font-medium';
+            dom.className = 'relative rounded bg-muted p-5 font-mono font-medium';
             dom.setAttribute('spellcheck', 'false');
       
             const select = document.createElement('select');
-            select.className = 'absolute top-2 left-2 bg-white';
+            select.className = 'absolute top-2 left-2 bg-white rounded';
             select.innerHTML = `
               <option value="">auto</option>
               <option disabled>—</option>
@@ -214,34 +255,49 @@ export const defaultExtensions = [
             const code = document.createElement('code');
             code.className = `language-${node.attrs.language || 'plain'}`;
             code.textContent = node.textContent;
-            pre.appendChild(code);
-            dom.appendChild(pre);
-      
+       
+              
             const button = document.createElement('button');
-            button.className = 'absolute top-2 right-2 text-sm bg-gray-200 px-2 py-1 rounded';
-            button.textContent = 'Copy';
+            button.className = 'absolute top-2 right-2 text-sm px-2 py-1 rounded flex items-center justify-center hover:bg-slate-500 transition-colors';
+            button.style.height = 'auto';
+            button.style.padding = '4px'; // adjust padding as needed
+            button.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+              </svg>
+            `;
             button.addEventListener('click', () => {
-              copy(node.textContent);
-            });
+                navigator.clipboard.writeText(code.textContent)
+                console.log(code.textContent);
+                
+              });
             dom.appendChild(button);
-      
+              pre.appendChild(code);
+              dom.appendChild(pre);
+
+              
             return {
               dom,
               contentDOM: code,
             };
           };
+            
         },
 
       
-      }).configure({
-        lowlight,
+    }).configure({
+      lowlight,
         HTMLAttributes: {
-          class: 'relative rounded-sm bg-stone-100 p-5 font-mono font-medium',
+          class: 'relative rounded-sm p-5 font-mono font-medium',
           spellcheck: 'false',
         },
           languageClassPrefix: 'language-',
          
       }),
+
     
 
 ];
+
+

@@ -1,87 +1,90 @@
 <script lang="ts">
-    import BulletList from './featureList.svelte';
-    import { Editor } from "$lib/dist";
-    import { Editor as EditorType } from '@tiptap/core';
-    import Issues from '$lib/nodeManager/Issues.svelte';
-    import State from './State.svelte';
-    import TitleInfo from './TitleInfo.svelte';
-    let saveStatus = 'Saved';
-    let editor: EditorType;
+	import BulletList from "./featureList.svelte";
+	import { Editor } from "$lib/dist";
+	import Issues from "$lib/nodeManager/Issues.svelte";
+	import State from "./State.svelte";
+	import TitleInfo from "./TitleInfo.svelte";
+	import { Separator } from "$lib/components/ui/separator";
+	import { Button } from "$lib/components/ui/button";
+	import { Maximize2 } from "lucide-svelte";
+	let isFullScreen = false;
+	let editorContainer: HTMLDivElement;
 
+	function toggleFullScreen() {
+		isFullScreen = !isFullScreen;
+		
+        editorContainer.scrollIntoView({ behavior: "smooth" });
+	
+	}
+</script>
 
-
-
-    
-
-
-  </script>
-  
-  <main>
-
-    <TitleInfo/>
-   
-
-    <State/>
-
-
-
-  
-
-
-    <div class="feature-container">
-        <h1>Summary</h1>
-        <Editor
-            bind:editor
-            onUpdate={() => {
-                saveStatus = 'Unsaved';
-            }}
-            onDebouncedUpdate={async () => {
-                saveStatus = 'Saving...';
-                
-        
-                setTimeout(() => {
-                    saveStatus = 'Saved';
-                }, 500);
-            }}
-        >
-            <div
-                class="absolute right-5 top-5 z-10 mb-5 rounded-lg bg-stone-100 px-2 py-1 text-sm text-stone-400"
-            >
-                {saveStatus}
-            </div>
-        </Editor>
-
+<div class="pointer-events-auto overflow-y-auto h-full pr-1.5 pl-4 flex flex-col">
+    <div class="my-4">
+        <TitleInfo />
     </div>
-
-       
+	
   
-        
-  
-    
+	<State />
 
+	<div class="py-4" bind:this="{editorContainer}">
+		<div class="{`feature-container editor-container ${isFullScreen ? 'full-screen' : ''}`}">
+			<div class="top-bar-editor py-2 px-4 flex items-center justify-between">
+				<h1 class="text-lg font-semibold text-muted-foreground">Summary</h1>
+				<div class="flex items-center">
+					<Button on:click="{toggleFullScreen}" variant="ghost">
+						<Maximize2 class="h-5 w-5 text-muted-foreground" /></Button
+					>
+				</div>
+			</div>
 
-
-
-
-    <BulletList />
-    <div class="feature-container">
-        <Issues/>
-        <!-- <List/> -->
+			<Separator />
+			<div
+				class="editor-container overflow-y-auto overflow-x-hidden pt-6 min-h-80 px-4  mr-0.5 {isFullScreen
+					? 'h-full'
+					: 'max-h-96'}"
+         
+			>
+				<Editor></Editor>
+			</div>
+		</div>
+	</div>
+    <div class="my-4">
+        <BulletList />
     </div>
+	
+	<div class="feature-container">
+		<Issues />
+		<!-- <List/> -->
+	</div>
+</div>
 
-    
-  </main>
-  <style>
-    main {
-        max-height: 100vh; 
-        overflow-y: auto; /* Enables vertical scrolling */
-        pointer-events: auto;
- 
-        padding-bottom: 2000px;
-  
-    }
+<style>
+	main {
+		max-height: 100vh;
+		overflow-y: auto; /* Enables vertical scrolling */
+		pointer-events: auto;
 
+		padding-bottom: 2000px;
+	}
 
+	.feature-container {
+		position: relative;
+		padding: 0;
+	
+		transition: height 0.3s ease-in-out;
+	}
 
-    
+	.top-bar-editor {
+		z-index: 5;
+
+		border-radius: 18px 18px 0 0;
+	}
+
+	.feature-container.full-screen .editor-container {
+		height: calc(100vh - 10.5rem);
+	}
+
+	.editor-container {
+		transition: height 0.3s ease-in-out;
+	}
 </style>

@@ -74,7 +74,6 @@ function buildHierarchy(nodes: Node[], issues: Issue[]) {
     }
 
     issues.forEach(issue => {
-    console.log(issue.description); // Log the issue description
     if (nodeMap.has(issue.node_id)) {
       addNodePath(issue);
     } else {
@@ -217,8 +216,8 @@ const gatherAllIssues = (node) => {
 
 
     onMount(() => {
-        let width = 0;
-        let height = 0;
+        let width = 100;
+        let height = 100;
 
  
        
@@ -226,31 +225,22 @@ const gatherAllIssues = (node) => {
 
         function updateDimensions() {
             const parentDiv = document.getElementById('data');
-            const layoutDiv = document.getElementById('layout-id');
-            const sidebarDiv = document.getElementById('sidebar-div');
             const svgElement = document.getElementById('treemap');
-            if (layoutDiv && parentDiv && sidebarDiv && svgElement) {
+            if (parentDiv && svgElement) {
 
-                const layoutHeight = parseFloat(window.getComputedStyle(layoutDiv).height);
-                const sidebarWidth = parseFloat(window.getComputedStyle(sidebarDiv).width);
 
-                
-                parentDiv.style.height = `${window.innerHeight - layoutHeight}px`;
-                parentDiv.style.width = `${window.innerWidth - sidebarWidth}px`;
-
-                width = window.innerWidth - sidebarWidth - 25;
-                height = window.innerHeight - layoutHeight - 18;
-
-                const dataDiv = document.getElementById('data');
-            
+          
                 
                 // Get the dimensions of the data div
-                const widthSvg = dataDiv.clientWidth - 15;
-                const heightSvg = dataDiv.clientHeight - 15;
+                const widthSvg =  parentDiv.clientWidth - 15;
+                const heightSvg = parentDiv.clientHeight - 15;
+
+                width = widthSvg;
+                height = heightSvg;
                 
                 // Set the dimensions of the SVG element
-                svgElement.setAttribute('width', widthSvg);
-                svgElement.setAttribute('height', heightSvg);
+                svgElement.setAttribute('width', `${widthSvg}`); // widthSvg);
+                svgElement.setAttribute('height', `${heightSvg}`);
 
 
            
@@ -516,7 +506,7 @@ const gatherAllIssues = (node) => {
 
 
                 function handleClick(event, d) {
-                    if (event.ctrlKey) {
+                    if (event.ctrlKey || event.metaKey) {
                         // Control key is pressed
                         if (d.data.value !== undefined) {
                             // Single issue click
@@ -617,7 +607,7 @@ const gatherAllIssues = (node) => {
   </script>
   
 <ContextMenu.Root>
-    <ContextMenu.Trigger>
+    <ContextMenu.Trigger class="w-full h-full">
         
      
             <div class="data" id="data">
@@ -654,6 +644,8 @@ const gatherAllIssues = (node) => {
 
     #treemap {
         margin: 0;
+        min-width: 100%;
+        height: 100%;
     }
 
 
@@ -673,13 +665,13 @@ const gatherAllIssues = (node) => {
     .data {
   
         overflow: hidden;
+        height: 100%;
+        width: 100%;
 
-        padding-top: 5px;
-        padding-left: 15px;
-        padding-right: 15px;
-        padding-bottom: 15px;
       
     }
+
+
   
 
 </style>

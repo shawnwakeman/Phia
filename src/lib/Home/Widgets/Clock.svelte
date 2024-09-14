@@ -134,6 +134,7 @@
 	.timer {
 		position: relative;
 		display: inline-block;
+        overflow: hidden;
 	}
 	.grow {
 		font-size: 14px;
