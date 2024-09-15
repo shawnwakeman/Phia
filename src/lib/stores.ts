@@ -2,7 +2,7 @@ import { supabase } from "./supabaseClient";
 // src/stores.ts
 import { writable, derived } from "svelte/store";
 import type { Node, Issue, Blocks, TargetStates, UserSettings } from "../types/collection";
-import type { GridController } from "./Home/svelte-grid-extended";
+
 // Initialize the selectedNode store with a default value or null if no default is desired
 export const supabaseStore = writable(null);
 
@@ -99,7 +99,7 @@ export const filterStoreKanBan = writable({
 	hideNullColumns: false,
 });
 
-export const gridController = writable<GridController>();
+
 
 
 export const settings = writable<UserSettings>();

@@ -155,43 +155,39 @@
     }
 
 	function initializeEditor() {
+    console.log("Initializing editor...");
 
-		editor = new Editor({
-			element,
-
-
-			extensions: [
-				...defaultExtensions,
-				...extensions,
-                CollaborationCursor.configure({
-                    provider,
-                    user: {
-                    name: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
+    editor = new Editor({
+        element,
+        extensions: [
+            ...defaultExtensions,
+            ...extensions,
+            CollaborationCursor.configure({
+                provider,
+                user: {
+                    name: 'Anonymous',
                     color: color,
-           
-                    },
-                    render: user => {
-                      const cursor = document.createElement('span')
-                      cursor.classList.add('collaboration-cursor__caret')
-                      cursor.setAttribute('style', `border-color: ${user.color}`)
-                                        
-                   
-                      return cursor
-                     }
-                }),
-				Collaboration.configure({
-					document: yDoc, // Configure Y.Doc for collaboration
-				}),
-               
-			],
-			editorProps: {
-				...defaultEditorProps,
-				...editorProps,
-			},
+                },
+                render: user => {
+                    const cursor = document.createElement('span');
+                    cursor.classList.add('collaboration-cursor__caret');
+                    cursor.setAttribute('style', `border-color: ${user.color}`);
+                    return cursor;
+                }
+            }),
+            Collaboration.configure({
+                document: yDoc,
+            }),
+        ],
+        editorProps: {
+            ...defaultEditorProps,
+            ...editorProps,
+        },
+        autofocus: false,
+    });
 
-			autofocus: false,
-		});
-	}
+    console.log("Editor initialized:", editor);
+}
 
 
     async function initializeDocument(lastNode, nodeId) {
