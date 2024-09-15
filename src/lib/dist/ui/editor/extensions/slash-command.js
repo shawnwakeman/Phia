@@ -119,28 +119,7 @@ const getSuggestionItems = ({ query }) => {
             icon: Code,
             command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
         },
-      
-        {
-        	title: 'Image',
-        	description: 'Upload an image from your computer.',
-        	searchTerms: ['photo', 'picture', 'media', 'picture', 'image'],
-        	icon: FileImage,
-        	command: ({ editor, range }) => {
-        		editor.chain().focus().deleteRange(range).run();
-        		// upload image
-        		const input = document.createElement('input');
-        		input.type = 'file';
-        		input.accept = 'image/*';
-        		input.onchange = async () => {
-        			if (input.files?.length) {
-        				const file = input.files[0];
-        				const pos = editor.view.state.selection.from;
-        				startFileUpload(file, editor.view, pos);
-        			}
-        		};
-        		input.click();
-        	}
-        },
+    
         {
         	title: 'File',
         	description: 'Upload a file from your computer.',

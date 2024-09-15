@@ -76,25 +76,10 @@
         const initialize = async () => {
             try {
                 // Fetch the session
-                const { data, error } = await supabase.auth.getSession();
-                if (error) throw error;
-                session = data;
 
-                let isFirstLoad = true;
-
-                unsubscribe = selectedNodeStore.subscribe(async (value) => {
-                    if (value && value.id) {
-                        if (isFirstLoad || lastNode !== value.id) {
-                            await initializeDocument(lastNode, value.id);
-                            lastNode = value.id;
-                            isFirstLoad = false;
-                        }
-                    }
-
-          
-
-
-                });
+                await initializeDocument("2", "2");
+            
+             
             } catch (error) {
                 console.error("Error in onMount:", error);
             }
@@ -105,8 +90,8 @@
 
         const cleanup = async () => {
             console.log("Cleanup");
-            
-            if (provider && lastNode) {
+
+            if (provider) {
                 try {
                     let exportedData = provider.persistData();
                     if (provider) provider.destroy();
@@ -115,11 +100,12 @@
                     if (!exportedData) {
                         console.warn("No data to persist for node", lastNode);
                     }
-
+                    console.log("Exported data:", exportedData);
+                    
                     await supabase
                         .from('summaries')
                         .upsert({
-                            'node_id': lastNode.toString(),
+                            'node_id': "2",
                             'summary': exportedData,
                         }, { onConflict: 'node_id' });
                 } catch (error) {
@@ -225,7 +211,7 @@
             await supabase
                 .from('summaries')
                 .upsert({
-                    'node_id': lastNode.toString(),
+                    'node_id': "2",
                     'summary': exportedData,
                 }, { onConflict: 'node_id' });
         }
@@ -235,10 +221,10 @@
         // Create a new Y.Doc and provider
         yDoc = new Y.Doc();
         provider = new SupabaseProvider(supabase, {
-            name: nodeId.toString(),
+            name: "2",
             document: yDoc,
             userData: {
-                name: session ? session.session.user.user_metadata.name.split(' ')[0] : 'Anonymous',
+                name: 'Anonymous',
                 color: color,
             },
             databaseDetails: {

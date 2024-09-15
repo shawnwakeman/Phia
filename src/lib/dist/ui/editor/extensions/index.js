@@ -289,7 +289,7 @@ export const defaultExtensions = [
     }).configure({
       lowlight,
         HTMLAttributes: {
-          class: 'relative rounded-sm p-5 font-mono font-medium',
+          class: 'relative bg-[#0e1211] rounded-sm p-5 font-mono font-medium',
           spellcheck: 'false',
         },
           languageClassPrefix: 'language-',
